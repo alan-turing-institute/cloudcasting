@@ -1,18 +1,7 @@
 [build-system]
 requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
-license = "MIT"
-description = "Tooling and infrastructure to enable cloud nowcasting."
-readme = "README.md"
 
-classifiers = [
-  "Development Status :: 1 - Planning",
-  "Intended Audience :: Science/Research",
-  "Intended Audience :: Developers",
-  "Operating System :: OS Independent",
-  "Topic :: Scientific/Engineering",
-"Typing :: Typed",
-]
 
 [project]
 name = "cloudcast"
@@ -39,14 +28,31 @@ classifiers = [
   "Topic :: Scientific/Engineering",
   "Typing :: Typed",
 ]
-dependencies = []
-
+dependencies = [
+    "gcsfs",
+    "zarr",
+    "xarray",
+    "dask",
+    "pyresample",
+    "pyproj",
+    "ocf-blosc2",
+    "ocf-datapipes",
+    "typer"
+]
 [project.optional-dependencies]
 dev = [
   "pytest >=6",
   "pytest-cov >=3",
   "pre-commit",
+  "pandas-stubs",
+  "types-PyYAML",
+  "types-Pygments",
+  "types-cffi",
+  "types-psutil"
 ]
+
+[project.scripts]
+cloudcast = "cloudcast.cli:app"
 
 [project.urls]
 Homepage = "https://github.com/climetrend/cloudcast"
@@ -75,7 +81,7 @@ port.exclude_lines = [
 ]
 
 [tool.mypy]
-files = ["src", "tests"]
+files = ["src"]
 python_version = "3.10"
 show_error_codes = true
 warn_unreachable = true

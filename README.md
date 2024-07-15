@@ -8,15 +8,11 @@ Tooling and infrastructure to enable cloud nowcasting.
 
 ## Installation
 
-```bash
-python -m pip install cloudcast
-```
-
-From source:
+From source (development mode):
 ```bash
 git clone https://github.com/climetrend/cloudcast
 cd cloudcast
-python -m pip install .
+python -m pip install ".[dev]"
 ```
 
 ## Usage

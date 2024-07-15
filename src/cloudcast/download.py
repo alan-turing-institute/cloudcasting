@@ -1,27 +1,15 @@
-"""
-A script to download a selection of EUMETSAT satellite imagery from the Google public dataset.
-
-Example usage from command line:
-    python download_uk_satellite.py "2020-06-01 00:00" "2020-06-30 23:55" "path/to/new/satellite/directory"
-
-Note: The output directory must already exist. This script will create a zarr directory within
-the supplied output directory.
-"""
-
-import os
 import logging
+import os
 
-import xarray as xr
+import ocf_blosc2  # noqa: F401
 import pandas as pd
+import xarray as xr
 from dask.diagnostics import ProgressBar
-
 from ocf_datapipes.utils.geospatial import lon_lat_to_geostationary_area_coords
-import ocf_blosc2
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
-
 
 
 def get_sat_public_dataset_path(year: int, is_hrv: bool = False) -> str:
@@ -37,6 +25,7 @@ def get_sat_public_dataset_path(year: int, is_hrv: bool = False) -> str:
     """
     file_end = "hrv.zarr" if is_hrv else "nonhrv.zarr"
     return f"gs://public-datasets-eumetsat-solar-forecasting/satellite/EUMETSAT/SEVIRI_RSS/v4/{year}_{file_end}"
+
 
 def download_satellite_data(
     start_date: str,
@@ -74,21 +63,23 @@ def download_satellite_data(
     """
     # Check output directory exists
     if not os.path.isdir(output_directory):
-        raise FileNotFoundError(
+        msg = (
             f"Output directory {output_directory} does not exist. "
             "Please create it before attempting to download satellite data."
         )
+        raise FileNotFoundError(msg)
 
     start_date = pd.Timestamp(start_date)
     end_date = pd.Timestamp(end_date)
 
     # Check date range for known errors
     if not override_date_bounds and start_date < pd.Timestamp("2018"):
-        raise ValueError(
+        msg = (
             "There are currently some issues with the EUMETSAT data before 2019/01/01. "
             "We recommend only using data from this date forward. "
             "To override this error set `override_date_bounds=True`"
         )
+        raise ValueError(msg)
 
     years = range(start_date.year, end_date.year + 1)
 
@@ -97,17 +88,22 @@ def download_satellite_data(
     for year in years:
         output_zarr_file = f"{output_directory}/{year}_{file_end}"
         if os.path.exists(output_zarr_file):
-            raise ValueError(
+            msg = (
                 f"The zarr file {output_zarr_file} already exists. "
                 "This function will not overwrite data."
             )
+            raise ValueError(msg)
 
     for year in years:
-        logger.info(f"Downloading data from {year}")
+        logger.info("Downloading data from %s", year)
         path = get_sat_public_dataset_path(year, is_hrv=get_hrv)
 
         # Slice the data from this year which are between the start and end dates
-        ds = xr.open_zarr(path, chunks=None).sortby("time").sel(time=slice(start_date, end_date, data_inner_steps))
+        ds = (
+            xr.open_zarr(path, chunks=None)
+            .sortby("time")
+            .sel(time=slice(start_date, end_date, data_inner_steps))
+        )
 
         # Convert lon-lat bounds to geostationary-coords
         (x_min, x_max), (y_min, y_max) = lon_lat_to_geostationary_area_coords(

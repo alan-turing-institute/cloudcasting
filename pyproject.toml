@@ -44,11 +44,7 @@ dev = [
   "pytest >=6",
   "pytest-cov >=3",
   "pre-commit",
-  "pandas-stubs",
-  "types-PyYAML",
-  "types-Pygments",
-  "types-cffi",
-  "types-psutil"
+
 ]
 
 [project.scripts]
@@ -99,7 +95,7 @@ disallow_incomplete_defs = true
 [tool.ruff]
 src = ["src"]
 exclude = []
-line-length = 88  # how long you want lines to be
+line-length = 100 # how long you want lines to be
 
 [tool.ruff.format]
 docstring-code-format = true  # code snippets in docstrings will be formatted

@@ -1,18 +1,28 @@
+__all__ = ("download_satellite_data",)
+
+import warnings
+
+# this line is just to filter out some pydantic warnings that originate from sub-packages.
+warnings.filterwarnings("ignore", message="Valid config keys have changed in V2:")
+
 import logging
 import os
+from typing import Annotated
 
 import ocf_blosc2  # noqa: F401
 import pandas as pd
+import typer
 import xarray as xr
 from dask.diagnostics import ProgressBar  # type: ignore[attr-defined]
 from ocf_datapipes.utils.geospatial import lon_lat_to_geostationary_area_coords
 
-# Configure logging
+xr.set_options(keep_attrs=True)
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
-def get_sat_public_dataset_path(year: int, is_hrv: bool = False) -> str:
+def _get_sat_public_dataset_path(year: int, is_hrv: bool = False) -> str:
     """
     Get the path to the Google Public Dataset of EUMETSAT satellite data.
 
@@ -28,16 +38,20 @@ def get_sat_public_dataset_path(year: int, is_hrv: bool = False) -> str:
 
 
 def download_satellite_data(
-    start_date: str,
-    end_date: str,
-    data_inner_steps: int,
-    output_directory: str,
-    lon_min: float = -16,
-    lon_max: float = 10,
-    lat_min: float = 45,
-    lat_max: float = 70,
-    get_hrv: bool = False,
-    override_date_bounds: bool = False,
+    start_date: Annotated[str, typer.Argument(help="Start date in 'YYYY-MM-DD HH:MM' format")],
+    end_date: Annotated[str, typer.Argument(help="End date in 'YYYY-MM-DD HH:MM' format")],
+    output_directory: Annotated[str, typer.Argument(help="Directory to save the satellite data")],
+    data_inner_steps: Annotated[
+        int, typer.Option(help="Data will be sliced into data_inner_steps*5minute chunks")
+    ] = 3,
+    get_hrv: Annotated[bool, typer.Option(help="Whether to download HRV data")] = False,
+    override_date_bounds: Annotated[
+        bool, typer.Option(help="Whether to override date range limits")
+    ] = False,
+    lon_min: Annotated[float, typer.Option(help="Minimum longitude")] = -16,
+    lon_max: Annotated[float, typer.Option(help="Maximum longitude")] = 10,
+    lat_min: Annotated[float, typer.Option(help="Minimum latitude")] = 45,
+    lat_max: Annotated[float, typer.Option(help="Maximum latitude")] = 70,
 ) -> None:
     """
     Download a selection of the available EUMETSAT data.
@@ -95,12 +109,12 @@ def download_satellite_data(
             raise ValueError(msg)
 
     for year in years:
-        logger.info("Downloading data from %s", year)
-        path = get_sat_public_dataset_path(year, is_hrv=get_hrv)
+        logger.info("Downloading data from %s...", year)
+        path = _get_sat_public_dataset_path(year, is_hrv=get_hrv)
 
         # Slice the data from this year which are between the start and end dates
         ds = (
-            xr.open_zarr(path, chunks=None)
+            xr.open_zarr(path, chunks={})
             .sortby("time")
             .sel(time=slice(start_date_stamp, end_date_stamp, data_inner_steps))
         )
@@ -117,6 +131,20 @@ def download_satellite_data(
             x_geostationary=slice(x_max, x_min),  # x-axis is in decreasing order
             y_geostationary=slice(y_min, y_max),
         )
+
+        # Re-chunking
+        for v in ds.variables:
+            if "chunks" in ds[v].encoding:
+                del ds[v].encoding["chunks"]
+
+        target_chunks_dict = {
+            "time": 1,
+            "x_geostationary": 100,
+            "y_geostationary": 100,
+            "variable": -1,
+        }
+
+        ds = ds.chunk(target_chunks_dict)
 
         # Save data
         output_zarr_file = f"{output_directory}/{year}_{file_end}"

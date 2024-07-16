@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from importlib.metadata import version
 
-from cloudcast import download
+from cloudcast import cli, download
 
-__all__ = ("__version__", "download")
+__all__ = ("__version__", "download", "cli")
 __version__ = version(__name__)

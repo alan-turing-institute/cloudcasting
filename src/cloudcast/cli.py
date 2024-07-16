@@ -34,7 +34,7 @@ def download(
             help="Whether to override date range limits",
         ),
     ],
-):
+) -> None:
     """
     Download satellite data for the specified date range.
     """

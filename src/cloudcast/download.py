@@ -4,7 +4,7 @@ import os
 import ocf_blosc2  # noqa: F401
 import pandas as pd
 import xarray as xr
-from dask.diagnostics import ProgressBar
+from dask.diagnostics import ProgressBar  # type: ignore[attr-defined]
 from ocf_datapipes.utils.geospatial import lon_lat_to_geostationary_area_coords
 
 # Configure logging
@@ -69,11 +69,11 @@ def download_satellite_data(
         )
         raise FileNotFoundError(msg)
 
-    start_date = pd.Timestamp(start_date)
-    end_date = pd.Timestamp(end_date)
+    start_date_stamp = pd.Timestamp(start_date)
+    end_date_stamp = pd.Timestamp(end_date)
 
     # Check date range for known errors
-    if not override_date_bounds and start_date < pd.Timestamp("2018"):
+    if not override_date_bounds and start_date_stamp < pd.Timestamp("2018"):
         msg = (
             "There are currently some issues with the EUMETSAT data before 2019/01/01. "
             "We recommend only using data from this date forward. "
@@ -81,7 +81,7 @@ def download_satellite_data(
         )
         raise ValueError(msg)
 
-    years = range(start_date.year, end_date.year + 1)
+    years = range(start_date_stamp.year, end_date_stamp.year + 1)
 
     # Check that none of the filenames we will save to already exist
     file_end = "hrv.zarr" if get_hrv else "nonhrv.zarr"
@@ -102,7 +102,7 @@ def download_satellite_data(
         ds = (
             xr.open_zarr(path, chunks=None)
             .sortby("time")
-            .sel(time=slice(start_date, end_date, data_inner_steps))
+            .sel(time=slice(start_date_stamp, end_date_stamp, data_inner_steps))
         )
 
         # Convert lon-lat bounds to geostationary-coords
@@ -122,4 +122,4 @@ def download_satellite_data(
         output_zarr_file = f"{output_directory}/{year}_{file_end}"
         with ProgressBar(dt=5):
             ds.to_zarr(output_zarr_file)
-        logger.info(f"Data for {year} saved to {output_zarr_file}")
+        logger.info("Data for %s saved to %s.", year, output_zarr_file)

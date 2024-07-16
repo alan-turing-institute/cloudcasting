@@ -92,6 +92,20 @@ module = "cloudcast.*"
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
 
+[[tool.mypy.overrides]]
+module = [
+    "ocf_blosc2",
+    "ocf_datapipes.utils.geospatial"
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+    "cloudcast.download",
+    "cloudcast.cli",
+]
+disallow_untyped_calls = false
+
 [tool.ruff]
 src = ["src"]
 exclude = []

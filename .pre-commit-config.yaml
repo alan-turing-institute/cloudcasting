@@ -38,4 +38,7 @@ repos:
         additional_dependencies:
           - pytest
           - xarray
+          - pandas-stubs
           - types-all
+          - typer
+          - dask

@@ -35,7 +35,6 @@ dependencies = [
     "pyresample",
     "pyproj",
     "ocf-blosc2",
-    "ocf-datapipes",
     "typer"
 ]
 [project.optional-dependencies]
@@ -94,7 +93,6 @@ disallow_incomplete_defs = true
 [[tool.mypy.overrides]]
 module = [
     "ocf_blosc2",
-    "ocf_datapipes.utils.geospatial"
 ]
 ignore_missing_imports = true
 
@@ -143,6 +141,4 @@ unfixable = [
   "F401",   # Would remove unused imports
   "F841",   # Would remove unused variables
 ]
-flake8-unused-arguments.ignore-variadic-names = true  # allow unused *args/**kwargsisort.required-imports = ["from __future__ import annotations"]
-[tool.ruff.lint.per-file-ignores]
-"src/cloudcast/download.py" = ["E402"]
+flake8-unused-arguments.ignore-variadic-names = true  # allow unused *args/**kwargs

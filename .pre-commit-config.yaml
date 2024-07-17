@@ -42,3 +42,5 @@ repos:
           - types-all
           - typer
           - dask
+          - pyproj
+          - pyresample

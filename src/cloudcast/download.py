@@ -5,6 +5,7 @@ import os
 from collections.abc import Sequence
 from typing import Annotated
 
+import numpy as np
 import ocf_blosc2  # noqa: F401
 import pandas as pd
 import pyproj
@@ -143,12 +144,15 @@ def download_satellite_data(
         logger.info("Downloading data from %s...", year)
         path = _get_sat_public_dataset_path(year, is_hrv=get_hrv)
 
-        # Slice the data from this year which are between the start and end dates
+        # Slice the data from this year which are between the start and end dates.
         ds = (
             xr.open_zarr(path, chunks={})
             .sortby("time")
-            .sel(time=slice(start_date_stamp, end_date_stamp, data_inner_steps))
+            .sel(time=slice(start_date_stamp, end_date_stamp))
         )
+        # Also filter out to strict multiples of the desired time delta specified
+        # in `data_inner_steps` (which should be slighly more robust to missing values).
+        ds = ds.sel(time=np.mod(ds.time.dt.minute, data_inner_steps * 5) == 0)
 
         # Convert lon-lat bounds to geostationary-coords
         (x_min, x_max), (y_min, y_max) = lon_lat_to_geostationary_area_coords(

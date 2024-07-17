@@ -1,18 +1,7 @@
 [build-system]
 requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
-license = "MIT"
-description = "Tooling and infrastructure to enable cloud nowcasting."
-readme = "README.md"
 
-classifiers = [
-  "Development Status :: 1 - Planning",
-  "Intended Audience :: Science/Research",
-  "Intended Audience :: Developers",
-  "Operating System :: OS Independent",
-  "Topic :: Scientific/Engineering",
-"Typing :: Typed",
-]
 
 [project]
 name = "cloudcast"
@@ -32,21 +21,32 @@ classifiers = [
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Topic :: Scientific/Engineering",
   "Typing :: Typed",
 ]
-dependencies = []
-
+dependencies = [
+    "gcsfs",
+    "zarr",
+    "xarray",
+    "dask",
+    "pyresample",
+    "pyproj",
+    "ocf-blosc2",
+    "typer"
+]
 [project.optional-dependencies]
 dev = [
   "pytest >=6",
   "pytest-cov >=3",
   "pre-commit",
+
 ]
+
+[project.scripts]
+cloudcast = "cloudcast.cli:app"
 
 [project.urls]
 Homepage = "https://github.com/climetrend/cloudcast"
@@ -75,7 +75,7 @@ port.exclude_lines = [
 ]
 
 [tool.mypy]
-files = ["src", "tests"]
+files = ["src"]
 python_version = "3.10"
 show_error_codes = true
 warn_unreachable = true
@@ -90,10 +90,23 @@ module = "cloudcast.*"
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
 
+[[tool.mypy.overrides]]
+module = [
+    "ocf_blosc2",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+    "cloudcast.download",
+    "cloudcast.cli",
+]
+disallow_untyped_calls = false
+
 [tool.ruff]
 src = ["src"]
 exclude = []
-line-length = 88  # how long you want lines to be
+line-length = 100 # how long you want lines to be
 
 [tool.ruff.format]
 docstring-code-format = true  # code snippets in docstrings will be formatted
@@ -128,4 +141,4 @@ unfixable = [
   "F401",   # Would remove unused imports
   "F841",   # Would remove unused variables
 ]
-flake8-unused-arguments.ignore-variadic-names = true  # allow unused *args/**kwargsisort.required-imports = ["from __future__ import annotations"]
+flake8-unused-arguments.ignore-variadic-names = true  # allow unused *args/**kwargs

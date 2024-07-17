@@ -37,3 +37,10 @@ repos:
         args: []
         additional_dependencies:
           - pytest
+          - xarray
+          - pandas-stubs
+          - types-all
+          - typer
+          - dask
+          - pyproj
+          - pyresample

@@ -39,7 +39,7 @@ pytest
 Use pytest-cov to generate coverage reports:
 
 ```bash
-pytest --cov=cloudcast
+pytest --cov=cloudcasting
 ```
 
 # Pre-commit

@@ -3,12 +3,12 @@ _commit: v0.1.0-8-ga0c8676
 _src_path: gh:alan-turing-institute/python-project-template
 coc: our_coc
 email: nsimpson@turing.ac.uk
-full_name: Cloudcast Maintainers
+full_name: cloudcasting Maintainers
 license: MIT
 min_python_version: '3.10'
 org: climetrend
-project_name: cloudcast
+project_name: cloudcasting
 project_short_description: Tooling and infrastructure to enable cloud nowcasting.
-python_name: cloudcast
+python_name: cloudcasting
 typing: strict
-url: https://github.com/climetrend/cloudcast
+url: https://github.com/climetrend/cloudcasting

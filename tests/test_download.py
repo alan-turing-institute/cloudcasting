@@ -3,7 +3,7 @@ import os
 import pytest
 from typer.testing import CliRunner
 
-from cloudcast.cli import app
+from cloudcasting.cli import app
 
 
 @pytest.fixture()

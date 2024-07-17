@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 
 [project]
-name = "cloudcast"
+name = "cloudcasting"
 version = "0.1.0"
 authors = [
-  { name = "Cloudcast Maintainers", email = "nsimpson@turing.ac.uk" },
+  { name = "cloudcasting Maintainers", email = "nsimpson@turing.ac.uk" },
 ]
 description = "Tooling and infrastructure to enable cloud nowcasting."
 readme = "README.md"
@@ -46,13 +46,13 @@ dev = [
 ]
 
 [project.scripts]
-cloudcast = "cloudcast.cli:app"
+cloudcasting = "cloudcasting.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/climetrend/cloudcast"
-"Bug Tracker" = "https://github.com/climetrend/cloudcast/issues"
-Discussions = "https://github.com/climetrend/cloudcast/discussions"
-Changelog = "https://github.com/climetrend/cloudcast/releases"
+Homepage = "https://github.com/climetrend/cloudcasting"
+"Bug Tracker" = "https://github.com/climetrend/cloudcasting/issues"
+Discussions = "https://github.com/climetrend/cloudcasting/discussions"
+Changelog = "https://github.com/climetrend/cloudcasting/releases"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
@@ -67,7 +67,7 @@ testpaths = [
 ]
 
 [tool.coverage]
-run.source = ["cloudcast"]
+run.source = ["cloudcasting"]
 port.exclude_lines = [
   'pragma: no cover',
   '\.\.\.',
@@ -86,7 +86,7 @@ strict = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 
 [[tool.mypy.overrides]]
-module = "cloudcast.*"
+module = "cloudcasting.*"
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
 
@@ -98,8 +98,8 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = [
-    "cloudcast.download",
-    "cloudcast.cli",
+    "cloudcasting.download",
+    "cloudcasting.cli",
 ]
 disallow_untyped_calls = false
 

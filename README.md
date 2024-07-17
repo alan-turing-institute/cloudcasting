@@ -1,4 +1,4 @@
-# cloudcast
+# cloudcasting
 
 [![Actions Status][actions-badge]][actions-link]
 [![PyPI version][pypi-version]][pypi-link]
@@ -10,8 +10,8 @@ Tooling and infrastructure to enable cloud nowcasting.
 
 From source (development mode):
 ```bash
-git clone https://github.com/climetrend/cloudcast
-cd cloudcast
+git clone https://github.com/climetrend/cloudcasting
+cd cloudcasting
 python -m pip install ".[dev]"
 ```
 
@@ -25,9 +25,9 @@ For making changes, see the [guidance on development](https://github.com/alan-tu
 
 ## Usage
 ```bash
- cloudcast download --help
+ cloudcasting download --help
 
- Usage: cloudcast download [OPTIONS] START_DATE END_DATE OUTPUT_DIRECTORY
+ Usage: cloudcasting download [OPTIONS] START_DATE END_DATE OUTPUT_DIRECTORY
 
  Download a selection of the available EUMETSAT data.
  Each calendar year of data within the supplied date range will be saved to a
@@ -87,7 +87,7 @@ For making changes, see the [guidance on development](https://github.com/alan-tu
 Example:
 
 ```bash
-cloudcast download "2020-06-01 00:00" "2020-06-30 23:55" "path/to/my/dir/data.zarr"
+cloudcasting download "2020-06-01 00:00" "2020-06-30 23:55" "path/to/my/dir/data.zarr"
 ```
 
 
@@ -101,9 +101,9 @@ Distributed under the terms of the [MIT license](LICENSE).
 
 
 <!-- prettier-ignore-start -->
-[actions-badge]:            https://github.com/climetrend/cloudcast/workflows/CI/badge.svg
-[actions-link]:             https://github.com/climetrend/cloudcast/actions
-[pypi-link]:                https://pypi.org/project/cloudcast/
-[pypi-platforms]:           https://img.shields.io/pypi/pyversions/cloudcast
-[pypi-version]:             https://img.shields.io/pypi/v/cloudcast
+[actions-badge]:            https://github.com/climetrend/cloudcasting/workflows/CI/badge.svg
+[actions-link]:             https://github.com/climetrend/cloudcasting/actions
+[pypi-link]:                https://pypi.org/project/cloudcasting/
+[pypi-platforms]:           https://img.shields.io/pypi/pyversions/cloudcasting
+[pypi-version]:             https://img.shields.io/pypi/v/cloudcasting
 <!-- prettier-ignore-end -->

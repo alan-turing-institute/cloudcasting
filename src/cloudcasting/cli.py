@@ -1,6 +1,6 @@
 import typer
 
-from cloudcast.download import download_satellite_data
+from cloudcasting.download import download_satellite_data
 
 # typer app code
 app = typer.Typer()

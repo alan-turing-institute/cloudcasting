@@ -2,7 +2,7 @@
 
 We value the participation of every member of our community and want to ensure
 that every contributor has an enjoyable and fulfilling experience. Accordingly,
-everyone who participates in the cloudcast project is expected to show respect and  courtesy to other community members at all time.
+everyone who participates in the cloudcasting project is expected to show respect and  courtesy to other community members at all time.
 
 In the interest of fostering an open and welcoming environment, we as
 contributors and maintainers are dedicated to making participation in our project

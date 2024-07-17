@@ -24,8 +24,15 @@ pre-commit install
 For making changes, see the [guidance on development](https://github.com/alan-turing-institute/python-project-template?tab=readme-ov-file#setting-up-a-new-project) from the template that generated this project.
 
 ## Usage
+
+Example:
+
 ```bash
- cloudcasting download --help
+cloudcasting download "2020-06-01 00:00" "2020-06-30 23:55" "path/to/my/dir/data.zarr"
+```
+
+```bash
+> cloudcasting download --help
 
  Usage: cloudcasting download [OPTIONS] START_DATE END_DATE OUTPUT_DIRECTORY
 
@@ -57,37 +64,38 @@ For making changes, see the [guidance on development](https://github.com/alan-tu
 │                                  [default: None]                               │
 │                                  [required]                                    │
 ╰────────────────────────────────────────────────────────────────────────────────╯
-╭─ Options ──────────────────────────────────────────────────────────────────────╮
-│ --data-inner-steps                              INTEGER  Data will be sliced   │
-│                                                          into                  │
-│                                                          data_inner_steps*5mi… │
-│                                                          chunks                │
-│                                                          [default: 3]          │
-│ --get-hrv                --no-get-hrv                    Whether to download   │
-│                                                          HRV data              │
-│                                                          [default: no-get-hrv] │
-│ --override-date-boun…    --no-override-date…             Whether to override   │
-│                                                          date range limits     │
-│                                                          [default:             │
-│                                                          no-override-date-bou… │
-│ --lon-min                                       FLOAT    Minimum longitude     │
-│                                                          [default: -16]        │
-│ --lon-max                                       FLOAT    Maximum longitude     │
-│                                                          [default: 10]         │
-│ --lat-min                                       FLOAT    Minimum latitude      │
-│                                                          [default: 45]         │
-│ --lat-max                                       FLOAT    Maximum latitude      │
-│                                                          [default: 70]         │
-│ --help                                                   Show this message and │
-│                                                          exit.                 │
-╰────────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ─────────────────────────────────────────────────────────────────────╮
+│ --data-inner-steps                             INTEGER  Data will be sliced   │
+│                                                         into                  │
+│                                                         data_inner_steps*5mi… │
+│                                                         chunks                │
+│                                                         [default: 3]          │
+│ --get-hrv               --no-get-hrv                    Whether to download   │
+│                                                         HRV data              │
+│                                                         [default: no-get-hrv] │
+│ --override-date-bou…    --no-override-date…             Whether to override   │
+│                                                         date range limits     │
+│                                                         [default:             │
+│                                                         no-override-date-bou… │
+│ --lon-min                                      FLOAT    Minimum longitude     │
+│                                                         [default: -16]        │
+│ --lon-max                                      FLOAT    Maximum longitude     │
+│                                                         [default: 10]         │
+│ --lat-min                                      FLOAT    Minimum latitude      │
+│                                                         [default: 45]         │
+│ --lat-max                                      FLOAT    Maximum latitude      │
+│                                                         [default: 70]         │
+│ --valid-set             --no-valid-set                  Whether to filter     │
+│                                                         data from 2022 to     │
+│                                                         download the          │
+│                                                         validation set (every │
+│                                                         2 weeks).             │
+│                                                         [default:             │
+│                                                         no-valid-set]         │
+│ --help                                                  Show this message and │
+│                                                         exit.                 │
+╰───────────────────────────────────────────────────────────────────────────────╯
 
-```
-
-Example:
-
-```bash
-cloudcasting download "2020-06-01 00:00" "2020-06-30 23:55" "path/to/my/dir/data.zarr"
 ```
 
 

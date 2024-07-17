@@ -84,6 +84,12 @@ def download_satellite_data(
     lon_max: Annotated[float, typer.Option(help="Maximum longitude")] = 10,
     lat_min: Annotated[float, typer.Option(help="Minimum latitude")] = 45,
     lat_max: Annotated[float, typer.Option(help="Maximum latitude")] = 70,
+    valid_set: Annotated[
+        bool,
+        typer.Option(
+            help="Whether to filter data from 2022 to download the validation set (every 2 weeks)."
+        ),
+    ] = False,
 ) -> None:
     """
     Download a selection of the available EUMETSAT data.
@@ -153,6 +159,21 @@ def download_satellite_data(
         # Also filter out to strict multiples of the desired time delta specified
         # in `data_inner_steps` (which should be slighly more robust to missing values).
         ds = ds.sel(time=np.mod(ds.time.dt.minute, data_inner_steps * 5) == 0)
+
+        if year == 2022:
+            set_str = "Validation" if valid_set else "Training"
+            week_str = "3" if valid_set else "1"
+            logger.info("Data in 2022 will be downloaded every 2 weeks due to train/valid split.")
+            logger.info("%s set selected: starting week will be %s", set_str, week_str)
+            # integer division by 14 will tell us the week we're on.
+            # checking the mod wrt 2 will let us select ever 2 weeks (weeks are 1-indexed).
+            # valid set is defined as from week 3-4, 7-8 etc. (where the mod is != 2).
+            mask = (
+                np.mod(ds.time.dt.day // 14, 2) != 0
+                if valid_set
+                else np.mod(ds.time.dt.day // 14, 2) == 0
+            )
+            ds = ds.sel(time=mask)
 
         # Convert lon-lat bounds to geostationary-coords
         (x_min, x_max), (y_min, y_max) = lon_lat_to_geostationary_area_coords(

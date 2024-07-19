@@ -6,7 +6,6 @@ from collections.abc import Sequence
 from typing import Annotated
 
 import numpy as np
-import ocf_blosc2  # noqa: F401
 import pandas as pd
 import pyproj
 import pyresample

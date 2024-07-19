@@ -34,7 +34,7 @@ dependencies = [
     "dask",
     "pyresample",
     "pyproj",
-    "ocf-blosc2",
+    "ocf-blosc2>=0.0.10",  # for no-import codec register
     "typer"
 ]
 [project.optional-dependencies]

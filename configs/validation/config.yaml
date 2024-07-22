@@ -1,0 +1,10 @@
+history_mins: 180
+forecast_mins: 180
+sample_freq_mins: 15
+sample_video_t0_times:
+ - 2023-01-01 03:00:00
+ - 2023-01-01 04:15:00
+ - 2023-01-01 05:30:00
+sample_video_channels:
+ - VIS008
+ - IR_039

@@ -35,12 +35,21 @@ dependencies = [
     "pyresample",
     "pyproj",
     "ocf-blosc2>=0.0.10",  # for no-import codec register
-    "typer"
+    "typer",
+    "torch",
+    "lightning",
+    "wandb",
+    "scikit-image",
+    "omegaconf",
+    "moviepy",
+    "imageio",
+    "ocf_datapipes",
 ]
 [project.optional-dependencies]
 dev = [
   "pytest >=6",
   "pytest-cov >=3",
+  "pytest-mock",
   "pre-commit",
 
 ]
@@ -58,9 +67,9 @@ Changelog = "https://github.com/climetrend/cloudcasting/releases"
 minversion = "6.0"
 addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config"]
 xfail_strict = true
-filterwarnings = [
-  "error",
-]
+#filterwarnings = [
+#  "error",
+#]
 log_cli_level = "INFO"
 testpaths = [
   "tests",

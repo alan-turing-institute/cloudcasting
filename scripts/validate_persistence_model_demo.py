@@ -1,5 +1,5 @@
 import numpy as np
-from cloudcast.validation import (
+from cloudcasting.validation import (
     validate_model,
     AbstractValidationModel
 )
@@ -48,7 +48,7 @@ if __name__=="__main__":
         run_name=run_name,
         batch_size=4, 
         num_workers=0,
-        val_zarr_path="/mnt/disks/nwp_rechunk/sat/2023_nonhrv.zarr",
+        val_zarr_path="path/to/test/2023/satellite.zarr",
         fast_dev_run=True,
     )
 

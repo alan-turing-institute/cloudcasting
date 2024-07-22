@@ -12,8 +12,8 @@ import pandas as pd
 from skimage.metrics import structural_similarity
 from torch.utils.data import DataLoader
 
-import cloudcast
-from cloudcast.dataloader import ValidationSatelliteDataset
+import cloudcasting
+from cloudcasting.dataset import ValidationSatelliteDataset
 
 import omegaconf
 import os
@@ -26,7 +26,7 @@ from pathlib import Path
 def get_validation_params():
     """Load and return the validation configuration file"""
     val_config_dir = (
-        Path(os.path.dirname(cloudcast.__file__)).parent.parent 
+        Path(os.path.dirname(cloudcasting.__file__)).parent.parent 
         / "configs/validation"
     )
     val_t0_times = omegaconf.OmegaConf.load(val_config_dir / "t0_times.yaml")
@@ -353,7 +353,7 @@ def validate_model(
     t0_times=pd.to_datetime(val_config.t0_times)
     
     if fast_dev_run:
-        t0_times = t0_times[:40]
+        t0_times = t0_times[:16]
         
     
     dataset = ValidationSatelliteDataset(

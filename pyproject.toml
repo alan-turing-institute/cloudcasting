@@ -1,24 +1,13 @@
 [build-system]
 requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
-license = "MIT"
-description = "Tooling and infrastructure to enable cloud nowcasting."
-readme = "README.md"
 
-classifiers = [
-  "Development Status :: 1 - Planning",
-  "Intended Audience :: Science/Research",
-  "Intended Audience :: Developers",
-  "Operating System :: OS Independent",
-  "Topic :: Scientific/Engineering",
-"Typing :: Typed",
-]
 
 [project]
-name = "cloudcast"
+name = "cloudcasting"
 version = "0.1.0"
 authors = [
-  { name = "Cloudcast Maintainers", email = "nsimpson@turing.ac.uk" },
+  { name = "cloudcasting Maintainers", email = "nsimpson@turing.ac.uk" },
 ]
 description = "Tooling and infrastructure to enable cloud nowcasting."
 readme = "README.md"
@@ -32,27 +21,38 @@ classifiers = [
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Topic :: Scientific/Engineering",
   "Typing :: Typed",
 ]
-dependencies = []
-
+dependencies = [
+    "gcsfs",
+    "zarr",
+    "xarray",
+    "dask",
+    "pyresample",
+    "pyproj",
+    "ocf-blosc2>=0.0.10",  # for no-import codec register
+    "typer"
+]
 [project.optional-dependencies]
 dev = [
   "pytest >=6",
   "pytest-cov >=3",
   "pre-commit",
+
 ]
 
+[project.scripts]
+cloudcasting = "cloudcasting.cli:app"
+
 [project.urls]
-Homepage = "https://github.com/climetrend/cloudcast"
-"Bug Tracker" = "https://github.com/climetrend/cloudcast/issues"
-Discussions = "https://github.com/climetrend/cloudcast/discussions"
-Changelog = "https://github.com/climetrend/cloudcast/releases"
+Homepage = "https://github.com/climetrend/cloudcasting"
+"Bug Tracker" = "https://github.com/climetrend/cloudcasting/issues"
+Discussions = "https://github.com/climetrend/cloudcasting/discussions"
+Changelog = "https://github.com/climetrend/cloudcasting/releases"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
@@ -67,7 +67,7 @@ testpaths = [
 ]
 
 [tool.coverage]
-run.source = ["cloudcast"]
+run.source = ["cloudcasting"]
 port.exclude_lines = [
   'pragma: no cover',
   '\.\.\.',
@@ -75,7 +75,7 @@ port.exclude_lines = [
 ]
 
 [tool.mypy]
-files = ["src", "tests"]
+files = ["src"]
 python_version = "3.10"
 show_error_codes = true
 warn_unreachable = true
@@ -86,14 +86,27 @@ strict = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 
 [[tool.mypy.overrides]]
-module = "cloudcast.*"
+module = "cloudcasting.*"
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
+
+[[tool.mypy.overrides]]
+module = [
+    "ocf_blosc2",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+    "cloudcasting.download",
+    "cloudcasting.cli",
+]
+disallow_untyped_calls = false
 
 [tool.ruff]
 src = ["src"]
 exclude = []
-line-length = 88  # how long you want lines to be
+line-length = 100 # how long you want lines to be
 
 [tool.ruff.format]
 docstring-code-format = true  # code snippets in docstrings will be formatted
@@ -128,4 +141,4 @@ unfixable = [
   "F401",   # Would remove unused imports
   "F841",   # Would remove unused variables
 ]
-flake8-unused-arguments.ignore-variadic-names = true  # allow unused *args/**kwargsisort.required-imports = ["from __future__ import annotations"]
+flake8-unused-arguments.ignore-variadic-names = true  # allow unused *args/**kwargs

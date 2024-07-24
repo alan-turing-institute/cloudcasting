@@ -145,7 +145,9 @@ def download_satellite_data(
     years = range(start_date_stamp.year, end_date_stamp.year + 1)
 
     # Create a list of dates to download
-    dates_to_download = pd.date_range(start_date_stamp, end_date_stamp, freq=download_frequency)
+    dates_to_download = pd.date_range(
+        start_date_stamp.ceil(download_frequency), end_date_stamp, freq=download_frequency
+    )
 
     # Check that none of the filenames we will save to already exist
     file_end = "hrv.zarr" if get_hrv else "nonhrv.zarr"

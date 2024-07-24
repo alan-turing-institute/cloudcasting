@@ -31,73 +31,75 @@ Example:
 cloudcasting download "2020-06-01 00:00" "2020-06-30 23:55" "path/to/my/dir/data.zarr"
 ```
 
+Full options:
+
 ```bash
 > cloudcasting download --help
 
- Usage: cloudcasting download [OPTIONS] START_DATE END_DATE OUTPUT_DIRECTORY
+ Usage: cloudcasting download [OPTIONS] START_DATE
+                              END_DATE OUTPUT_DIRECTORY
 
- Download a selection of the available EUMETSAT data.
- Each calendar year of data within the supplied date range will be saved to a
- separate file in the output directory.
- Args:     start_date: First datetime (inclusive) to download.     end_date: Last
- datetime (inclusive) to download.     data_inner_steps: Data will be sliced into
- data_inner_steps*5minute chunks.     output_directory: Directory to which the
- satellite data should be saved.     lon_min: The west-most longitude (in
- degrees) of the bounding box to download.     lon_max: The east-most longitude
- (in degrees) of the bounding box to download.     lat_min: The south-most
- latitude (in degrees) of the bounding box to download.     lat_max: The
- north-most latitude (in degrees) of the bounding box to download.     get_hrv:
- Whether to download the HRV data, else non-HRV is downloaded.
- override_date_bounds: Whether to override the date range limits.
- Raises:     FileNotFoundError: If the output directory doesn't exist.
- ValueError: If there are issues with the date range or if output files already
- exist.
-
-╭─ Arguments ────────────────────────────────────────────────────────────────────╮
-│ *    start_date            TEXT  Start date in 'YYYY-MM-DD HH:MM' format       │
-│                                  [default: None]                               │
-│                                  [required]                                    │
-│ *    end_date              TEXT  End date in 'YYYY-MM-DD HH:MM' format         │
-│                                  [default: None]                               │
-│                                  [required]                                    │
-│ *    output_directory      TEXT  Directory to save the satellite data          │
-│                                  [default: None]                               │
-│                                  [required]                                    │
-╰────────────────────────────────────────────────────────────────────────────────╯
-╭─ Options ─────────────────────────────────────────────────────────────────────╮
-│ --data-inner-steps                             INTEGER  Data will be sliced   │
-│                                                         into                  │
-│                                                         data_inner_steps*5mi… │
-│                                                         chunks                │
-│                                                         [default: 3]          │
-│ --get-hrv               --no-get-hrv                    Whether to download   │
-│                                                         HRV data              │
-│                                                         [default: no-get-hrv] │
-│ --override-date-bou…    --no-override-date…             Whether to override   │
-│                                                         date range limits     │
-│                                                         [default:             │
-│                                                         no-override-date-bou… │
-│ --lon-min                                      FLOAT    Minimum longitude     │
-│                                                         [default: -16]        │
-│ --lon-max                                      FLOAT    Maximum longitude     │
-│                                                         [default: 10]         │
-│ --lat-min                                      FLOAT    Minimum latitude      │
-│                                                         [default: 45]         │
-│ --lat-max                                      FLOAT    Maximum latitude      │
-│                                                         [default: 70]         │
-│ --valid-set             --no-valid-set                  Whether to filter     │
-│                                                         data from 2022 to     │
-│                                                         download the          │
-│                                                         validation set (every │
-│                                                         2 weeks).             │
-│                                                         [default:             │
-│                                                         no-valid-set]         │
-│ --help                                                  Show this message and │
-│                                                         exit.                 │
-╰───────────────────────────────────────────────────────────────────────────────╯
-
+╭─ Arguments ──────────────────────────────────────────╮
+│ *    start_date            TEXT  Start date in       │
+│                                  'YYYY-MM-DD HH:MM'  │
+│                                  format              │
+│                                  [default: None]     │
+│                                  [required]          │
+│ *    end_date              TEXT  End date in         │
+│                                  'YYYY-MM-DD HH:MM'  │
+│                                  format              │
+│                                  [default: None]     │
+│                                  [required]          │
+│ *    output_directory      TEXT  Directory to save   │
+│                                  the satellite data  │
+│                                  [default: None]     │
+│                                  [required]          │
+╰──────────────────────────────────────────────────────╯
+╭─ Options ────────────────────────────────────────────╮
+│ --download-f…                   TEXT   Frequency to  │
+│                                        download data │
+│                                        in pandas     │
+│                                        datetime      │
+│                                        format        │
+│                                        [default:     │
+│                                        15min]        │
+│ --get-hrv        --no-get-h…           Whether to    │
+│                                        download HRV  │
+│                                        data          │
+│                                        [default:     │
+│                                        no-get-hrv]   │
+│ --override-d…    --no-overr…           Whether to    │
+│                                        override date │
+│                                        range limits  │
+│                                        [default:     │
+│                                        no-override-… │
+│ --lon-min                       FLOAT  Minimum       │
+│                                        longitude     │
+│                                        [default:     │
+│                                        -16]          │
+│ --lon-max                       FLOAT  Maximum       │
+│                                        longitude     │
+│                                        [default: 10] │
+│ --lat-min                       FLOAT  Minimum       │
+│                                        latitude      │
+│                                        [default: 45] │
+│ --lat-max                       FLOAT  Maximum       │
+│                                        latitude      │
+│                                        [default: 70] │
+│ --valid-set      --no-valid…           Whether to    │
+│                                        filter data   │
+│                                        from 2022 to  │
+│                                        download the  │
+│                                        validation    │
+│                                        set (every 2  │
+│                                        weeks).       │
+│                                        [default:     │
+│                                        no-valid-set] │
+│ --help                                 Show this     │
+│                                        message and   │
+│                                        exit.         │
+╰──────────────────────────────────────────────────────╯
 ```
-
 
 ## Contributing
 

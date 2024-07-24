@@ -5,19 +5,11 @@ from datetime import datetime, timedelta
 import numpy as np
 import pandas as pd
 import xarray as xr
-from lightning.pytorch import LightningDataModule
+from lightning import LightningDataModule
 from numpy.typing import NDArray
-from ocf_datapipes.load.satellite import _get_single_sat_data
-from ocf_datapipes.select.find_contiguous_t0_time_periods import (
-    find_contiguous_t0_time_periods,
-    find_contiguous_time_periods,
-)
 from torch.utils.data import DataLoader, Dataset
 
-
-def minutes(m: int) -> timedelta:
-    """Timedelta of a number of minutes"""
-    return timedelta(minutes=m)
+from cloudcasting.utils import find_contiguous_t0_time_periods, find_contiguous_time_periods
 
 
 def load_satellite_zarrs(zarr_path: list[str] | tuple[str] | str) -> xr.Dataset:
@@ -29,13 +21,13 @@ def load_satellite_zarrs(zarr_path: list[str] | tuple[str] | str) -> xr.Dataset:
 
     if isinstance(zarr_path, list | tuple):
         ds = xr.combine_nested(
-            [_get_single_sat_data(path) for path in zarr_path],
+            [xr.open_dataset(path, engine="zarr") for path in zarr_path],
             concat_dim="time",
             combine_attrs="override",
             join="override",
         )
     else:
-        ds = _get_single_sat_data(zarr_path)
+        ds = xr.open_dataset(zarr_path, engine="zarr")
 
     return ds
 
@@ -52,14 +44,14 @@ def find_valid_t0_times(
     contiguous_time_periods = find_contiguous_time_periods(
         datetimes=datetimes,
         min_seq_length=int((history_mins + forecast_mins) / sample_freq_mins) + 1,
-        max_gap_duration=minutes(sample_freq_mins),
+        max_gap_duration=timedelta(minutes=sample_freq_mins),
     )
 
     # Find periods of valid init-times
     contiguous_t0_periods = find_contiguous_t0_time_periods(
         contiguous_time_periods=contiguous_time_periods,
-        history_duration=minutes(history_mins),
-        forecast_duration=minutes(forecast_mins),
+        history_duration=timedelta(minutes=history_mins),
+        forecast_duration=timedelta(minutes=forecast_mins),
     )
 
     valid_t0_times = []
@@ -119,7 +111,10 @@ class SatelliteDataset(Dataset):
 
     def _get_datetime(self, t0: datetime) -> tuple[NDArray[np.float32], NDArray[np.float32]]:
         ds_sel = self.ds.sel(
-            time=slice(t0 - minutes(self.history_mins), t0 + minutes(self.forecast_mins))
+            time=slice(
+                t0 - timedelta(minutes=self.history_mins),
+                t0 + timedelta(minutes=self.forecast_mins),
+            )
         )
 
         # Load the data eagerly so that the same chunks aren't loaded multiple times after we split
@@ -130,7 +125,7 @@ class SatelliteDataset(Dataset):
         ds_sel = ds_sel.transpose("variable", "time", "y_geostationary", "x_geostationary")
 
         ds_input = ds_sel.sel(time=slice(None, t0))
-        ds_target = ds_sel.sel(time=slice(t0 + minutes(self.sample_freq_mins), None))
+        ds_target = ds_sel.sel(time=slice(t0 + timedelta(minutes=self.sample_freq_mins), None))
 
         # Convert to arrays
         X = ds_input.data.values

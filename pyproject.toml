@@ -35,14 +35,15 @@ dependencies = [
     "pyresample",
     "pyproj",
     "ocf-blosc2>=0.0.10",  # for no-import codec register
-    "typer"
+    "typer",
+    "lightning",
+    "torch",
 ]
 [project.optional-dependencies]
 dev = [
   "pytest >=6",
   "pytest-cov >=3",
   "pre-commit",
-
 ]
 
 [project.scripts]
@@ -60,6 +61,8 @@ addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config"]
 xfail_strict = true
 filterwarnings = [
   "error",
+  "ignore:pkg_resources:DeprecationWarning",                                        # lightning
+  "ignore:Deprecated call to `pkg_resources.declare_namespace:DeprecationWarning",  # lightning
 ]
 log_cli_level = "INFO"
 testpaths = [

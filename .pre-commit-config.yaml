@@ -44,3 +44,5 @@ repos:
           - dask
           - pyproj
           - pyresample
+          - lightning
+          - torch

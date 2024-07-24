@@ -49,7 +49,6 @@ def test_download_satellite_data(runner, temp_output_dir):
 def test_download_satellite_data_valid_set(runner, temp_output_dir):
     # Only run this test on 2022 as it's the only year with a validation set.
     # Want to make sure that the --valid-set flag works as expected.
-    # We need to make jumps of at least 2 weeks to ensure that the validation set is used.
     start_date = "2022-01-01 00:00"
     end_date = "2022-03-01 00:00"
 
@@ -61,7 +60,7 @@ def test_download_satellite_data_valid_set(runner, temp_output_dir):
             start_date,
             end_date,
             temp_output_dir,
-            "--download-frequency=168h",
+            "--download-frequency=168h",  # every week
             "--lon-min=-16",
             "--lon-max=10",
             "--lat-min=45",
@@ -92,9 +91,6 @@ def test_download_satellite_data_2022_nonvalid_set(runner, temp_output_dir):
     end_date = "2022-03-01 00:00"
 
     # Run the CLI command with the --valid-set flag turned off
-    # also choose a bigger value for --data-inner-steps to ensure that downloading the data
-    # doesn't take too long. Since we care about 2-week jumps, and data is only every 5 minutes,
-    # we take slices of one week, which is 1440 minutes * 7 / 5 = 2016 minutes.
     result = runner.invoke(
         app,
         [
@@ -102,7 +98,7 @@ def test_download_satellite_data_2022_nonvalid_set(runner, temp_output_dir):
             start_date,
             end_date,
             temp_output_dir,
-            "--download-frequency=168h",
+            "--download-frequency=168h",  # every week
             "--lon-min=-16",
             "--lon-max=10",
             "--lat-min=45",

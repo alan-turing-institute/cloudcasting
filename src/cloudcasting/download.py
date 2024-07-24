@@ -144,10 +144,16 @@ def download_satellite_data(
 
     years = range(start_date_stamp.year, end_date_stamp.year + 1)
 
-    # Create a list of dates to download
-    dates_to_download = pd.date_range(
-        start_date_stamp.ceil(download_frequency), end_date_stamp, freq=download_frequency
+    # Ceiling the start date to nearest multiple of the download frequency
+    # Breaks down over multiple days due to starting at the Unix epoch (1970-01-01 Thursday),
+    # e.g. 2022-01-01 ceiled to 1 week will be 2022-01-06 (the closest Thursday to 2022-01-01).
+    range_start = (
+        start_date_stamp.ceil(download_frequency)
+        if pd.Timedelta(download_frequency) <= pd.Timedelta("1day")
+        else start_date_stamp
     )
+    # Create a list of dates to download
+    dates_to_download = pd.date_range(range_start, end_date_stamp, freq=download_frequency)
 
     # Check that none of the filenames we will save to already exist
     file_end = "hrv.zarr" if get_hrv else "nonhrv.zarr"

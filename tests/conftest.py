@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-xr.set_options(keep_attrs=True)
+xr.set_options(keep_attrs=True)  # type: ignore[no-untyped-call]
 
 
 @pytest.fixture()

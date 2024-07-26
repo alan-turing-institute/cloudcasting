@@ -1,3 +1,5 @@
+import pandas as pd
+
 from cloudcasting.dataset import (
     SatelliteDataModule,
     SatelliteDataset,
@@ -11,7 +13,7 @@ def test_load_satellite_zarrs(sat_zarr_path):
     ds = load_satellite_zarrs(sat_zarr_path)
     ds = load_satellite_zarrs([sat_zarr_path])
 
-    # Dataset is a full 24 hours of 5 minutely data -> 24hours * (60/5) = 288
+    # Dataset is a full 48 hours of 5 minutely data -> 48hours * (60/5) = 576
     assert len(ds.time) == 576
 
 
@@ -19,7 +21,7 @@ def test_find_valid_t0_times(sat_zarr_path):
     ds = load_satellite_zarrs(sat_zarr_path)
 
     t0_times = find_valid_t0_times(
-        ds,
+        pd.DatetimeIndex(ds.time),
         history_mins=60,
         forecast_mins=120,
         sample_freq_mins=5,
@@ -34,7 +36,7 @@ def test_find_valid_t0_times(sat_zarr_path):
     assert len(t0_times) == 540
 
     t0_times = find_valid_t0_times(
-        ds,
+        pd.DatetimeIndex(ds.time),
         history_mins=60,
         forecast_mins=120,
         sample_freq_mins=15,

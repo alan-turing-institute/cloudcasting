@@ -1,5 +1,10 @@
 """Dataset and DataModule for past and future satellite data"""
 
+__all__ = (
+    "SatelliteDataModule",
+    "SatelliteDataset",
+)
+
 from datetime import datetime, timedelta
 from typing import TypedDict
 

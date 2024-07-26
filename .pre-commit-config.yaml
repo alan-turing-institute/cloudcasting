@@ -33,7 +33,6 @@ repos:
     rev: "v1.10.1"
     hooks:
       - id: mypy
-        files: src
         args: []
         additional_dependencies:
           - pytest

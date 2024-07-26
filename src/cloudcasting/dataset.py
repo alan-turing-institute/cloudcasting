@@ -1,6 +1,7 @@
 """Dataset and DataModule for past and future satellite data"""
 
 from datetime import datetime, timedelta
+from typing import TypedDict
 
 import numpy as np
 import pandas as pd
@@ -10,6 +11,19 @@ from numpy.typing import NDArray
 from torch.utils.data import DataLoader, Dataset
 
 from cloudcasting.utils import find_contiguous_t0_time_periods, find_contiguous_time_periods
+
+
+class DataloaderArgs(TypedDict):
+    batch_size: int
+    sampler: None
+    batch_sampler: None
+    num_workers: int
+    pin_memory: bool
+    drop_last: bool
+    timeout: int
+    worker_init_fn: None
+    prefetch_factor: int | None
+    persistent_workers: bool
 
 
 def load_satellite_zarrs(zarr_path: list[str] | tuple[str] | str) -> xr.Dataset:
@@ -63,7 +77,10 @@ def find_valid_t0_times(
     return pd.to_datetime(np.concatenate(valid_t0_times))
 
 
-class SatelliteDataset(Dataset):
+DataIndex = str | datetime | pd.Timestamp | int
+
+
+class SatelliteDataset(Dataset[tuple[NDArray[np.float32], NDArray[np.float32]]]):
     def __init__(
         self,
         zarr_path: list[str] | str,
@@ -136,9 +153,7 @@ class SatelliteDataset(Dataset):
 
         return X.astype(np.float32), y.astype(np.float32)
 
-    def __getitem__(
-        self, key: int | str | datetime | pd.Timestamp
-    ) -> tuple[NDArray[np.float32], NDArray[np.float32]]:
+    def __getitem__(self, key: DataIndex) -> tuple[NDArray[np.float32], NDArray[np.float32]]:
         if isinstance(key, int):
             t0 = self.t0_times[key]
 
@@ -202,18 +217,18 @@ class SatelliteDataModule(LightningDataModule):
         self.forecast_mins = forecast_mins
         self.sample_freq_mins = sample_freq_mins
 
-        self._common_dataloader_kwargs = {
-            "batch_size": batch_size,
-            "sampler": None,
-            "batch_sampler": None,
-            "num_workers": num_workers,
-            "pin_memory": False,
-            "drop_last": False,
-            "timeout": 0,
-            "worker_init_fn": None,
-            "prefetch_factor": prefetch_factor,
-            "persistent_workers": False,
-        }
+        self._common_dataloader_kwargs = DataloaderArgs(
+            batch_size=batch_size,
+            sampler=None,
+            batch_sampler=None,
+            num_workers=num_workers,
+            pin_memory=False,
+            drop_last=False,
+            timeout=0,
+            worker_init_fn=None,
+            prefetch_factor=prefetch_factor,
+            persistent_workers=False,
+        )
 
     def _make_dataset(
         self, start_date: str | None, end_date: str | None, preshuffle: bool = False
@@ -228,17 +243,17 @@ class SatelliteDataModule(LightningDataModule):
             preshuffle,
         )
 
-    def train_dataloader(self) -> DataLoader:
+    def train_dataloader(self) -> DataLoader[tuple[NDArray[np.float32], NDArray[np.float32]]]:
         """Construct train dataloader"""
         dataset = self._make_dataset(self.train_period[0], self.train_period[1])
         return DataLoader(dataset, shuffle=True, **self._common_dataloader_kwargs)
 
-    def val_dataloader(self) -> DataLoader:
+    def val_dataloader(self) -> DataLoader[tuple[NDArray[np.float32], NDArray[np.float32]]]:
         """Construct val dataloader"""
         dataset = self._make_dataset(self.val_period[0], self.val_period[1], preshuffle=True)
         return DataLoader(dataset, shuffle=False, **self._common_dataloader_kwargs)
 
-    def test_dataloader(self) -> DataLoader:
+    def test_dataloader(self) -> DataLoader[tuple[NDArray[np.float32], NDArray[np.float32]]]:
         """Construct test dataloader"""
         dataset = self._make_dataset(self.test_period[0], self.test_period[1])
         return DataLoader(dataset, shuffle=False, **self._common_dataloader_kwargs)

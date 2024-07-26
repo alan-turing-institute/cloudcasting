@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 from cloudcasting.dataset import (
@@ -73,6 +74,9 @@ def test_satellite_dataset(sat_zarr_path):
     assert X.shape == (11, 13, 372, 614)
     assert y.shape == (11, 24, 372, 614)
 
+    assert np.sum(np.isnan(X)) == 11 * 13
+    assert np.sum(np.isnan(y)) == 11 * 24
+
 
 def test_satellite_datamodule(sat_zarr_path):
     datamodule = SatelliteDataModule(
@@ -91,3 +95,32 @@ def test_satellite_datamodule(sat_zarr_path):
 
     assert X.shape == (2, 11, 13, 372, 614)
     assert y.shape == (2, 11, 24, 372, 614)
+
+
+def test_satellite_dataset_nan_to_num(sat_zarr_path):
+    dataset = SatelliteDataset(
+        zarr_path=sat_zarr_path,
+        start_time=None,
+        end_time=None,
+        history_mins=60,
+        forecast_mins=120,
+        sample_freq_mins=5,
+        nan_to_num=True,
+    )
+    assert len(dataset) == 540
+
+    X, y = dataset[0]
+
+    # 11 channels
+    # 372 y-dim steps
+    # 614 x-dim steps
+    # (60 / 5) + 1 = 13 history steps
+    # (120 / 5) = 24 forecast steps
+    assert X.shape == (11, 13, 372, 614)
+    assert y.shape == (11, 24, 372, 614)
+
+    assert np.sum(np.isnan(X)) == 0
+    assert np.sum(np.isnan(y)) == 0
+
+    assert np.sum(X[:, :, 0, 0]) == -11 * 13
+    assert np.sum(y[:, :, 0, 0]) == -11 * 24

@@ -95,6 +95,7 @@ class SatelliteDataset(Dataset[tuple[NDArray[np.float32], NDArray[np.float32]]])
         forecast_mins: int,
         sample_freq_mins: int,
         preshuffle: bool = False,
+        nan_to_num: bool = False,
     ):
         """A torch Dataset for loading past and future satellite data
 
@@ -106,6 +107,7 @@ class SatelliteDataset(Dataset[tuple[NDArray[np.float32], NDArray[np.float32]]])
             forecast_mins: How many minutes of future will be used as target features
             sample_freq_mins: The sample frequency to use for the satellite data
             preshuffle: Whether to shuffle the data - useful for validation
+            nan_to_num: Whether to convert NaNs to -1.
         """
 
         # Load the sat zarr file or list of files and slice the data to the given period
@@ -127,6 +129,7 @@ class SatelliteDataset(Dataset[tuple[NDArray[np.float32], NDArray[np.float32]]])
         self.history_mins = history_mins
         self.forecast_mins = forecast_mins
         self.sample_freq_mins = sample_freq_mins
+        self.nan_to_num = nan_to_num
 
     def __len__(self) -> int:
         return len(self.t0_times)
@@ -153,8 +156,9 @@ class SatelliteDataset(Dataset[tuple[NDArray[np.float32], NDArray[np.float32]]])
         X = ds_input.data.values
         y = ds_target.data.values
 
-        X = np.nan_to_num(X, nan=-1)
-        y = np.nan_to_num(y, nan=-1)
+        if self.nan_to_num:
+            X = np.nan_to_num(X, nan=-1)
+            y = np.nan_to_num(y, nan=-1)
 
         return X.astype(np.float32), y.astype(np.float32)
 
@@ -185,6 +189,7 @@ class SatelliteDataModule(LightningDataModule):
         train_period: list[str | None] | tuple[str | None] | None = None,
         val_period: list[str | None] | tuple[str | None] | None = None,
         test_period: list[str | None] | tuple[str | None] | None = None,
+        nan_to_num: bool = False,
     ):
         """A lightning DataModule for loading past and future satellite data
 
@@ -235,6 +240,8 @@ class SatelliteDataModule(LightningDataModule):
             persistent_workers=False,
         )
 
+        self.nan_to_num = nan_to_num
+
     def _make_dataset(
         self, start_date: str | None, end_date: str | None, preshuffle: bool = False
     ) -> SatelliteDataset:
@@ -246,6 +253,7 @@ class SatelliteDataModule(LightningDataModule):
             self.forecast_mins,
             self.sample_freq_mins,
             preshuffle,
+            self.nan_to_num,
         )
 
     def train_dataloader(self) -> DataLoader[tuple[NDArray[np.float32], NDArray[np.float32]]]:

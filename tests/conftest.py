@@ -29,6 +29,12 @@ def sat_zarr_path(temp_output_dir):
         coords=ds.coords,
     )
 
+    # Transpose to variables, time, y, x (just in case)
+    ds = ds.transpose("variable", "time", "y_geostationary", "x_geostationary")
+
+    # Add some NaNs
+    ds["data"].values[:, :, 0, 0] = np.nan
+
     # Save temporarily as a zarr
     zarr_path = f"{temp_output_dir}/test_sat.zarr"
     ds.to_zarr(zarr_path)

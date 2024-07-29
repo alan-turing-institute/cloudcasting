@@ -25,7 +25,7 @@ def sat_zarr_path(temp_output_dir):
 
     # Add data to dataset
     ds["data"] = xr.DataArray(
-        np.zeros([len(ds[c]) for c in ds.coords]),
+        np.zeros([len(ds[c]) for c in ds.coords], dtype=np.float32),
         coords=ds.coords,
     )
 
@@ -34,6 +34,9 @@ def sat_zarr_path(temp_output_dir):
 
     # Add some NaNs
     ds["data"].values[:, :, 0, 0] = np.nan
+
+    # Specifiy chunking
+    ds = ds.chunk({"time": 10, "variable": -1, "y_geostationary": -1, "x_geostationary": -1})
 
     # Save temporarily as a zarr
     zarr_path = f"{temp_output_dir}/test_sat.zarr"

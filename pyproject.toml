@@ -44,7 +44,7 @@ dev = [
   "pytest >=6",
   "pytest-cov >=3",
   "pre-commit",
-  "netcdf4",
+  "h5netcdf",
 ]
 
 [project.scripts]

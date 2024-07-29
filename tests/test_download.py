@@ -23,10 +23,10 @@ def test_download_satellite_data(temp_output_dir):
         end_date,
         temp_output_dir,
         download_frequency="15min",
-        lon_min=-16,
-        lon_max=10,
-        lat_min=45,
-        lat_max=70,
+        lon_min=-1,
+        lon_max=1,
+        lat_min=50,
+        lat_max=51,
     )
 
     # Check if the output file was created
@@ -46,10 +46,10 @@ def test_download_satellite_data_valid_set(temp_output_dir):
         end_date,
         temp_output_dir,
         download_frequency="168h",
-        lon_min=-16,
-        lon_max=10,
-        lat_min=45,
-        lat_max=70,
+        lon_min=-1,
+        lon_max=1,
+        lat_min=50,
+        lat_max=51,
         valid_set=True,
     )
 
@@ -77,10 +77,10 @@ def test_download_satellite_data_2022_nonvalid_set(temp_output_dir):
         end_date,
         temp_output_dir,
         download_frequency="168h",
-        lon_min=-16,
-        lon_max=10,
-        lat_min=45,
-        lat_max=70,
+        lon_min=-1,
+        lon_max=1,
+        lat_min=50,
+        lat_max=51,
     )
 
     # Check if the output file was created and contains the expected data
@@ -107,10 +107,10 @@ def test_irregular_start_date(temp_output_dir):
         end_date,
         temp_output_dir,
         download_frequency="15min",
-        lon_min=-16,
-        lon_max=10,
-        lat_min=45,
-        lat_max=70,
+        lon_min=-1,
+        lon_max=1,
+        lat_min=50,
+        lat_max=51,
     )
 
     # Check if the output file was created

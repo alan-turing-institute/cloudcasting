@@ -30,10 +30,10 @@ def test_download_satellite_data(runner, temp_output_dir):
             end_date,
             temp_output_dir,
             "--download-frequency=15min",
-            "--lon-min=-16",
-            "--lon-max=10",
-            "--lat-min=45",
-            "--lat-max=70",
+            "--lon-min=-1",
+            "--lon-max=1",
+            "--lat-min=50",
+            "--lat-max=51",
         ],
     )
 

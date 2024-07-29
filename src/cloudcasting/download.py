@@ -2,55 +2,20 @@ __all__ = ("download_satellite_data",)
 
 import logging
 import os
-from collections.abc import Sequence
 from typing import Annotated
 
 import numpy as np
 import pandas as pd
-import pyproj
-import pyresample
 import typer
 import xarray as xr
 from dask.diagnostics import ProgressBar  # type: ignore[attr-defined]
+
+from cloudcasting.utils import lon_lat_to_geostationary_area_coords
 
 xr.set_options(keep_attrs=True)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
-
-
-# taken from ocf_datapipes
-def lon_lat_to_geostationary_area_coords(
-    x: Sequence[float],
-    y: Sequence[float],
-    xr_data: xr.Dataset,
-) -> tuple[Sequence[float], Sequence[float]]:
-    """Loads geostationary area and change from lon-lat to geostationaery coords
-    Args:
-        x: Longitude east-west
-        y: Latitude north-south
-        xr_data: xarray object with geostationary area
-    Returns:
-        Geostationary coords: x, y
-    """
-    # WGS84 is short for "World Geodetic System 1984", used in GPS. Uses
-    # latitude and longitude.
-    WGS84 = 4326
-
-    try:
-        area_definition_yaml = xr_data.attrs["area"]
-    except KeyError:
-        area_definition_yaml = xr_data.data.attrs["area"]
-    geostationary_area_definition = pyresample.area_config.load_area_from_string(
-        area_definition_yaml
-    )
-    geostationary_crs = geostationary_area_definition.crs
-    lonlat_to_geostationary = pyproj.Transformer.from_crs(
-        crs_from=WGS84,
-        crs_to=geostationary_crs,
-        always_xy=True,
-    ).transform
-    return lonlat_to_geostationary(xx=x, yy=y)
 
 
 def _get_sat_public_dataset_path(year: int, is_hrv: bool = False) -> str:

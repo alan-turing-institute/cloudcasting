@@ -38,6 +38,7 @@ dependencies = [
     "typer",
     "lightning",
     "torch",
+    "skimage",
 ]
 [project.optional-dependencies]
 dev = [

@@ -6,7 +6,18 @@ from __future__ import annotations
 
 from importlib.metadata import version
 
+from jaxtyping import install_import_hook
+
+# Any module imported inside this `with` block, whose
+# name begins with the specified string, will
+# automatically have both `@jaxtyped` and the
+# typechecker applied to all of their functions and
+# dataclasses, meaning that they will be type-checked
+# (and therefore shape-checked via jaxtyping) at runtime.
+with install_import_hook("cloudcasting", "typeguard.typechecked"):
+    from cloudcasting import metrics
+
 from cloudcasting import cli, dataset, download
 
-__all__ = ("__version__", "download", "cli", "dataset")
+__all__ = ("__version__", "download", "cli", "dataset", "metrics")
 __version__ = version(__name__)

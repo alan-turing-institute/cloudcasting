@@ -1,79 +1,91 @@
-"""Functions used to calculate common metrics on model outputs"""
+"""Metrics for model output evaluation"""
+
 import numpy as np
-from numpy.typing import NDArray
+from jaxtyping import Float
 from skimage.metrics import structural_similarity
+from torch import Tensor
+
+# Type aliases for clarity + reuse
+Array = np.ndarray | Tensor  # type: ignore[type-arg]
+SingleArray = Float[Array, "channels time height width"]
+BatchArray = Float[Array, "batch channels time height width"]
+InputArray = SingleArray | BatchArray
+TimeArray = Float[Array, "time"]
 
 
-def _check_input_and_targets(input: NDArray[np.float32], target: NDArray[np.float32]) -> None:
-    """Perform a series of checks on the inputs and targets for validity
-
-    Args:
-        input: Input array of shape [(batch), channels, time, height, width]
-        target: target array of shape [(batch), channels, time, height, width]
-    """
-
-    ndims = len(input.shape)
-
-    if ndims not in [4, 5]:
-        error_msg = f"Input expected to have 4 or 5 dimensions - found {ndims}"
-        raise ValueError(error_msg)
-    if input.shape != target.shape:
-        error_msg = f"Input {input.shape} and target {target.shape} must have the same shape"
-        raise ValueError(error_msg)
-
-
-def calc_mae(input: NDArray[np.float32], target: NDArray[np.float32]) -> NDArray[np.float32]:
-    """Calculate the mean absolute error between between batched or non-batched image sequences
-
-    The result is the mean along all dimensions except the time dimension
+def mae_single(input: SingleArray, target: SingleArray) -> TimeArray:
+    """Mean absolute error for single (non-batched) image sequences.
 
     Args:
-        input: Input array of shape [(batch), channels, time, height, width]
-        target: target array of shape [(batch), channels, time, height, width]
-    """
-    _check_input_and_targets(input, target)
+        input: Array of shape [channels, time, height, width]
+        target: Array of shape [channels, time, height, width]
 
+    Returns:
+        Array of MAE values along the time dimension
+    """
     absolute_error = np.abs(input - target)
-
-    if len(input.shape) == 5:
-        return np.nanmean(absolute_error, axis=(0, 1, 3, 4))
-    else:
-        return np.nanmean(absolute_error, axis=(0, 2, 3))
+    arr: TimeArray = np.nanmean(absolute_error, axis=(0, 2, 3))
+    return arr
 
 
-def calc_mse(input: NDArray[np.float32], target: NDArray[np.float32]) -> NDArray[np.float32]:
-    """Calculate the mean square error between between batched or non-batched image sequences
-
-    The result is the mean along all dimensions except the time dimension
+def mae_batch(input: BatchArray, target: BatchArray) -> TimeArray:
+    """Mean absolute error for batched image sequences.
 
     Args:
-        input: Input array of shape [(batch), channels, time, height, width]
-        target: target array of shape [(batch), channels, time, height, width]
-    """
-    _check_input_and_targets(input, target)
+        input: Array of shape [batch, channels, time, height, width]
+        target: Array of shape [batch, channels, time, height, width]
 
+    Returns:
+        Array of MAE values along the time dimension
+    """
+    absolute_error = np.abs(input - target)
+    arr: TimeArray = np.nanmean(absolute_error, axis=(0, 1, 3, 4))
+    return arr
+
+
+def mse_single(input: SingleArray, target: SingleArray) -> TimeArray:
+    """Mean squared error for single (non-batched) image sequences.
+
+    Args:
+        input: Array of shape [channels, time, height, width]
+        target: Array of shape [channels, time, height, width]
+
+    Returns:
+        Array of MSE values along the time dimension
+    """
     square_error = (input - target) ** 2
-
-    if len(input.shape) == 5:
-        return np.nanmean(square_error, axis=(0, 1, 3, 4))
-    else:
-        return np.nanmean(square_error, axis=(0, 2, 3))
+    arr: TimeArray = np.nanmean(square_error, axis=(0, 2, 3))
+    return arr
 
 
-def _calc_ssim_sample(
-    input: NDArray[np.float32], target: NDArray[np.float32], win_size: int | None = None
-) -> NDArray[np.float32]:
-    """Calculate the structual similarity between non-batched image sequences
-
-    The result is the mean along all dimensions except the time dimension
+def mse_batch(input: BatchArray, target: BatchArray) -> TimeArray:
+    """Mean squared error for batched image sequences.
 
     Args:
-        input: Input array of shape [channels, time, height, width]
-        target: target array of shape [channels, time, height, width]
-        win_size: The side-length of the sliding window used in comparison. Must be an odd value.
-    """
+        input: Array of shape [batch, channels, time, height, width]
+        target: Array of shape [batch, channels, time, height, width]
 
-    # Loop through the time index and compute SSIM on image pairs
+    Returns:
+        Array of MSE values along the time dimension
+    """
+    square_error = (input - target) ** 2
+    arr: TimeArray = np.nanmean(square_error, axis=(0, 1, 3, 4))
+    return arr
+
+
+def ssim_single(input: SingleArray, target: SingleArray, win_size: int | None = None) -> TimeArray:
+    """Structural similarity for single (non-batched) image sequences.
+
+    Args:
+        input: Array of shape [channels, time, height, width]
+        target: Array of shape [channels, time, height, width]
+        win_size: Side-length of the sliding window for comparison (must be odd)
+
+    Returns:
+        Array of SSIM values along the time dimension
+    """
+    # This function assumes the data will be in the range 0-1 and will give invalid results if not
+    _check_input_target_ranges(input, target)
     ssim_seq = []
     for i_t in range(input.shape[1]):
         _, ssim_array = structural_similarity(
@@ -83,52 +95,50 @@ def _calc_ssim_sample(
             channel_axis=0,
             full=True,
             win_size=win_size,
-        )
-
+        )  # type: ignore[no-untyped-call]
         ssim_seq.append(np.nanmean(ssim_array))
-
-    return np.stack(ssim_seq, axis=0)
-
-
-def _check_input_target_ranges(input: NDArray[np.float32], target: NDArray[np.float32]) -> None:
-    """Check if input and target are in the expected range of 0-1"""
-    input_max = input.max()
-    input_min = input.min()
-    target_max = target.max()
-    target_min = target.min()
-
-    if (input_min < 0) | (input_max > 1) | (target_min < 0) | (target_max > 1):
-        error_msg = (
-            "Input and target arrays must be in the range 0-1. "
-            f"Input range: {input_min}-{input_max}. "
-            f"Target range: {target_min}-{target_max}"
-        )
-        raise ValueError(error_msg)
+    arr: TimeArray = np.stack(ssim_seq, axis=0)
+    return arr
 
 
-def calc_ssim(
-    input: NDArray[np.float32], target: NDArray[np.float32], win_size: int | None = None
-) -> NDArray[np.float32]:
-    """Calculate the structual similarity between batched or non-batched image sequences
-
-    The result is the mean along all dimensions except the time dimension
+def ssim_batch(input: BatchArray, target: BatchArray, win_size: int | None = None) -> TimeArray:
+    """Structural similarity for batched image sequences.
 
     Args:
-        input: Input array of shape [(batch), channels, time, height, width]
-        target: target array of shape [(batch), channels, time, height, width]
-        win_size: The side-length of the sliding window used in comparison. Must be an odd value.
+        input: Array of shape [batch, channels, time, height, width]
+        target: Array of shape [batch, channels, time, height, width]
+        win_size: Side-length of the sliding window for comparison (must be odd)
+
+    Returns:
+        Array of SSIM values along the time dimension
     """
-
-    _check_input_and_targets(input, target)
-
     # This function assumes the data will be in the range 0-1 and will give invalid results if not
     _check_input_target_ranges(input, target)
 
-    if len(input.shape) == 5:
-        # If the input is batched samples, loop through the samples
-        ssim_samples = []
-        for i_b in range(input.shape[0]):
-            ssim_samples.append(_calc_ssim_sample(input[i_b], target[i_b], win_size=win_size))
-        return np.stack(ssim_samples, axis=0).mean(axis=0)
-    else:
-        return _calc_ssim_sample(input, target, win_size=win_size)
+    ssim_samples = []
+    for i_b in range(input.shape[0]):
+        ssim_samples.append(ssim_single(input[i_b], target[i_b], win_size=win_size))
+    arr: TimeArray = np.stack(ssim_samples, axis=0).mean(axis=0)
+    return arr
+
+
+def _check_input_target_ranges(input: InputArray, target: InputArray) -> None:
+    """Validate input and target arrays are within the 0-1 range.
+
+    Args:
+        input: Input array
+        target: Target array
+
+    Raises:
+        ValueError: If input or target values are outside the 0-1 range.
+    """
+    input_max, input_min = input.max(), input.min()
+    target_max, target_min = target.max(), target.min()
+
+    if (input_min < 0) | (input_max > 1) | (target_min < 0) | (target_max > 1):
+        msg = (
+            f"Input and target must be in 0-1 range. "
+            f"Input range: {input_min}-{input_max}. "
+            f"Target range: {target_min}-{target_max}"
+        )
+        raise ValueError(msg)

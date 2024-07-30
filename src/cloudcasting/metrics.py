@@ -1,16 +1,12 @@
 """Functions used to calculate common metrics on model outputs"""
-
-from collections.abc import Callable
-
 import numpy as np
 from numpy.typing import NDArray
-
 from skimage.metrics import structural_similarity
 
 
-def _check_input_and_targets(input: NDArray[np.float32], target: NDArray[np.float32]):
+def _check_input_and_targets(input: NDArray[np.float32], target: NDArray[np.float32]) -> None:
     """Perform a series of checks on the inputs and targets for validity
-    
+
     Args:
         input: Input array of shape [(batch), channels, time, height, width]
         target: target array of shape [(batch), channels, time, height, width]
@@ -19,9 +15,11 @@ def _check_input_and_targets(input: NDArray[np.float32], target: NDArray[np.floa
     ndims = len(input.shape)
 
     if ndims not in [4, 5]:
-        raise ValueError(f"Input expected to have 4 or 5 dimensions - found {ndims}")
+        error_msg = f"Input expected to have 4 or 5 dimensions - found {ndims}"
+        raise ValueError(error_msg)
     if input.shape != target.shape:
-        raise ValueError(f"Input {input.shape} and target {target.shape} must have the same shape")
+        error_msg = f"Input {input.shape} and target {target.shape} must have the same shape"
+        raise ValueError(error_msg)
 
 
 def calc_mae(input: NDArray[np.float32], target: NDArray[np.float32]) -> NDArray[np.float32]:
@@ -63,10 +61,8 @@ def calc_mse(input: NDArray[np.float32], target: NDArray[np.float32]) -> NDArray
 
 
 def _calc_ssim_sample(
-        input: NDArray[np.float32], 
-        target: NDArray[np.float32], 
-        win_size: int | None = None
-    ) -> NDArray[np.float32]:
+    input: NDArray[np.float32], target: NDArray[np.float32], win_size: int | None = None
+) -> NDArray[np.float32]:
     """Calculate the structual similarity between non-batched image sequences
 
     The result is the mean along all dimensions except the time dimension
@@ -91,11 +87,10 @@ def _calc_ssim_sample(
 
         ssim_seq.append(np.nanmean(ssim_array))
 
-    ssim = np.stack(ssim_seq, axis=0)
-    return ssim
+    return np.stack(ssim_seq, axis=0)
 
 
-def _check_input_target_ranges(input: NDArray[np.float32], target: NDArray[np.float32]):
+def _check_input_target_ranges(input: NDArray[np.float32], target: NDArray[np.float32]) -> None:
     """Check if input and target are in the expected range of 0-1"""
     input_max = input.max()
     input_min = input.min()
@@ -112,10 +107,8 @@ def _check_input_target_ranges(input: NDArray[np.float32], target: NDArray[np.fl
 
 
 def calc_ssim(
-        input: NDArray[np.float32], 
-        target: NDArray[np.float32], 
-        win_size: int | None = None
-    ) -> NDArray[np.float32]:
+    input: NDArray[np.float32], target: NDArray[np.float32], win_size: int | None = None
+) -> NDArray[np.float32]:
     """Calculate the structual similarity between batched or non-batched image sequences
 
     The result is the mean along all dimensions except the time dimension
@@ -136,8 +129,6 @@ def calc_ssim(
         ssim_samples = []
         for i_b in range(input.shape[0]):
             ssim_samples.append(_calc_ssim_sample(input[i_b], target[i_b], win_size=win_size))
-        ssim = np.stack(ssim_samples, axis=0).mean(axis=0)
+        return np.stack(ssim_samples, axis=0).mean(axis=0)
     else:
-        ssim = _calc_ssim_sample(input, target, win_size=win_size)
-
-    return ssim
+        return _calc_ssim_sample(input, target, win_size=win_size)

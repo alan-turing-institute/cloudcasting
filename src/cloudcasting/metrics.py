@@ -68,8 +68,8 @@ def _calc_ssim_sample(
     The result is the mean along all dimensions except the time dimension
 
     Args:
-        input: Input array of shape [(batch), channels, time, height, width]
-        target: target array of shape [(batch), channels, time, height, width]
+        input: Input array of shape [channels, time, height, width]
+        target: target array of shape [channels, time, height, width]
         win_size: The side-length of the sliding window used in comparison. Must be an odd value.
     """
 

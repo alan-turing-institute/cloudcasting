@@ -120,3 +120,34 @@ def test_irregular_start_date(temp_output_dir):
     ds = xr.open_zarr(expected_file)
     # Check that the data ignored the 00:02 entry; only the 00:15 and 00:30 entries should exist.
     assert np.all(ds.time.dt.minute.values == [np.int64(15), np.int64(30)])
+
+
+def test_download_satellite_data_mock_to_zarr(temp_output_dir, monkeypatch):
+    # make a tiny dataset to mock the to_zarr function,
+    # but use netcdf instead of zarr (as to not recurse)
+    mock_file_name = f"{temp_output_dir}/mock.nc"
+
+    def mock_to_zarr(*args, **kwargs):
+        xr.Dataset({"data": xr.DataArray(np.zeros([1, 1, 1, 1]))}).to_netcdf(mock_file_name)
+
+    monkeypatch.setattr("xarray.Dataset.to_zarr", mock_to_zarr)
+
+    # Define test parameters (known missing data here somewhere)
+    start_date = "2020-06-01 00:00"
+    end_date = "2020-06-30 23:55"
+
+    # Run the function to download the file
+    download_satellite_data(
+        start_date,
+        end_date,
+        temp_output_dir,
+        download_frequency="15min",
+        lon_min=-1,
+        lon_max=1,
+        lat_min=50,
+        lat_max=51,
+    )
+
+    # Check if the output file was created
+    expected_file = os.path.join(temp_output_dir, mock_file_name)
+    assert os.path.exists(expected_file)

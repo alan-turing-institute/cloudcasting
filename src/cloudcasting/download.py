@@ -135,7 +135,9 @@ def download_satellite_data(
         path = _get_sat_public_dataset_path(year, is_hrv=get_hrv)
 
         # Slice the data from this year which are between the start and end dates.
-        ds = xr.open_zarr(path, chunks={}).sortby("time").sel(time=dates_to_download)
+        ds = xr.open_zarr(path, chunks={}).sortby("time")
+        
+        ds = ds.sel(time=dates_to_download[dates_to_download.isin(ds.time.values)])
 
         if year == 2022:
             set_str = "Validation" if valid_set else "Training"

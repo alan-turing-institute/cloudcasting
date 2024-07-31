@@ -136,7 +136,7 @@ def download_satellite_data(
 
         # Slice the data from this year which are between the start and end dates.
         ds = xr.open_zarr(path, chunks={}).sortby("time")
-        
+
         ds = ds.sel(time=dates_to_download[dates_to_download.isin(ds.time.values)])
 
         if year == 2022:

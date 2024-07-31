@@ -122,9 +122,9 @@ def test_irregular_start_date(temp_output_dir):
     assert np.all(ds.time.dt.minute.values == [np.int64(15), np.int64(30)])
 
 
-
 def test_download_satellite_data_mock_to_zarr(temp_output_dir, monkeypatch):
-    # make a tiny dataset to mock the to_zarr function, but use netcdf instead of zarr (as to not recurse)
+    # make a tiny dataset to mock the to_zarr function,
+    # but use netcdf instead of zarr (as to not recurse)
     mock_file_name = f"{temp_output_dir}/mock.nc"
 
     def mock_to_zarr(*args, **kwargs):

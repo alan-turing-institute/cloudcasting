@@ -38,6 +38,8 @@ dependencies = [
     "typer",
     "lightning",
     "torch",
+    "scikit-image",
+    "jaxtyping",
 ]
 [project.optional-dependencies]
 dev = [
@@ -64,6 +66,7 @@ filterwarnings = [
   "error",
   "ignore:pkg_resources:DeprecationWarning",                                        # lightning
   "ignore:Deprecated call to `pkg_resources.declare_namespace:DeprecationWarning",  # lightning
+  "ignore:ast.Str is deprecated:DeprecationWarning",             # jaxtyping
 ]
 log_cli_level = "INFO"
 testpaths = [

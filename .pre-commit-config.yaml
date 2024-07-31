@@ -45,3 +45,5 @@ repos:
           - pyresample
           - lightning
           - torch
+          - jaxtyping
+          - scikit-image

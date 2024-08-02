@@ -15,7 +15,7 @@ from jaxtyping import install_import_hook
 # dataclasses, meaning that they will be type-checked
 # (and therefore shape-checked via jaxtyping) at runtime.
 with install_import_hook("cloudcasting", "typeguard.typechecked"):
-    from cloudcasting import metrics
+    from cloudcasting import metrics, validation
 
 from cloudcasting import cli, dataset, download
 

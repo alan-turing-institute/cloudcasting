@@ -1,17 +1,8 @@
 """Metrics for model output evaluation"""
 
 import numpy as np
-from jaxtyping import Float
 from skimage.metrics import structural_similarity
-from torch import Tensor
-
-# Type aliases for clarity + reuse
-Array = np.ndarray | Tensor  # type: ignore[type-arg]
-SingleArray = Float[Array, "channels time height width"]
-BatchArray = Float[Array, "batch channels time height width"]
-InputArray = SingleArray | BatchArray
-TimeArray = Float[Array, "time"]
-
+from cloudcasting.types import SingleArray, BatchArray, InputArray, TimeArray
 
 def mae_single(input: SingleArray, target: SingleArray) -> TimeArray:
     """Mean absolute error for single (non-batched) image sequences.

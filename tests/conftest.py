@@ -5,6 +5,8 @@ import pandas as pd
 import pytest
 import xarray as xr
 
+from cloudcasting.models import VariableHorizonModel
+
 xr.set_options(keep_attrs=True)  # type: ignore[no-untyped-call]
 
 
@@ -79,3 +81,18 @@ def val_sat_zarr_path(temp_output_dir):
     ds.to_zarr(zarr_path)
 
     return zarr_path
+
+
+class PersistenceModel(VariableHorizonModel):
+    """A persistence model used solely for testing the validation procedure"""
+
+    def forward(self, X):
+        # Grab the most recent frame from the input data
+        # There may be NaNs in the input data, so we need to handle these
+        latest_frame = np.nan_to_num(X[..., -1:, :, :], nan=0., copy=True)
+
+        # The NaN values in the input data could be filled with -1. Clip these to zero
+        latest_frame = latest_frame.clip(0, 1)
+
+        y_hat = np.repeat(latest_frame, self.forecast_horizon, axis=-3)
+        return y_hat

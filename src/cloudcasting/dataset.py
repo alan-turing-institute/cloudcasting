@@ -216,7 +216,7 @@ class ValidationSatelliteDataset(SatelliteDataset):
         )
 
     @staticmethod
-    def _find_t0_times(date_range: pd.DatetimeIndex, history_mins: int, forecast_mins: int, sample_freq_mins: int, strict: bool = False) -> pd.DatetimeIndex:
+    def _find_t0_times(date_range: pd.DatetimeIndex, history_mins: int, forecast_mins: int, sample_freq_mins: int) -> pd.DatetimeIndex:
 
         # Find the valid t0 times for the available data. This avoids trying to take samples where
         # there would be a missing timestamp in the sat data required for the sample
@@ -226,16 +226,9 @@ class ValidationSatelliteDataset(SatelliteDataset):
 
         # Get the required validation t0 times
         val_t0_times_from_csv = get_required_validation_t0_times()
-
         
-        if strict:
-            # Find the intersection of the available t0 times and the required validation t0 times
-            val_time_available = val_t0_times_from_csv.isin(available_t0_times)
-        else:
-            # If we're not strict, we can just take the intersection of the available t0 times and the required validation t0 times
-            val_time_available = available_t0_times.isin(val_t0_times_from_csv)
-
-
+        # Find the intersection of the available t0 times and the required validation t0 times
+        val_time_available = val_t0_times_from_csv.isin(available_t0_times)
 
         # Make sure all of the required validation times are available in the data
         if not val_time_available.all():
@@ -246,7 +239,7 @@ class ValidationSatelliteDataset(SatelliteDataset):
             )
             raise ValueError(msg)
         
-        return val_t0_times_from_csv if strict else val_t0_times_from_csv[val_time_available]
+        return val_t0_times_from_csv
     
 def _get_t0_times(path: str) -> pd.DatetimeIndex:
     """Get the required validation t0 times"""

@@ -3,7 +3,11 @@
 __all__ = (
     "SatelliteDataModule",
     "SatelliteDataset",
+    "ValidationSatelliteDataset",
 )
+
+import pkgutil
+import io
 
 from datetime import datetime, timedelta
 from typing import TypedDict
@@ -101,7 +105,7 @@ class SatelliteDataset(Dataset[tuple[NDArray[np.float32], NDArray[np.float32]]])
         """A torch Dataset for loading past and future satellite data
 
         Args:
-            zarr_path: Path the satellite data. Can be a string or list
+            zarr_path: Path to the satellite data. Can be a string or list
             start_time: The satellite data is filtered to exclude timestamps before this
             end_time: The satellite data is filtered to exclude timestamps after this
             history_mins: How many minutes of history will be used as input features
@@ -170,7 +174,7 @@ class SatelliteDataset(Dataset[tuple[NDArray[np.float32], NDArray[np.float32]]])
             y = np.nan_to_num(y, nan=-1)
 
         return X.astype(np.float32), y.astype(np.float32)
-
+    
     def __getitem__(self, key: DataIndex) -> tuple[NDArray[np.float32], NDArray[np.float32]]:
         if isinstance(key, int):
             t0 = self.t0_times[key]
@@ -181,6 +185,80 @@ class SatelliteDataset(Dataset[tuple[NDArray[np.float32], NDArray[np.float32]]])
             assert t0 in self.t0_times
 
         return self._get_datetime(t0)
+    
+
+class ValidationSatelliteDataset(SatelliteDataset):
+    def __init__(
+        self,
+        zarr_path: list[str] | str,
+        history_mins: int,
+        forecast_mins: int = 180,
+        sample_freq_mins: int = 15,
+        nan_to_num: bool = False,
+    ):
+        """A torch Dataset used only in the validation proceedure.
+
+        Args:
+            zarr_path: Path to the satellite data for validation. Can be a string or list
+            history_mins: How many minutes of history will be used as input features
+            forecast_mins: How many minutes of future will be used as target features
+            sample_freq_mins: The sample frequency to use for the satellite data
+            nan_to_num: Whether to convert NaNs to -1.
+        """
+
+        # Load the sat zarr file or list of files and slice the data to the given period
+        self.ds = load_satellite_zarrs(zarr_path)
+
+        # Convert the satellite data to the given time frequency by selection
+        mask = np.mod(self.ds.time.dt.minute, sample_freq_mins) == 0
+        self.ds = self.ds.sel(time=mask)
+
+        # Find the valid t0 times for the available data. This avoids trying to take samples where
+        # there would be a missing timestamp in the sat data required for the sample
+        available_t0_times = find_valid_t0_times(
+            pd.DatetimeIndex(self.ds.time), history_mins, forecast_mins, sample_freq_mins
+        )
+
+        # Get the required validation t0 times
+        val_t0_times = self.get_required_validation_t0_times()
+
+        # Find the intersection of the available t0 times and the required validation t0 times
+        val_time_available = val_t0_times.isin(available_t0_times)
+
+        # Make sure all of the required validation times are available in the data
+        if not val_time_available.all():
+            msg = (
+                "The following validation t0 times are not available in the satellite data: \n"
+                f"{val_t0_times[~val_time_available]}\n"
+                "The validation proceedure requires these t0 times to be available."
+            )
+            raise ValueError(msg)
+        
+        self.t0_times = val_t0_times
+
+        self.history_mins = history_mins
+        self.forecast_mins = forecast_mins
+        self.sample_freq_mins = sample_freq_mins
+        self.nan_to_num = nan_to_num
+
+    def get_required_validation_t0_times(self) -> pd.DatetimeIndex:
+        """Get the required validation t0 times"""
+
+        # The validation t0 times are contained in this zipped csv file
+        path = "data/2022_t0_val_times.csv.zip"
+
+        # Load the zipped csv file as a byte stream
+        byte_stream = io.BytesIO(pkgutil.get_data("cloudcasting", path))
+
+        # Load the times into pandas
+        df = pd.read_csv(
+            byte_stream, 
+            encoding='utf8', 
+            compression='zip'
+        )
+
+        return pd.DatetimeIndex(df.t0_time)
+
 
 
 class SatelliteDataModule(LightningDataModule):

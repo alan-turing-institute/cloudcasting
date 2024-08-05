@@ -123,7 +123,7 @@ class SatelliteDataset(Dataset[tuple[NDArray[np.float32], NDArray[np.float32]]])
 
         # Find the valid t0 times for the available data. This avoids trying to take samples where
         # there would be a missing timestamp in the sat data required for the sample
-        self.t0_times = find_valid_t0_times(
+        self.t0_times = self._find_t0_times(
             pd.DatetimeIndex(self.ds.time), history_mins, forecast_mins, sample_freq_mins
         )
 
@@ -134,6 +134,13 @@ class SatelliteDataset(Dataset[tuple[NDArray[np.float32], NDArray[np.float32]]])
         self.forecast_mins = forecast_mins
         self.sample_freq_mins = sample_freq_mins
         self.nan_to_num = nan_to_num
+
+
+    @staticmethod
+    def _find_t0_times(date_range: pd.DatetimeIndex, history_mins: int, forecast_mins: int, sample_freq_mins: int) -> pd.DatetimeIndex:
+       return find_valid_t0_times(
+            date_range, history_mins, forecast_mins, sample_freq_mins
+        ) 
 
     def __len__(self) -> int:
         return len(self.t0_times)
@@ -197,21 +204,28 @@ class ValidationSatelliteDataset(SatelliteDataset):
             nan_to_num: Whether to convert NaNs to -1.
         """
 
-        # Load the sat zarr file or list of files and slice the data to the given period
-        self.ds = load_satellite_zarrs(zarr_path)
+        super().__init__(
+            zarr_path=zarr_path,
+            start_time=None, 
+            end_time=None,
+            history_mins=history_mins, 
+            forecast_mins=forecast_mins, 
+            sample_freq_mins=sample_freq_mins,
+            preshuffle=False,
+            nan_to_num=nan_to_num,
+        )
 
-        # Convert the satellite data to the given time frequency by selection
-        mask = np.mod(self.ds.time.dt.minute, sample_freq_mins) == 0
-        self.ds = self.ds.sel(time=mask)
+    @staticmethod
+    def _find_t0_times(date_range: pd.DatetimeIndex, history_mins: int, forecast_mins: int, sample_freq_mins: int) -> pd.DatetimeIndex:
 
         # Find the valid t0 times for the available data. This avoids trying to take samples where
         # there would be a missing timestamp in the sat data required for the sample
         available_t0_times = find_valid_t0_times(
-            pd.DatetimeIndex(self.ds.time), history_mins, forecast_mins, sample_freq_mins
+            date_range, history_mins, forecast_mins, sample_freq_mins
         )
 
         # Get the required validation t0 times
-        val_t0_times = self.get_required_validation_t0_times()
+        val_t0_times = get_required_validation_t0_times()
 
         # Find the intersection of the available t0 times and the required validation t0 times
         val_time_available = val_t0_times.isin(available_t0_times)
@@ -225,30 +239,30 @@ class ValidationSatelliteDataset(SatelliteDataset):
             )
             raise ValueError(msg)
         
-        self.t0_times = val_t0_times
+        return val_t0_times
+    
+def _get_t0_times(path: str) -> pd.DatetimeIndex:
+    """Get the required validation t0 times"""
 
-        self.history_mins = history_mins
-        self.forecast_mins = forecast_mins
-        self.sample_freq_mins = sample_freq_mins
-        self.nan_to_num = nan_to_num
+    # Load the zipped csv file as a byte stream
+    byte_stream = io.BytesIO(pkgutil.get_data("cloudcasting", path))
 
-    def get_required_validation_t0_times(self) -> pd.DatetimeIndex:
-        """Get the required validation t0 times"""
+    # Load the times into pandas
+    df = pd.read_csv(
+        byte_stream, 
+        encoding='utf8', 
+        compression='zip'
+    )
 
-        # The validation t0 times are contained in this zipped csv file
-        path = "data/2022_t0_val_times.csv.zip"
+    return pd.DatetimeIndex(df.t0_time)
 
-        # Load the zipped csv file as a byte stream
-        byte_stream = io.BytesIO(pkgutil.get_data("cloudcasting", path))
 
-        # Load the times into pandas
-        df = pd.read_csv(
-            byte_stream, 
-            encoding='utf8', 
-            compression='zip'
-        )
+def get_required_validation_t0_times() -> pd.DatetimeIndex:
+    """Get the required validation t0 times"""
+    return _get_t0_times("data/2022_t0_val_times.csv.zip")
 
-        return pd.DatetimeIndex(df.t0_time)
+def get_required_test_t0_times() -> pd.DatetimeIndex: ...
+    
 
 
 

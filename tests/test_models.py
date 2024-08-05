@@ -1,20 +1,8 @@
 import numpy as np
 import pytest
 from jaxtyping import TypeCheckError
-from cloudcasting.models import AbstractModel, VariableHorizonModel
 
-
-class PersistenceModel(VariableHorizonModel):
-    """A persistence model used solely for testing the validation procedure"""
-
-    def forward(self, X):
-        latest_frame = X[..., -1:, :, :].copy()
-
-        # The NaN values in the input data could be filled with -1. Clip these to zero
-        latest_frame = latest_frame.clip(0, 1)
-
-        y_hat = np.repeat(latest_frame, self.forecast_horizon, axis=-3)
-        return y_hat
+from conftest import PersistenceModel
 
 
 @pytest.fixture
@@ -59,7 +47,7 @@ def test_check_predictions_outside_range(model):
     y_hat = np.random.rand(1, 3, model.forecast_horizon, 100, 100) * 2
 
     # Call the check_predictions method and expect a ValueError
-    with pytest.raises(ValueError, match="Predictions must be in the range"):
+    with pytest.raises(ValueError, match="The predictions must be in the range "):
         model.check_predictions(y_hat)
 
 def test_call(model):

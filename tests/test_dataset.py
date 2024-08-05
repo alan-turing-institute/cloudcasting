@@ -1,9 +1,11 @@
+import pytest
 import numpy as np
 import pandas as pd
 
 from cloudcasting.dataset import (
     SatelliteDataModule,
     SatelliteDataset,
+    ValidationSatelliteDataset,
     find_valid_t0_times,
     load_satellite_zarrs,
 )
@@ -124,3 +126,36 @@ def test_satellite_dataset_nan_to_num(sat_zarr_path):
 
     assert np.sum(X[:, :, 0, 0]) == -11 * 13
     assert np.sum(y[:, :, 0, 0]) == -11 * 24
+
+
+def test_validation_dataset(val_sat_zarr_path):
+    dataset = ValidationSatelliteDataset(
+        zarr_path=val_sat_zarr_path,
+        history_mins=60,
+        forecast_mins=180,
+        sample_freq_mins=15,
+    )
+
+    # There are 15237 init times which all models must make predictions for
+    assert len(dataset) == 15237
+
+    X, y = dataset[0]
+
+    # 11 channels
+    # 2 y-dim steps
+    # 1 x-dim steps
+    # (60 / 15) + 1 = 5 history steps
+    # (180 / 15) = 12 forecast steps
+    assert X.shape == (11, 5, 2, 1)
+    assert y.shape == (11, 12, 2, 1)
+
+
+def test_validation_dataset_raises_error(sat_zarr_path):
+    with pytest.raises(ValueError, match="The following validation t0 times are not available"):
+        dataset = ValidationSatelliteDataset(
+            zarr_path=sat_zarr_path,
+            history_mins=60,
+            forecast_mins=180,
+            sample_freq_mins=15,
+        )
+

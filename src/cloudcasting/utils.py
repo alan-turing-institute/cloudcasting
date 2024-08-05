@@ -2,6 +2,7 @@ __all__ = (
     "lon_lat_to_geostationary_area_coords",
     "find_contiguous_time_periods",
     "find_contiguous_t0_time_periods",
+    "numpy_validation_collate_fn",
 )
 
 from collections.abc import Sequence
@@ -12,6 +13,8 @@ import pandas as pd
 import pyproj
 import pyresample
 import xarray as xr
+
+from cloudcasting.types import SingleArray, SingleForecastArray, BatchArray, ForecastArray
 
 
 # taken from ocf_datapipes
@@ -116,3 +119,28 @@ def find_contiguous_t0_time_periods(
     contiguous_time_periods["end_dt"] -= np.timedelta64(forecast_duration)
     assert (contiguous_time_periods["start_dt"] < contiguous_time_periods["end_dt"]).all()
     return contiguous_time_periods
+
+
+# possibly slow (?)
+def numpy_validation_collate_fn(samples: list[tuple[SingleArray, SingleForecastArray]]) -> tuple[BatchArray, ForecastArray]:
+    """Collate a list of data + targets into a batch.
+        input: list of (X, y) samples, with sizes 
+        X: (batch, channels, time, height, width)
+        y: (batch, channels, forecast_horizon, height, width)
+    into output; a tuple of:
+        X: (batch, channels, time, height, width)
+        y: (batch, channels, forecast_horizon, height, width)
+    Args:
+        samples: List of (X, y) samples
+    Returns:
+        np.ndarray: The collated batch of X samples
+        np.ndarray: The collated batch of y samples
+    """
+    X_list = []
+    y_list = []
+    for X, y in samples:
+        X_list.append(X)
+        y_list.append(y)
+    X = np.stack(X_list)
+    y = np.stack(y_list)
+    return X, y

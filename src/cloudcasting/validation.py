@@ -67,6 +67,8 @@ def validate(model: AbstractModel, data_path: Path, nan_to_num: bool = False, ba
     metrics = {k: [] for k in metric_funcs.keys()}
 
     num_batches_ran = 0
+
+    # we probably want to accumulate metrics here instead of taking the mean of means!
     for X, y in valid_dataloader:
         y_hat = model(X)
         for metric_name, metric_func in metric_funcs.items():

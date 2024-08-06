@@ -7,14 +7,19 @@ import pytest
 def model():
     return PersistenceModel(history_mins=0, forecast_horizon=180)
 
-def test_validate(val_sat_zarr_path, model):
+
+@pytest.mark.parametrize(
+    "nan_to_num", 
+    [True, False]
+)
+def test_validate(val_sat_zarr_path, model, nan_to_num):
     # Call the validate function
     metrics_dict = validate(
         model=model, 
         data_path=val_sat_zarr_path, 
-        nan_to_num=True, 
+        nan_to_num=nan_to_num, 
         batch_size=2, 
-        num_workers= 0, 
+        num_workers=0, 
         num_termination_batches=3,
     ) 
 

@@ -80,14 +80,16 @@ def ssim_single(input: SingleArray, target: SingleArray, win_size: int | None = 
     ssim_seq = []
     for i_t in range(input.shape[1]):
         _, ssim_array = structural_similarity(
-            input[:, i_t],
-            target[:, i_t],
+            input[:, i_t, :, :],
+            target[:, i_t, :, :],
             data_range=1,
             channel_axis=0,
             full=True,
             win_size=win_size,
         )  # type: ignore[no-untyped-call]
-        ssim_seq.append(np.nanmean(ssim_array))
+        # isinstance check for channels/height/width arr
+        
+        ssim_seq.append(np.nanmean(ssim_array, axis=(0, 1, 2)))
     arr: TimeArray = np.stack(ssim_seq, axis=0)
     return arr
 

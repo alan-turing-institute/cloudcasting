@@ -21,8 +21,8 @@ class AbstractModel(ABC):
                 time = {t_{-n}, ..., t_{0}} = all n values needed to predict {t'_{1}, ..., t'_{horizon}}
         Returns
             ForecastArray: The model's prediction of the future satellite data of shape 
-                [batch, channels, forecast_horizon, height, width]
-                forecast_horizon = {t'_{1}, ..., t'_{horizon}}
+                [batch, channels, rollout_steps, height, width]
+                rollout_steps = {t'_{1}, ..., t'_{horizon}}
         """
 
     def check_predictions(self, y_hat: ForecastArray):
@@ -30,7 +30,7 @@ class AbstractModel(ABC):
         # Check no NaNs in the predictions
         if np.isnan(y_hat).any():
             raise ValueError(
-                f"Found NaNs in the predictions - {np.isnan(y_hat).mean():.4%=}."
+                f"Predictions contain NaNs: {np.isnan(y_hat).mean()=:.4g}."
             )
 
         # Check the range of the predictions. If outside the expected range this can interfere
@@ -51,8 +51,8 @@ class AbstractModel(ABC):
         return y_hat
 
 class VariableHorizonModel(AbstractModel):
-    def __init__(self, forecast_horizon: int, history_mins: int) -> None:
-        self.forecast_horizon: int = forecast_horizon
+    def __init__(self, rollout_steps: int, history_mins: int) -> None:
+        self.rollout_steps: int = rollout_steps
         super().__init__(history_mins)
 
 

@@ -7,7 +7,7 @@ from conftest import PersistenceModel
 
 @pytest.fixture
 def model():
-    return PersistenceModel(history_mins=60, forecast_horizon=5)
+    return PersistenceModel(history_mins=60, rollout_steps=5)
 
 def test_forward(model):
     # Create a sample input batch
@@ -17,18 +17,18 @@ def test_forward(model):
     y_hat = model.forward(X)
 
     # Check the shape of the output
-    assert y_hat.shape == (1, 3, model.forecast_horizon, 100, 100)
+    assert y_hat.shape == (1, 3, model.rollout_steps, 100, 100)
 
 def test_check_predictions_no_nans(model):
     # Create a sample prediction array without NaNs
-    y_hat = np.random.rand(1, 3, model.forecast_horizon, 100, 100)
+    y_hat = np.random.rand(1, 3, model.rollout_steps, 100, 100)
 
     # Call the check_predictions method
     model.check_predictions(y_hat)
 
 def test_check_predictions_with_nans(model):
     # Create a sample prediction array with NaNs
-    y_hat = np.random.rand(1, 3, model.forecast_horizon, 100, 100)
+    y_hat = np.random.rand(1, 3, model.rollout_steps, 100, 100)
     y_hat[0, 0, 0, 0, 0] = np.nan
 
     # Call the check_predictions method and expect a ValueError
@@ -37,14 +37,14 @@ def test_check_predictions_with_nans(model):
 
 def test_check_predictions_within_range(model):
     # Create a sample prediction array within the expected range
-    y_hat = np.random.rand(1, 3, model.forecast_horizon, 100, 100)
+    y_hat = np.random.rand(1, 3, model.rollout_steps, 100, 100)
 
     # Call the check_predictions method
     model.check_predictions(y_hat)
 
 def test_check_predictions_outside_range(model):
     # Create a sample prediction array outside the expected range
-    y_hat = np.random.rand(1, 3, model.forecast_horizon, 100, 100) * 2
+    y_hat = np.random.rand(1, 3, model.rollout_steps, 100, 100) * 2
 
     # Call the check_predictions method and expect a ValueError
     with pytest.raises(ValueError, match="The predictions must be in the range "):
@@ -58,7 +58,7 @@ def test_call(model):
     y_hat = model(X)
 
     # Check the shape of the output
-    assert y_hat.shape == (1, 3, model.forecast_horizon, 100, 100)
+    assert y_hat.shape == (1, 3, model.rollout_steps, 100, 100)
 
 
 def test_incorrect_shapes(model):

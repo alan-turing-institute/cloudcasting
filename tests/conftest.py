@@ -46,9 +46,15 @@ def sat_zarr_path(temp_output_dir):
 
     return zarr_path
 
+@pytest.fixture()
+def val_dataset_hyperparams():
+    return {
+        "x_geostationary_size": 8,
+        "y_geostationary_size": 9,
+    }
 
 @pytest.fixture()
-def val_sat_zarr_path(temp_output_dir):
+def val_sat_zarr_path(temp_output_dir, val_dataset_hyperparams):
     # The validation set requires a much larger set of times so we create it separately
     # Load dataset which only contains coordinates, but no data
     ds = xr.load_dataset(
@@ -56,7 +62,7 @@ def val_sat_zarr_path(temp_output_dir):
     )
 
     # Make the dataset spatially small
-    ds = ds.isel(x_geostationary=slice(0, 1), y_geostationary=slice(0, 2))
+    ds = ds.isel(x_geostationary=slice(0, val_dataset_hyperparams["x_geostationary_size"]), y_geostationary=slice(0, val_dataset_hyperparams["y_geostationary_size"]))
 
     # Add time coord
     ds = ds.assign_coords(time=pd.date_range("2022-01-01 00:00", "2022-12-31 23:45", freq="15min"))
@@ -94,5 +100,5 @@ class PersistenceModel(VariableHorizonModel):
         # The NaN values in the input data could be filled with -1. Clip these to zero
         latest_frame = latest_frame.clip(0, 1)
 
-        y_hat = np.repeat(latest_frame, self.forecast_horizon, axis=-3)
+        y_hat = np.repeat(latest_frame, self.rollout_steps, axis=-3)
         return y_hat

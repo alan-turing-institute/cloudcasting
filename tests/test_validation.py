@@ -2,10 +2,11 @@ from cloudcasting.validation import validate
 from conftest import PersistenceModel
 import pytest
 
+ROLLOUT_STEPS_TEST = 12
 
 @pytest.fixture
 def model():
-    return PersistenceModel(history_mins=0, forecast_horizon=180)
+    return PersistenceModel(history_mins=0, rollout_steps=ROLLOUT_STEPS_TEST)
 
 
 @pytest.mark.parametrize(
@@ -24,8 +25,12 @@ def test_validate(val_sat_zarr_path, model, nan_to_num):
     ) 
 
     # Check all the expected keys are there
-    assert metrics_dict.keys() == {"mae", "mse", "ssim"}
+    assert metrics_dict.keys() == {
+        "mae", 
+        "mse",
+        # "ssim",  # currently unstable with nans
+    }
 
     for metric_name, metric_array in metrics_dict.items():
-        # check all the items have th expected shape
-        assert metric_array.shape == (12,), f"Metric {metric_name} has the wrong shape"
+        # check all the items have the expected shape
+        assert metric_array.shape == (ROLLOUT_STEPS_TEST,), f"Metric {metric_name} has the wrong shape"

@@ -62,7 +62,7 @@ def validate(model: AbstractModel, data_path: Path, nan_to_num: bool = False, ba
     metric_funcs: dict[str, Callable[[ForecastArray, ForecastArray], TimeArray]] = {
         "mae": mae_batch,
         "mse": mse_batch,
-        "ssim": ssim_batch,
+        # "ssim": ssim_batch,  # currently unstable with nans
     }
     metrics = {k: [] for k in metric_funcs.keys()}
 
@@ -86,4 +86,6 @@ def validate(model: AbstractModel, data_path: Path, nan_to_num: bool = False, ba
     # if the number of batches equals the number of timesteps
     for v in res.values():
         assert v.shape == (num_timesteps,), f"metric {v.shape} is not the correct shape (should be {(num_timesteps,)})"
+
+    return res
         

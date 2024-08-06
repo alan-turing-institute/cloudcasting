@@ -126,10 +126,10 @@ def numpy_validation_collate_fn(samples: list[tuple[SingleArray, SingleForecastA
     """Collate a list of data + targets into a batch.
         input: list of (X, y) samples, with sizes 
         X: (batch, channels, time, height, width)
-        y: (batch, channels, forecast_horizon, height, width)
+        y: (batch, channels, rollout_steps, height, width)
     into output; a tuple of:
         X: (batch, channels, time, height, width)
-        y: (batch, channels, forecast_horizon, height, width)
+        y: (batch, channels, rollout_steps, height, width)
     Args:
         samples: List of (X, y) samples
     Returns:

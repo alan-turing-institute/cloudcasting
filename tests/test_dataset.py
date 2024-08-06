@@ -128,7 +128,7 @@ def test_satellite_dataset_nan_to_num(sat_zarr_path):
     assert np.sum(y[:, :, 0, 0]) == -11 * 24
 
 
-def test_validation_dataset(val_sat_zarr_path):
+def test_validation_dataset(val_sat_zarr_path, val_dataset_hyperparams):
     dataset = ValidationSatelliteDataset(
         zarr_path=val_sat_zarr_path,
         history_mins=60,
@@ -146,8 +146,8 @@ def test_validation_dataset(val_sat_zarr_path):
     # 1 x-dim steps
     # (60 / 15) + 1 = 5 history steps
     # (180 / 15) = 12 forecast steps
-    assert X.shape == (11, 5, 2, 1)
-    assert y.shape == (11, 12, 2, 1)
+    assert X.shape == (11, 5, val_dataset_hyperparams["y_geostationary_size"], val_dataset_hyperparams["x_geostationary_size"])
+    assert y.shape == (11, 12, val_dataset_hyperparams["y_geostationary_size"], val_dataset_hyperparams["x_geostationary_size"])
 
 
 def test_validation_dataset_raises_error(sat_zarr_path):

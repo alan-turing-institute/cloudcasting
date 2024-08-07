@@ -6,9 +6,8 @@ __all__ = (
     "ValidationSatelliteDataset",
 )
 
-import pkgutil
 import io
-
+import pkgutil
 from datetime import datetime, timedelta
 from typing import TypedDict
 
@@ -144,12 +143,11 @@ class SatelliteDataset(Dataset[tuple[NDArray[np.float32], NDArray[np.float32]]])
         self.sample_freq_mins = sample_freq_mins
         self.nan_to_num = nan_to_num
 
-
     @staticmethod
-    def _find_t0_times(date_range: pd.DatetimeIndex, history_mins: int, forecast_mins: int, sample_freq_mins: int) -> pd.DatetimeIndex:
-       return find_valid_t0_times(
-            date_range, history_mins, forecast_mins, sample_freq_mins
-        ) 
+    def _find_t0_times(
+        date_range: pd.DatetimeIndex, history_mins: int, forecast_mins: int, sample_freq_mins: int
+    ) -> pd.DatetimeIndex:
+        return find_valid_t0_times(date_range, history_mins, forecast_mins, sample_freq_mins)
 
     def __len__(self) -> int:
         return len(self.t0_times)
@@ -181,7 +179,7 @@ class SatelliteDataset(Dataset[tuple[NDArray[np.float32], NDArray[np.float32]]])
             y = np.nan_to_num(y, nan=-1)
 
         return X.astype(np.float32), y.astype(np.float32)
-    
+
     def __getitem__(self, key: DataIndex) -> tuple[NDArray[np.float32], NDArray[np.float32]]:
         if isinstance(key, int):
             t0 = self.t0_times[key]
@@ -192,7 +190,7 @@ class SatelliteDataset(Dataset[tuple[NDArray[np.float32], NDArray[np.float32]]])
             assert t0 in self.t0_times
 
         return self._get_datetime(t0)
-    
+
 
 class ValidationSatelliteDataset(SatelliteDataset):
     def __init__(
@@ -215,18 +213,19 @@ class ValidationSatelliteDataset(SatelliteDataset):
 
         super().__init__(
             zarr_path=zarr_path,
-            start_time=None, 
+            start_time=None,
             end_time=None,
-            history_mins=history_mins, 
-            forecast_mins=forecast_mins, 
+            history_mins=history_mins,
+            forecast_mins=forecast_mins,
             sample_freq_mins=sample_freq_mins,
             preshuffle=False,
             nan_to_num=nan_to_num,
         )
 
     @staticmethod
-    def _find_t0_times(date_range: pd.DatetimeIndex, history_mins: int, forecast_mins: int, sample_freq_mins: int) -> pd.DatetimeIndex:
-
+    def _find_t0_times(
+        date_range: pd.DatetimeIndex, history_mins: int, forecast_mins: int, sample_freq_mins: int
+    ) -> pd.DatetimeIndex:
         # Find the valid t0 times for the available data. This avoids trying to take samples where
         # there would be a missing timestamp in the sat data required for the sample
         available_t0_times = find_valid_t0_times(
@@ -235,11 +234,11 @@ class ValidationSatelliteDataset(SatelliteDataset):
 
         # Get the required validation t0 times
         val_t0_times_from_csv = get_required_validation_t0_times()
-        
+
         # Find the intersection of the available t0 times and the required validation t0 times
         val_time_available = val_t0_times_from_csv.isin(available_t0_times)
 
-        # Make sure all of the required validation times are available in the data
+        # Make sure all of the required validation times are available in the data
         if not val_time_available.all():
             msg = (
                 "The following validation t0 times are not available in the satellite data: \n"
@@ -247,21 +246,24 @@ class ValidationSatelliteDataset(SatelliteDataset):
                 "The validation proceedure requires these t0 times to be available."
             )
             raise ValueError(msg)
-        
+
         return val_t0_times_from_csv
-    
+
+
 def _get_t0_times(path: str) -> pd.DatetimeIndex:
     """Get the required validation t0 times"""
 
     # Load the zipped csv file as a byte stream
-    byte_stream = io.BytesIO(pkgutil.get_data("cloudcasting", path))
+    data = pkgutil.get_data("cloudcasting", path)
+    if data is not None:
+        byte_stream = io.BytesIO(data)
+    else:
+        # Handle the case where data is None
+        msg = f"No data found for path: {path}"
+        raise ValueError(msg)
 
     # Load the times into pandas
-    df = pd.read_csv(
-        byte_stream, 
-        encoding='utf8', 
-        compression='zip'
-    )
+    df = pd.read_csv(byte_stream, encoding="utf8", compression="zip")
 
     return pd.DatetimeIndex(df.t0_time)
 
@@ -270,9 +272,8 @@ def get_required_validation_t0_times() -> pd.DatetimeIndex:
     """Get the required validation t0 times"""
     return _get_t0_times("data/2022_t0_val_times.csv.zip")
 
-def get_required_test_t0_times() -> pd.DatetimeIndex: ...
-    
 
+# def get_required_test_t0_times() -> pd.DatetimeIndex: ...
 
 
 class SatelliteDataModule(LightningDataModule):

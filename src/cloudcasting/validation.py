@@ -1,21 +1,21 @@
+from collections.abc import Callable
+
 import numpy as np
-from pathlib import Path
-from typing import Callable
-from cloudcasting.models import AbstractModel
-from cloudcasting.types import TimeArray, ForecastArray
-from cloudcasting.dataset import ValidationSatelliteDataset
-from cloudcasting.metrics import mae_batch, mse_batch, ssim_batch
-from cloudcasting.utils import numpy_validation_collate_fn
 from torch.utils.data import DataLoader
+
+from cloudcasting.dataset import ValidationSatelliteDataset
+from cloudcasting.metrics import mae_batch, mse_batch
+from cloudcasting.models import AbstractModel
+from cloudcasting.types import ForecastArray, TimeArray
+from cloudcasting.utils import numpy_validation_collate_fn
 
 # defined in manchester prize technical document
 FORECAST_HORIZON_MINUTES = 180
 DATA_INTERVAL_SPACING_MINUTES = 15
 
 
-
-
 # wandb tracking
+
 
 # validation loop
 # specify times to run over (not controlled by user)
@@ -23,7 +23,14 @@ DATA_INTERVAL_SPACING_MINUTES = 15
 #    - res = model(file)
 #    - -> set of metrics that assess res
 # log to wandb (?)
-def validate(model: AbstractModel, data_path: Path, nan_to_num: bool = False, batch_size: int = 1, num_workers: int = 0, num_termination_batches: int | None = None) -> dict[str, TimeArray]:
+def validate(
+    model: AbstractModel,
+    data_path: list[str] | str,
+    nan_to_num: bool = False,
+    batch_size: int = 1,
+    num_workers: int = 0,
+    num_termination_batches: int | None = None,
+) -> dict[str, TimeArray]:
     """_summary_
 
     Args:
@@ -35,12 +42,15 @@ def validate(model: AbstractModel, data_path: Path, nan_to_num: bool = False, ba
         num_termination_batches (int | None, optional): Defaults to None. For testing purposes only.
 
     Returns:
-        dict[str, TimeArray]: keys are metric names, 
+        dict[str, TimeArray]: keys are metric names,
         values are arrays of results averaged over all dims except time.
     """
 
     # check the the data spacing perfectly divides the forecast horizon
-    assert FORECAST_HORIZON_MINUTES % DATA_INTERVAL_SPACING_MINUTES == 0, "forecast horizon must be a multiple of the data interval (please make an issue on github if you see this!!!!)"
+    assert FORECAST_HORIZON_MINUTES % DATA_INTERVAL_SPACING_MINUTES == 0, (
+        "forecast horizon must be a multiple of the data interval "
+        "(please make an issue on github if you see this!!!!)"
+    )
 
     valid_dataset = ValidationSatelliteDataset(
         zarr_path=data_path,
@@ -51,30 +61,27 @@ def validate(model: AbstractModel, data_path: Path, nan_to_num: bool = False, ba
     )
 
     valid_dataloader = DataLoader(
-        valid_dataset, 
-        batch_size=batch_size, 
+        valid_dataset,
+        batch_size=batch_size,
         num_workers=num_workers,
         shuffle=False,
         collate_fn=numpy_validation_collate_fn,
         drop_last=False,
     )
-    
+
     metric_funcs: dict[str, Callable[[ForecastArray, ForecastArray], TimeArray]] = {
         "mae": mae_batch,
         "mse": mse_batch,
         # "ssim": ssim_batch,  # currently unstable with nans
     }
-    metrics = {k: [] for k in metric_funcs.keys()}
-
-    num_batches_ran = 0
+    metrics: dict[str, list[TimeArray]] = {k: [] for k in metric_funcs}
 
     # we probably want to accumulate metrics here instead of taking the mean of means!
-    for X, y in valid_dataloader:
+    for num_batches_ran, (X, y) in enumerate(valid_dataloader):
         y_hat = model(X)
         for metric_name, metric_func in metric_funcs.items():
             metrics[metric_name].append(metric_func(y_hat, y))
 
-        num_batches_ran += 1
         if num_termination_batches is not None and num_batches_ran >= num_termination_batches:
             break
 
@@ -85,7 +92,8 @@ def validate(model: AbstractModel, data_path: Path, nan_to_num: bool = False, ba
     # technically, if we've made a mistake in the shapes/reduction dim, this would silently fail
     # if the number of batches equals the number of timesteps
     for v in res.values():
-        assert v.shape == (num_timesteps,), f"metric {v.shape} is not the correct shape (should be {(num_timesteps,)})"
+        assert v.shape == (
+            num_timesteps,
+        ), f"metric {v.shape} is not the correct shape (should be {(num_timesteps,)})"
 
     return res
-        

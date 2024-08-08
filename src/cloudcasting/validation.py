@@ -1,4 +1,5 @@
 import numpy as np
+import wandb
 from pathlib import Path
 from typing import Callable
 from cloudcasting.models import AbstractModel
@@ -16,6 +17,25 @@ DATA_INTERVAL_SPACING_MINUTES = 15
 
 
 # wandb tracking
+def push_horizon_metric_plot_to_wandb(
+    horizon_mins: TimeArray,
+    metric_values: TimeArray,
+    plot_name: str,
+    metric_name: str,
+):
+    """Upload a plot of metric value vs forecast horizon to wandb
+    
+    Args:
+        horizon_mins: Array of the number of minutes after the init time for each predicted frame
+            of satellite data
+        metric_values: Array of the mean metric value at each forecast horizon
+        plot_name: The name under which to save the plot to wandb
+        metric_name: The name of the metric used to label the y-axis in the uploaded plot
+    """
+    data = [[x, y] for (x, y) in zip(horizon_mins, metric_values, strict=False)]
+    table = wandb.Table(data=data, columns=["horizon_mins", metric_name])
+    wandb.log({plot_name: wandb.plot.line(table, "horizon_mins", metric_name, title=plot_name)})
+
 
 # validation loop
 # specify times to run over (not controlled by user)

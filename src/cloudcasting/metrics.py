@@ -1,8 +1,10 @@
 """Metrics for model output evaluation"""
 
 import numpy as np
-from skimage.metrics import structural_similarity
-from cloudcasting.types import SingleArray, BatchArray, InputArray, TimeArray
+from skimage.metrics import structural_similarity  # type: ignore[import-not-found]
+
+from cloudcasting.types import BatchArray, InputArray, SingleArray, TimeArray
+
 
 def mae_single(input: SingleArray, target: SingleArray) -> TimeArray:
     """Mean absolute error for single (non-batched) image sequences.
@@ -86,9 +88,9 @@ def ssim_single(input: SingleArray, target: SingleArray, win_size: int | None = 
             channel_axis=0,
             full=True,
             win_size=win_size,
-        )  # type: ignore[no-untyped-call]
+        )
         # isinstance check for channels/height/width arr
-        
+
         ssim_seq.append(np.nanmean(ssim_array, axis=(0, 1, 2)))
     arr: TimeArray = np.stack(ssim_seq, axis=0)
     return arr

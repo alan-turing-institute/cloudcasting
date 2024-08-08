@@ -1,6 +1,6 @@
-import pytest
 import numpy as np
 import pandas as pd
+import pytest
 
 from cloudcasting.dataset import (
     SatelliteDataModule,
@@ -146,16 +146,25 @@ def test_validation_dataset(val_sat_zarr_path, val_dataset_hyperparams):
     # 1 x-dim steps
     # (60 / 15) + 1 = 5 history steps
     # (180 / 15) = 12 forecast steps
-    assert X.shape == (11, 5, val_dataset_hyperparams["y_geostationary_size"], val_dataset_hyperparams["x_geostationary_size"])
-    assert y.shape == (11, 12, val_dataset_hyperparams["y_geostationary_size"], val_dataset_hyperparams["x_geostationary_size"])
+    assert X.shape == (
+        11,
+        5,
+        val_dataset_hyperparams["y_geostationary_size"],
+        val_dataset_hyperparams["x_geostationary_size"],
+    )
+    assert y.shape == (
+        11,
+        12,
+        val_dataset_hyperparams["y_geostationary_size"],
+        val_dataset_hyperparams["x_geostationary_size"],
+    )
 
 
 def test_validation_dataset_raises_error(sat_zarr_path):
     with pytest.raises(ValueError, match="The following validation t0 times are not available"):
-        dataset = ValidationSatelliteDataset(
+        ValidationSatelliteDataset(
             zarr_path=sat_zarr_path,
             history_mins=60,
             forecast_mins=180,
             sample_freq_mins=15,
         )
-

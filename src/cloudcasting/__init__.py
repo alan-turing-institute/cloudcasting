@@ -19,5 +19,12 @@ with install_import_hook("cloudcasting", "typeguard.typechecked"):
 
 from cloudcasting import cli, dataset, download
 
-__all__ = ("__version__", "download", "cli", "dataset", "metrics", "models",)
+__all__ = (
+    "__version__",
+    "download",
+    "cli",
+    "dataset",
+    "metrics",
+    "models",
+)
 __version__ = version(__name__)

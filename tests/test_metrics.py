@@ -1,8 +1,8 @@
 import jaxtyping
 import numpy as np
 import pytest
-import torch
 
+# import torch
 from cloudcasting.metrics import (
     mae_batch,
     mae_single,
@@ -88,6 +88,7 @@ def test_calc_mse_batch(zeros_batch, ones_batch):
     result = mse_batch(ones_batch * 2, zeros_batch)
     assert (result == 4).all()
 
+
 # currently unstable with nans
 # def test_calc_ssim_sample(zeros_sample, ones_sample, zeros_missing_sample):
 #     result = ssim_single(zeros_sample, zeros_sample)
@@ -132,6 +133,7 @@ def test_wrong_shapes(zeros_sample, ones_batch):
 
     with pytest.raises(jaxtyping.TypeCheckError):
         ssim_batch(zeros_sample, ones_batch)
+
 
 # currently unsupported -- we assume numpy arrays
 # def test_wrong_shapes_torch(zeros_sample, ones_batch):

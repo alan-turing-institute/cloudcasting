@@ -6,7 +6,7 @@ ROLLOUT_STEPS_TEST = 12
 
 @pytest.fixture
 def model():
-    return PersistenceModel(history_mins=0, rollout_steps=ROLLOUT_STEPS_TEST)
+    return PersistenceModel(history_steps=1, rollout_steps=ROLLOUT_STEPS_TEST)
 
 
 @pytest.mark.parametrize(

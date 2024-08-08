@@ -6,10 +6,10 @@ import numpy as np
 # model interface
 class AbstractModel(ABC):
     """An abstract class for validating a generic satellite prediction model"""
-    history_mins: int
+    history_steps: int
 
-    def __init__(self, history_mins: int) -> None:
-        self.history_mins: int = history_mins
+    def __init__(self, history_steps: int) -> None:
+        self.history_steps: int = history_steps
 
     @abstractmethod
     def forward(self, X: BatchArray) -> ForecastArray:
@@ -51,9 +51,9 @@ class AbstractModel(ABC):
         return y_hat
 
 class VariableHorizonModel(AbstractModel):
-    def __init__(self, rollout_steps: int, history_mins: int) -> None:
+    def __init__(self, rollout_steps: int, history_steps: int) -> None:
         self.rollout_steps: int = rollout_steps
-        super().__init__(history_mins)
+        super().__init__(history_steps)
 
 
     

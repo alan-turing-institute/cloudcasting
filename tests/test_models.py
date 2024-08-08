@@ -7,7 +7,7 @@ from conftest import PersistenceModel
 
 @pytest.fixture
 def model():
-    return PersistenceModel(history_mins=60, rollout_steps=5)
+    return PersistenceModel(history_steps=1, rollout_steps=5)
 
 def test_forward(model):
     # Create a sample input batch

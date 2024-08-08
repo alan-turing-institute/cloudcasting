@@ -10,13 +10,15 @@ from cloudcasting.models import AbstractModel
 from cloudcasting.types import ForecastArray, TimeArray
 from cloudcasting.utils import numpy_validation_collate_fn
 
+import cloudcasting
+
 # defined in manchester prize technical document
 FORECAST_HORIZON_MINUTES = 180
 DATA_INTERVAL_SPACING_MINUTES = 15
 
 
 # wandb tracking
-def push_horizon_metric_plot_to_wandb(
+def log_horizon_metric_plot_to_wandb(
     horizon_mins: TimeArray,
     metric_values: TimeArray,
     plot_name: str,
@@ -43,7 +45,7 @@ def push_horizon_metric_plot_to_wandb(
 #    - res = model(file)
 #    - -> set of metrics that assess res
 # log to wandb (?)
-def validate(
+def score_model_on_all_metrics(
     model: AbstractModel,
     data_path: list[str] | str,
     nan_to_num: bool = False,
@@ -51,7 +53,7 @@ def validate(
     num_workers: int = 0,
     num_termination_batches: int | None = None,
 ) -> dict[str, TimeArray]:
-    """_summary_
+    """Calculate the scoreboard metrics for the given model on the validation dataset.
 
     Args:
         model (AbstractModel): _description_
@@ -117,3 +119,77 @@ def validate(
         ), f"metric {v.shape} is not the correct shape (should be {(num_timesteps,)})"
 
     return res
+
+
+def validate(
+    model: AbstractModel,
+    data_path: list[str] | str,
+    wandb_project_name: str,
+    wandb_run_name: str,
+    nan_to_num: bool = False,
+    batch_size: int = 1,
+    num_workers: int = 0,
+    num_termination_batches: int | None = None,
+) -> None:
+    """_summary_
+
+    Args:
+        model (AbstractModel): _description_
+        data_path (Path): _description_
+        nan_to_num (bool, optional): Whether to convert NaNs to -1. Defaults to False.
+        batch_size (int, optional): Defaults to 1.
+        num_workers (int, optional): Defaults to 0.
+        num_termination_batches (int | None, optional): Defaults to None. For testing purposes only.
+
+    Returns:
+        dict[str, TimeArray]: keys are metric names,
+        values are arrays of results averaged over all dims except time.
+    """
+
+    # Login to wandb
+    wandb.login()
+
+    # Calculate the metrics before logging to wandb
+    horizon_metrics_dict = score_model_on_all_metrics(
+        model, 
+        data_path, 
+        nan_to_num=nan_to_num, 
+        batch_size=batch_size, 
+        num_workers=num_workers, 
+        num_termination_batches=num_termination_batches,
+    )
+
+    # Append to the wandb run name if we are limiting the number of batches
+    if num_termination_batches is not None:
+        wandb_run_name = wandb_run_name + f"-limited-to-{num_termination_batches}batches"
+
+    # Start a wandb run
+    wandb_run = wandb.init(
+        project=wandb_project_name,
+        name=wandb_run_name,
+    )
+
+    # Add the cloudcasting version to the wandb config
+    wandb.config.update(
+        {
+            "cloudcast_version": cloudcasting.__version__,
+            "batch_limit": num_termination_batches,
+        }
+    )
+
+    # Log the model hyperparameters to wandb
+    wandb.config.update(model.hyperparameters_dict())
+
+    # Log plot of the horozon metrics to wandb
+    horizon_mins = (
+        np.arange(1, FORECAST_HORIZON_MINUTES//DATA_INTERVAL_SPACING_MINUTES+1)
+        *DATA_INTERVAL_SPACING_MINUTES
+    )
+
+    for metric_name, metric_array in horizon_metrics_dict.items():
+        log_horizon_metric_plot_to_wandb(
+            horizon_mins=horizon_mins,
+            metric_values=metric_array,
+            plot_name=f"{metric_name}-horizon",
+            metric_name=metric_name,
+        )

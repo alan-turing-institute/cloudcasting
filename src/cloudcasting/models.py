@@ -52,6 +52,11 @@ class AbstractModel(ABC):
         self.check_predictions(y_hat)
 
         return y_hat
+    
+    @abstractmethod
+    def hyperparameters_dict(self) -> dict:
+        """Return a dictionary of the hyperparameters used to train the model"""
+        pass
 
 
 class VariableHorizonModel(AbstractModel):

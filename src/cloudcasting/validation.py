@@ -131,7 +131,7 @@ def validate(
     num_workers: int = 0,
     num_termination_batches: int | None = None,
 ) -> None:
-    """_summary_
+    """Run the full validation procedure on the model and log the results to wandb.
 
     Args:
         model (AbstractModel): _description_
@@ -140,10 +140,6 @@ def validate(
         batch_size (int, optional): Defaults to 1.
         num_workers (int, optional): Defaults to 0.
         num_termination_batches (int | None, optional): Defaults to None. For testing purposes only.
-
-    Returns:
-        dict[str, TimeArray]: keys are metric names,
-        values are arrays of results averaged over all dims except time.
     """
 
     # Login to wandb

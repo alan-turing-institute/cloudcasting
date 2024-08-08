@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
 import numpy as np
 
@@ -8,6 +9,7 @@ from cloudcasting.types import BatchArray, ForecastArray
 # model interface
 class AbstractModel(ABC):
     """An abstract class for validating a generic satellite prediction model"""
+
     history_steps: int
 
     def __init__(self, history_steps: int) -> None:
@@ -52,11 +54,10 @@ class AbstractModel(ABC):
         self.check_predictions(y_hat)
 
         return y_hat
-    
+
     @abstractmethod
-    def hyperparameters_dict(self) -> dict:
+    def hyperparameters_dict(self) -> dict[str, Any]:
         """Return a dictionary of the hyperparameters used to train the model"""
-        pass
 
 
 class VariableHorizonModel(AbstractModel):

@@ -1,16 +1,15 @@
 from collections.abc import Callable
-import wandb
 
 import numpy as np
+import wandb  # type: ignore[import-not-found]
 from torch.utils.data import DataLoader
 
+import cloudcasting
 from cloudcasting.dataset import ValidationSatelliteDataset
 from cloudcasting.metrics import mae_batch, mse_batch
 from cloudcasting.models import AbstractModel
 from cloudcasting.types import ForecastArray, TimeArray
 from cloudcasting.utils import numpy_validation_collate_fn
-
-import cloudcasting
 
 # defined in manchester prize technical document
 FORECAST_HORIZON_MINUTES = 180
@@ -23,9 +22,9 @@ def log_horizon_metric_plot_to_wandb(
     metric_values: TimeArray,
     plot_name: str,
     metric_name: str,
-):
+) -> None:
     """Upload a plot of metric value vs forecast horizon to wandb
-    
+
     Args:
         horizon_mins: Array of the number of minutes after the init time for each predicted frame
             of satellite data
@@ -36,7 +35,6 @@ def log_horizon_metric_plot_to_wandb(
     data = [[x, y] for (x, y) in zip(horizon_mins, metric_values, strict=False)]
     table = wandb.Table(data=data, columns=["horizon_mins", metric_name])
     wandb.log({plot_name: wandb.plot.line(table, "horizon_mins", metric_name, title=plot_name)})
-
 
 
 # validation loop
@@ -76,7 +74,7 @@ def score_model_on_all_metrics(
 
     valid_dataset = ValidationSatelliteDataset(
         zarr_path=data_path,
-        history_mins=model.history_mins,
+        history_mins=model.history_steps * DATA_INTERVAL_SPACING_MINUTES,
         forecast_mins=FORECAST_HORIZON_MINUTES,
         sample_freq_mins=DATA_INTERVAL_SPACING_MINUTES,
         nan_to_num=nan_to_num,
@@ -145,13 +143,13 @@ def validate(
     # Login to wandb
     wandb.login()
 
-    # Calculate the metrics before logging to wandb
+    # Calculate the metrics before logging to wandb
     horizon_metrics_dict = score_model_on_all_metrics(
-        model, 
-        data_path, 
-        nan_to_num=nan_to_num, 
-        batch_size=batch_size, 
-        num_workers=num_workers, 
+        model,
+        data_path,
+        nan_to_num=nan_to_num,
+        batch_size=batch_size,
+        num_workers=num_workers,
         num_termination_batches=num_termination_batches,
     )
 
@@ -160,7 +158,7 @@ def validate(
         wandb_run_name = wandb_run_name + f"-limited-to-{num_termination_batches}batches"
 
     # Start a wandb run
-    wandb_run = wandb.init(
+    wandb.init(
         project=wandb_project_name,
         name=wandb_run_name,
     )
@@ -177,9 +175,11 @@ def validate(
     wandb.config.update(model.hyperparameters_dict())
 
     # Log plot of the horozon metrics to wandb
-    horizon_mins = (
-        np.arange(1, FORECAST_HORIZON_MINUTES//DATA_INTERVAL_SPACING_MINUTES+1)
-        *DATA_INTERVAL_SPACING_MINUTES
+    horizon_mins = np.arange(
+        start=DATA_INTERVAL_SPACING_MINUTES,
+        stop=FORECAST_HORIZON_MINUTES + DATA_INTERVAL_SPACING_MINUTES,
+        step=DATA_INTERVAL_SPACING_MINUTES,
+        dtype=np.float32,
     )
 
     for metric_name, metric_array in horizon_metrics_dict.items():

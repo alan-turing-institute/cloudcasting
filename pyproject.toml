@@ -40,7 +40,7 @@ dependencies = [
     "torch",
     "scikit-image",
     "jaxtyping",
-    "numpy<2.0.0", # causing issues with torch
+    "numpy<2.0.0", # numpy 2 causing issues with torch
     "matplotlib",
 ]
 [project.optional-dependencies]

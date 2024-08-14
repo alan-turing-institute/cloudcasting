@@ -173,9 +173,9 @@ def download_satellite_data(
                 del ds[v].encoding["chunks"]
 
         target_chunks_dict = {
-            "time": 1,
-            "x_geostationary": 100,
-            "y_geostationary": 100,
+            "time": 2,
+            "x_geostationary": -1,
+            "y_geostationary": -1,
             "variable": -1,
         }
 

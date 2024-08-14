@@ -40,8 +40,7 @@ dependencies = [
     "torch>=2.3.0", # needed for numpy 2.0
     "scikit-image",
     "jaxtyping",
-    "numpy",
-    "matplotlib",
+    "wandb",
 ]
 [project.optional-dependencies]
 dev = [

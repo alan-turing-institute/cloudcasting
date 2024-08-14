@@ -40,6 +40,7 @@ dependencies = [
     "torch",
     "scikit-image",
     "jaxtyping",
+    "wandb",
 ]
 [project.optional-dependencies]
 dev = [

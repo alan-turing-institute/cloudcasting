@@ -1,20 +1,20 @@
 import pytest
 from conftest import PersistenceModel
 
-from cloudcasting.validation import validate
+from cloudcasting.validation import score_model_on_all_metrics
 
 ROLLOUT_STEPS_TEST = 12
 
 
 @pytest.fixture()
 def model():
-    return PersistenceModel(history_mins=0, rollout_steps=ROLLOUT_STEPS_TEST)
+    return PersistenceModel(history_steps=1, rollout_steps=ROLLOUT_STEPS_TEST)
 
 
 @pytest.mark.parametrize("nan_to_num", [True, False])
-def test_validate(val_sat_zarr_path, model, nan_to_num):
-    # Call the validate function
-    metrics_dict = validate(
+def test_score_model_on_all_metrics(val_sat_zarr_path, model, nan_to_num):
+    # Call the score_model_on_all_metrics function
+    metrics_dict = score_model_on_all_metrics(
         model=model,
         data_path=val_sat_zarr_path,
         nan_to_num=nan_to_num,

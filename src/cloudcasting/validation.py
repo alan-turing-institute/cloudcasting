@@ -36,6 +36,17 @@ def log_horizon_metric_plot_to_wandb(
     table = wandb.Table(data=data, columns=["horizon_mins", metric_name])
     wandb.log({plot_name: wandb.plot.line(table, "horizon_mins", metric_name, title=plot_name)})
 
+def log_mean_metrics_to_wandb(    
+    metric_value: float,
+    plot_name: str,
+    metric_name: str,
+) -> None:
+
+    data = [[metric_name, metric_value]]
+    
+    table = wandb.Table(data=data, columns = ["metric name", "value"])
+
+    wandb.log({plot_name : wandb.plot.bar(table, "metric name", "value", title=plot_name)})
 
 # validation loop
 # specify times to run over (not controlled by user)
@@ -118,6 +129,16 @@ def score_model_on_all_metrics(
 
     return res
 
+def calc_mean_metrics(horizon_metrics_dict: dict[str, TimeArray]) -> dict[str, float]:
+    """Calculate the mean of each metric over the forecast horizon.
+
+    Args:
+        horizon_metrics_dict: dict of metric names and arrays of metric values
+
+    Returns:
+        dict: metric names and their mean values
+    """
+    return {k: np.mean(v) for k, v in horizon_metrics_dict.items()}
 
 def validate(
     model: AbstractModel,
@@ -152,6 +173,9 @@ def validate(
         num_workers=num_workers,
         num_termination_batches=num_termination_batches,
     )
+
+    # Calculate the mean of each metric over the forecast horizon
+    mean_metrics_dict = calc_mean_metrics(horizon_metrics_dict)
 
     # Append to the wandb run name if we are limiting the number of batches
     if num_termination_batches is not None:
@@ -189,3 +213,6 @@ def validate(
             plot_name=f"{metric_name}-horizon",
             metric_name=metric_name,
         )
+
+    # Log the mean metrics to wandb
+    wandb.log(mean_metrics_dict)

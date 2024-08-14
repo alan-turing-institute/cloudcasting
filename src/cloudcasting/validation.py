@@ -198,7 +198,7 @@ def validate(
     # Log the model hyperparameters to wandb
     wandb.config.update(model.hyperparameters_dict())
 
-    # Log plot of the horozon metrics to wandb
+    # Log plot of the horizon metrics to wandb
     horizon_mins = np.arange(
         start=DATA_INTERVAL_SPACING_MINUTES,
         stop=FORECAST_HORIZON_MINUTES + DATA_INTERVAL_SPACING_MINUTES,
@@ -215,4 +215,10 @@ def validate(
         )
 
     # Log the mean metrics to wandb
-    wandb.log(mean_metrics_dict)
+
+    for metric_name, metric_value in mean_metrics_dict.items():
+        log_mean_metrics_to_wandb(
+            metric_value=metric_value,
+            plot_name=f"{metric_name}-mean",
+            metric_name=metric_name,
+        )

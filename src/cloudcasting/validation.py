@@ -3,6 +3,7 @@ from collections.abc import Callable
 import numpy as np
 import wandb  # type: ignore[import-not-found]
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 import cloudcasting
 from cloudcasting.dataset import ValidationSatelliteDataset
@@ -14,9 +15,9 @@ from cloudcasting.utils import numpy_validation_collate_fn
 # defined in manchester prize technical document
 FORECAST_HORIZON_MINUTES = 180
 DATA_INTERVAL_SPACING_MINUTES = 15
+WANDB_ENTITY = "manchester_prize"
 
 
-# wandb tracking
 def log_horizon_metric_plot_to_wandb(
     horizon_mins: TimeArray,
     metric_values: TimeArray,
@@ -37,19 +38,25 @@ def log_horizon_metric_plot_to_wandb(
     wandb.log({plot_name: wandb.plot.line(table, "horizon_mins", metric_name, title=plot_name)})
 
 
-# validation loop
-# specify times to run over (not controlled by user)
-# - for each file in the validation set:
-#    - res = model(file)
-#    - -> set of metrics that assess res
-# log to wandb (?)
+def log_mean_metrics_to_wandb(
+    metric_value: float,
+    plot_name: str,
+    metric_name: str,
+) -> None:
+    data = [[metric_name, metric_value]]
+
+    table = wandb.Table(data=data, columns=["metric name", "value"])
+
+    wandb.log({plot_name: wandb.plot.bar(table, "metric name", "value", title=plot_name)})
+
+
 def score_model_on_all_metrics(
     model: AbstractModel,
     data_path: list[str] | str,
     nan_to_num: bool = False,
     batch_size: int = 1,
     num_workers: int = 0,
-    num_termination_batches: int | None = None,
+    batch_limit: int | None = None,
 ) -> dict[str, TimeArray]:
     """Calculate the scoreboard metrics for the given model on the validation dataset.
 
@@ -59,7 +66,7 @@ def score_model_on_all_metrics(
         nan_to_num (bool, optional): Whether to convert NaNs to -1. Defaults to False.
         batch_size (int, optional): Defaults to 1.
         num_workers (int, optional): Defaults to 0.
-        num_termination_batches (int | None, optional): Defaults to None. For testing purposes only.
+        batch_limit (int | None, optional): Defaults to None. For testing purposes only.
 
     Returns:
         dict[str, TimeArray]: keys are metric names,
@@ -97,12 +104,14 @@ def score_model_on_all_metrics(
     metrics: dict[str, list[TimeArray]] = {k: [] for k in metric_funcs}
 
     # we probably want to accumulate metrics here instead of taking the mean of means!
-    for num_batches_ran, (X, y) in enumerate(valid_dataloader):
+    loop_steps = len(valid_dataloader) if batch_limit is None else batch_limit
+
+    for i, (X, y) in tqdm(enumerate(valid_dataloader), total=loop_steps):
         y_hat = model(X)
         for metric_name, metric_func in metric_funcs.items():
             metrics[metric_name].append(metric_func(y_hat, y))
 
-        if num_termination_batches is not None and num_batches_ran >= num_termination_batches:
+        if batch_limit is not None and i >= batch_limit:
             break
 
     res = {k: np.mean(v, axis=0) for k, v in metrics.items()}
@@ -119,6 +128,18 @@ def score_model_on_all_metrics(
     return res
 
 
+def calc_mean_metrics(horizon_metrics_dict: dict[str, TimeArray]) -> dict[str, float]:
+    """Calculate the mean of each metric over the forecast horizon.
+
+    Args:
+        horizon_metrics_dict: dict of metric names and arrays of metric values
+
+    Returns:
+        dict: metric names and their mean values
+    """
+    return {k: np.mean(v) for k, v in horizon_metrics_dict.items()}
+
+
 def validate(
     model: AbstractModel,
     data_path: list[str] | str,
@@ -127,7 +148,7 @@ def validate(
     nan_to_num: bool = False,
     batch_size: int = 1,
     num_workers: int = 0,
-    num_termination_batches: int | None = None,
+    batch_limit: int | None = None,
 ) -> None:
     """Run the full validation procedure on the model and log the results to wandb.
 
@@ -137,7 +158,7 @@ def validate(
         nan_to_num (bool, optional): Whether to convert NaNs to -1. Defaults to False.
         batch_size (int, optional): Defaults to 1.
         num_workers (int, optional): Defaults to 0.
-        num_termination_batches (int | None, optional): Defaults to None. For testing purposes only.
+        batch_limit (int | None, optional): Defaults to None. For testing purposes only.
     """
 
     # Login to wandb
@@ -150,31 +171,35 @@ def validate(
         nan_to_num=nan_to_num,
         batch_size=batch_size,
         num_workers=num_workers,
-        num_termination_batches=num_termination_batches,
+        batch_limit=batch_limit,
     )
 
+    # Calculate the mean of each metric over the forecast horizon
+    mean_metrics_dict = calc_mean_metrics(horizon_metrics_dict)
+
     # Append to the wandb run name if we are limiting the number of batches
-    if num_termination_batches is not None:
-        wandb_run_name = wandb_run_name + f"-limited-to-{num_termination_batches}batches"
+    if batch_limit is not None:
+        wandb_run_name = wandb_run_name + f"-limited-to-{batch_limit}batches"
 
     # Start a wandb run
     wandb.init(
         project=wandb_project_name,
         name=wandb_run_name,
+        entity=WANDB_ENTITY,
     )
 
     # Add the cloudcasting version to the wandb config
     wandb.config.update(
         {
             "cloudcast_version": cloudcasting.__version__,
-            "batch_limit": num_termination_batches,
+            "batch_limit": batch_limit,
         }
     )
 
     # Log the model hyperparameters to wandb
     wandb.config.update(model.hyperparameters_dict())
 
-    # Log plot of the horozon metrics to wandb
+    # Log plot of the horizon metrics to wandb
     horizon_mins = np.arange(
         start=DATA_INTERVAL_SPACING_MINUTES,
         stop=FORECAST_HORIZON_MINUTES + DATA_INTERVAL_SPACING_MINUTES,
@@ -187,5 +212,14 @@ def validate(
             horizon_mins=horizon_mins,
             metric_values=metric_array,
             plot_name=f"{metric_name}-horizon",
+            metric_name=metric_name,
+        )
+
+    # Log the mean metrics to wandb
+
+    for metric_name, metric_value in mean_metrics_dict.items():
+        log_mean_metrics_to_wandb(
+            metric_value=metric_value,
+            plot_name=f"{metric_name}-mean",
             metric_name=metric_name,
         )

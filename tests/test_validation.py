@@ -1,5 +1,6 @@
 import pytest
 from conftest import PersistenceModel
+import numpy as np
 
 from cloudcasting.validation import score_model_on_all_metrics, validate, calc_mean_metrics
 
@@ -40,8 +41,8 @@ def test_score_model_on_all_metrics(val_sat_zarr_path, model, nan_to_num):
 def test_calc_mean_metrics():
     # Create a test dictionary of metrics
     test_metrics_dict = {
-        "mae": [1, 2, 3],
-        "mse": [4, 5, 6],
+        "mae": np.array([1., 2., 3.]),
+        "mse": np.array([4., 5., 6.]),
     }
 
     # Call the calc_mean_metrics function

@@ -135,7 +135,7 @@ def calc_mean_metrics(horizon_metrics_dict: dict[str, TimeArray]) -> dict[str, f
     Returns:
         dict: metric names and their mean values
     """
-    return {k: np.mean(v) for k, v in horizon_metrics_dict.items()}
+    return {k: float(np.mean(v)) for k, v in horizon_metrics_dict.items()}
 
 
 def validate(

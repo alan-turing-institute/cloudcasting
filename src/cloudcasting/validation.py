@@ -37,17 +37,16 @@ def log_horizon_metric_plot_to_wandb(
     wandb.log({plot_name: wandb.plot.line(table, "horizon_mins", metric_name, title=plot_name)})
 
 
-def log_mean_metrics_to_wandb(    
+def log_mean_metrics_to_wandb(
     metric_value: float,
     plot_name: str,
     metric_name: str,
 ) -> None:
-
     data = [[metric_name, metric_value]]
-    
-    table = wandb.Table(data=data, columns = ["metric name", "value"])
 
-    wandb.log({plot_name : wandb.plot.bar(table, "metric name", "value", title=plot_name)})
+    table = wandb.Table(data=data, columns=["metric name", "value"])
+
+    wandb.log({plot_name: wandb.plot.bar(table, "metric name", "value", title=plot_name)})
 
 
 def score_model_on_all_metrics(
@@ -178,7 +177,7 @@ def validate(
     # Append to the wandb run name if we are limiting the number of batches
     if num_termination_batches is not None:
         wandb_run_name = wandb_run_name + f"-limited-to-{num_termination_batches}batches"
-    
+
     # Start a wandb run
     wandb.init(
         project=wandb_project_name,
@@ -204,7 +203,7 @@ def validate(
         step=DATA_INTERVAL_SPACING_MINUTES,
         dtype=np.float32,
     )
-    
+
     for metric_name, metric_array in horizon_metrics_dict.items():
         log_horizon_metric_plot_to_wandb(
             horizon_mins=horizon_mins,
@@ -214,7 +213,7 @@ def validate(
         )
 
     # Log the mean metrics to wandb
-    
+
     for metric_name, metric_value in mean_metrics_dict.items():
         log_mean_metrics_to_wandb(
             metric_value=metric_value,

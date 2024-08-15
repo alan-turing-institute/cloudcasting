@@ -1,8 +1,8 @@
+import numpy as np
 import pytest
 from conftest import PersistenceModel
-import numpy as np
 
-from cloudcasting.validation import score_model_on_all_metrics, validate, calc_mean_metrics
+from cloudcasting.validation import calc_mean_metrics, score_model_on_all_metrics, validate
 
 ROLLOUT_STEPS_TEST = 12
 
@@ -41,8 +41,8 @@ def test_score_model_on_all_metrics(val_sat_zarr_path, model, nan_to_num):
 def test_calc_mean_metrics():
     # Create a test dictionary of metrics
     test_metrics_dict = {
-        "mae": np.array([1., 2., 3.]),
-        "mse": np.array([4., 5., 6.]),
+        "mae": np.array([1.0, 2.0, 3.0]),
+        "mse": np.array([4.0, 5.0, 6.0]),
     }
 
     # Call the calc_mean_metrics function
@@ -57,7 +57,6 @@ def test_calc_mean_metrics():
 
 
 def test_validate(model, val_sat_zarr_path, mocker):
-
     # Mock the wandb functions so they aren't run in testing
     mocker.patch("wandb.login")
     mocker.patch("wandb.init")
@@ -65,15 +64,14 @@ def test_validate(model, val_sat_zarr_path, mocker):
     mocker.patch("wandb.log")
     mocker.patch("wandb.plot.line")
     mocker.patch("wandb.plot.bar")
-    
 
     validate(
         model=model,
         data_path=val_sat_zarr_path,
         wandb_project_name="cloudcasting-pytest",
         wandb_run_name="test_validate",
-        nan_to_num = False,
-        batch_size = 2,
-        num_workers = 0,
-        num_termination_batches = 4,
+        nan_to_num=False,
+        batch_size=2,
+        num_workers=0,
+        num_termination_batches=4,
     )

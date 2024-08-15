@@ -14,9 +14,9 @@ from cloudcasting.utils import numpy_validation_collate_fn
 # defined in manchester prize technical document
 FORECAST_HORIZON_MINUTES = 180
 DATA_INTERVAL_SPACING_MINUTES = 15
+WANDB_ENTITY = "manchester_prize"
 
 
-# wandb tracking
 def log_horizon_metric_plot_to_wandb(
     horizon_mins: TimeArray,
     metric_values: TimeArray,
@@ -36,6 +36,7 @@ def log_horizon_metric_plot_to_wandb(
     table = wandb.Table(data=data, columns=["horizon_mins", metric_name])
     wandb.log({plot_name: wandb.plot.line(table, "horizon_mins", metric_name, title=plot_name)})
 
+
 def log_mean_metrics_to_wandb(    
     metric_value: float,
     plot_name: str,
@@ -48,12 +49,7 @@ def log_mean_metrics_to_wandb(
 
     wandb.log({plot_name : wandb.plot.bar(table, "metric name", "value", title=plot_name)})
 
-# validation loop
-# specify times to run over (not controlled by user)
-# - for each file in the validation set:
-#    - res = model(file)
-#    - -> set of metrics that assess res
-# log to wandb (?)
+
 def score_model_on_all_metrics(
     model: AbstractModel,
     data_path: list[str] | str,
@@ -129,6 +125,7 @@ def score_model_on_all_metrics(
 
     return res
 
+
 def calc_mean_metrics(horizon_metrics_dict: dict[str, TimeArray]) -> dict[str, float]:
     """Calculate the mean of each metric over the forecast horizon.
 
@@ -139,6 +136,7 @@ def calc_mean_metrics(horizon_metrics_dict: dict[str, TimeArray]) -> dict[str, f
         dict: metric names and their mean values
     """
     return {k: np.mean(v) for k, v in horizon_metrics_dict.items()}
+
 
 def validate(
     model: AbstractModel,
@@ -180,11 +178,12 @@ def validate(
     # Append to the wandb run name if we are limiting the number of batches
     if num_termination_batches is not None:
         wandb_run_name = wandb_run_name + f"-limited-to-{num_termination_batches}batches"
-
+    
     # Start a wandb run
     wandb.init(
         project=wandb_project_name,
         name=wandb_run_name,
+        entity=WANDB_ENTITY,
     )
 
     # Add the cloudcasting version to the wandb config
@@ -205,7 +204,7 @@ def validate(
         step=DATA_INTERVAL_SPACING_MINUTES,
         dtype=np.float32,
     )
-
+    
     for metric_name, metric_array in horizon_metrics_dict.items():
         log_horizon_metric_plot_to_wandb(
             horizon_mins=horizon_mins,
@@ -215,7 +214,7 @@ def validate(
         )
 
     # Log the mean metrics to wandb
-
+    
     for metric_name, metric_value in mean_metrics_dict.items():
         log_mean_metrics_to_wandb(
             metric_value=metric_value,

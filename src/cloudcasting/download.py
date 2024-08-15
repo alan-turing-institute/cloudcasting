@@ -48,10 +48,10 @@ def download_satellite_data(
     lon_max: Annotated[float, typer.Option(help="Maximum longitude")] = 10,
     lat_min: Annotated[float, typer.Option(help="Minimum latitude")] = 45,
     lat_max: Annotated[float, typer.Option(help="Maximum latitude")] = 70,
-    valid_set: Annotated[
+    test_2022_set: Annotated[
         bool,
         typer.Option(
-            help="Whether to filter data from 2022 to download the validation set (every 2 weeks)."
+            help="Whether to filter data from 2022 to download the test set (every 2 weeks)."
         ),
     ] = False,
 ) -> None:
@@ -140,16 +140,16 @@ def download_satellite_data(
         ds = ds.sel(time=dates_to_download[dates_to_download.isin(ds.time.values)])
 
         if year == 2022:
-            set_str = "Validation" if valid_set else "Training"
-            day_str = "15" if valid_set else "1"
-            logger.info("Data in 2022 will be downloaded every 2 weeks due to train/valid split.")
+            set_str = "Test_2022" if test_2022_set else "Training"
+            day_str = "15" if test_2022_set else "1"
+            logger.info("Data in 2022 will be downloaded every 2 weeks due to train/test split.")
             logger.info("%s set selected: Starting day will be %s", set_str, day_str)
             # integer division by 14 will tell us the week we're on.
             # checking the mod wrt 2 will let us select ever 2 weeks (weeks are 1-indexed)
-            # valid set is defined as from week 3-4, 7-8 etc. (where the mod is != 2).
+            # test set is defined as from week 3-4, 7-8 etc. (where the mod is != 2).
             mask = (
                 np.mod(ds.time.dt.dayofyear // 14, 2) != 0
-                if valid_set
+                if test_2022_set
                 else np.mod(ds.time.dt.dayofyear // 14, 2) == 0
             )
             ds = ds.sel(time=mask)
@@ -182,8 +182,8 @@ def download_satellite_data(
         ds = ds.chunk(target_chunks_dict)
 
         # Save data
-        valid_set_file_str = "validation" if valid_set else "training"
-        output_zarr_file = f"{output_directory}/{year}_{valid_set_file_str}_{file_end}"
+        test_set_file_str = "test" if test_2022_set else "training"
+        output_zarr_file = f"{output_directory}/{year}_{test_set_file_str}_{file_end}"
         with ProgressBar(dt=1):
             ds.to_zarr(output_zarr_file)
         logger.info("Data for %s saved to %s.", year, output_zarr_file)

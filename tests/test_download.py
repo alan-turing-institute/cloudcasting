@@ -34,13 +34,13 @@ def test_download_satellite_data(temp_output_dir):
     assert os.path.exists(expected_file)
 
 
-def test_download_satellite_data_valid_set(temp_output_dir):
-    # Only run this test on 2022 as it's the only year with a validation set.
-    # Want to make sure that the --valid-set flag works as expected.
+def test_download_satellite_data_test_2022_set(temp_output_dir):
+    # Only run this test on 2022 as it's the only year with a test_2022 set.
+    # Want to make sure that the --test-2022-set flag works as expected.
     start_date = "2022-01-01 00:00"
     end_date = "2022-03-01 00:00"
 
-    # Run the function with the --valid-set flag
+    # Run the function with the --test_2022-set flag
     download_satellite_data(
         start_date,
         end_date,
@@ -50,11 +50,11 @@ def test_download_satellite_data_valid_set(temp_output_dir):
         lon_max=1,
         lat_min=50,
         lat_max=51,
-        valid_set=True,
+        test_2022_set=True,
     )
 
     # Check if the output file was created and contains the expected data
-    expected_file = os.path.join(temp_output_dir, "2022_validation_nonhrv.zarr")
+    expected_file = os.path.join(temp_output_dir, "2022_test_nonhrv.zarr")
     assert os.path.exists(expected_file)
 
     ds = xr.open_zarr(expected_file)
@@ -64,14 +64,14 @@ def test_download_satellite_data_valid_set(temp_output_dir):
         assert day in ds.time.dt.dayofyear.values
 
 
-def test_download_satellite_data_2022_nonvalid_set(temp_output_dir):
-    # Only run this test on 2022 as it's the only year with a validation set.
-    # Want to make sure that the --valid-set flag works as expected.
-    # We need to make jumps of at least 2 weeks to ensure that the validation set is used.
+def test_download_satellite_data_2022_nontest_set(temp_output_dir):
+    # Only run this test on 2022 as it's the only year with a test set.
+    # Want to make sure that the --test-2022-set flag works as expected.
+    # We need to make jumps of at least 2 weeks to ensure that the test set is used.
     start_date = "2022-01-01 00:00"
     end_date = "2022-03-01 00:00"
 
-    # Run the function with the --valid-set flag turned off
+    # Run the function with the --test-set flag turned off
     download_satellite_data(
         start_date,
         end_date,

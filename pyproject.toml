@@ -53,9 +53,7 @@ dev = [
 ]
 
 [tool.setuptools]
-include = [
-  "cloudcasting/data/2022_t0_val_times.csv.zip",
-]
+include-package-data = true
 
 [project.scripts]
 cloudcasting = "cloudcasting.cli:app"

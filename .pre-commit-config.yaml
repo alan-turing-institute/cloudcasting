@@ -45,3 +45,4 @@ repos:
           - lightning
           - torch
           - jaxtyping
+          - types-tqdm

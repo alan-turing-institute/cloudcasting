@@ -49,7 +49,11 @@ dev = [
   "pytest-cov >=3",
   "pre-commit",
   "scipy",
+  "pytest-mock",
 ]
+
+[tool.setuptools.package-data]
+"cloudcasting" = ["data/*.zip"]
 
 [project.scripts]
 cloudcasting = "cloudcasting.cli:app"

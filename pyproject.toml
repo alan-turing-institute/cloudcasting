@@ -52,8 +52,8 @@ dev = [
   "pytest-mock",
 ]
 
-[tool.setuptools]
-include-package-data = true
+[tool.setuptools.package-data]
+"cloudcasting" = ["data/*.zip"]
 
 [project.scripts]
 cloudcasting = "cloudcasting.cli:app"

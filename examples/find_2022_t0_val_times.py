@@ -45,7 +45,11 @@ print(valid_t0_times)
 
 # Find the path of the cloudcasting package so we can save the valid times into it
 spec = importlib.util.find_spec("cloudcasting")
-package_path = os.path.dirname(spec.origin)
+if spec and spec.origin:
+    package_path = os.path.dirname(spec.origin)
+else:
+    msg = "Path of package `cloudcasting` can not be found"
+    raise ModuleNotFoundError(msg)
 
 # Save the valid t0 times
 filename = "2022_t0_val_times.csv"

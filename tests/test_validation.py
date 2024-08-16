@@ -21,7 +21,7 @@ def test_score_model_on_all_metrics(val_sat_zarr_path, model, nan_to_num):
         nan_to_num=nan_to_num,
         batch_size=2,
         num_workers=0,
-        num_termination_batches=3,
+        batch_limit=3,
     )
 
     # Check all the expected keys are there
@@ -73,5 +73,5 @@ def test_validate(model, val_sat_zarr_path, mocker):
         nan_to_num=False,
         batch_size=2,
         num_workers=0,
-        num_termination_batches=4,
+        batch_limit=4,
     )

@@ -57,10 +57,7 @@ def download_satellite_data(
     verify_2023_set: Annotated[
         bool,
         typer.Option(
-            help="""
-            Whether to download the verification data from 2023. Only used at the end of the project. 
-            If set there is no need to specify the start and end date.
-            """
+            help="Whether to download the verification data from 2023. Only used at the end of the project"
         ),
     ] = False,
 ) -> None:
@@ -124,10 +121,10 @@ def download_satellite_data(
         )
         raise ValueError(msg)
     
-    # Check the year is 2023 if verification data is being downloaded
-    if verify_2023_set and start_date_stamp != pd.Timestamp("2023") and end_date_stamp != pd.Timestamp("2023"):
+    # Check the start / end dates are correct if verification data is being downloaded
+    if verify_2023_set and start_date_stamp != pd.Timestamp("2023-01-01 00:00") and end_date_stamp != pd.Timestamp("2023-12-31 23:55"):
         msg = (
-            "Verification data is only defined for 2023"
+            "Verification data requires a start date of '2023-01-01 00:00' and an end date of '2023-12-31 23:55'."
         )
         raise ValueError(msg)
     

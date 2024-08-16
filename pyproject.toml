@@ -42,6 +42,7 @@ dependencies = [
     "jaxtyping",
     "wandb",
     "tqdm",
+    "types-tqdm",
 ]
 [project.optional-dependencies]
 dev = [

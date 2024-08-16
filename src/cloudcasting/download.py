@@ -54,6 +54,15 @@ def download_satellite_data(
             help="Whether to filter data from 2022 to download the test set (every 2 weeks)."
         ),
     ] = False,
+    verify_2023_set: Annotated[
+        bool,
+        typer.Option(
+            help="""
+            Whether to download the verification data from 2023. Only used at the end of the project. 
+            If set there is no need to specify the start and end date.
+            """
+        ),
+    ] = False,
 ) -> None:
     """
     Download a selection of the available EUMETSAT data.
@@ -72,6 +81,8 @@ def download_satellite_data(
         lat_max: The north-most latitude (in degrees) of the bounding box to download.
         get_hrv: Whether to download the HRV data, else non-HRV is downloaded.
         override_date_bounds: Whether to override the date range limits.
+        test_2022_set: Whether to filter data from 2022 to download the test set (every 2 weeks).
+        verify_2023_set: Whether to download the verification data from 2023. Only used at the end of the project.
 
     Raises:
         FileNotFoundError: If the output directory doesn't exist.
@@ -103,6 +114,27 @@ def download_satellite_data(
             "There are currently some issues with the EUMETSAT data before 2019/01/01. "
             "We recommend only using data from this date forward. "
             "To override this error set `override_date_bounds=True`"
+        )
+        raise ValueError(msg)
+    
+    # Check the year is 2022 if test data is being downloaded
+    if test_2022_set and start_date_stamp != pd.Timestamp("2022") and end_date_stamp != pd.Timestamp("2022"):
+        msg = (
+            "Test data is only defined for 2022"
+        )
+        raise ValueError(msg)
+    
+    # Check the year is 2023 if verification data is being downloaded
+    if verify_2023_set and start_date_stamp != pd.Timestamp("2023") and end_date_stamp != pd.Timestamp("2023"):
+        msg = (
+            "Verification data is only defined for 2023"
+        )
+        raise ValueError(msg)
+    
+    # Check the year is not 2023 unless verification data is being downloaded
+    if (start_date_stamp == pd.Timestamp("2023") or end_date_stamp == pd.Timestamp("2023")) and not verify_2023_set:
+        msg = (
+            "2023 data is reserved for the verification process"
         )
         raise ValueError(msg)
 

@@ -173,12 +173,13 @@ def download_satellite_data(
             day_str = "15" if test_2022_set else "1"
             logger.info("Data in 2022 will be downloaded every 2 weeks due to train/test split.")
             logger.info("%s set selected: Starting day will be %s", set_str, day_str)
-            # integer division by 14 will tell us the week we're on.
-            # checking the mod wrt 2 will let us select ever 2 weeks (weeks are 1-indexed)
-            # test set is defined as from week 3-4, 7-8 etc. (where the mod is != 2).
+            # Integer division by 14 will tell us the fortnight we're on.
+            # checking the mod wrt 2 will let us select every 2 weeks
+            # Valid set is defined as from week 2-3, 6-7 etc. 
+            # Weeks 0-1, 4-5 etc. are included in training set
             mask = (
-                np.mod(ds.time.dt.dayofyear // 14, 2) != 0
-                if test_2022_set
+                np.mod(ds.time.dt.dayofyear // 14, 2) == 1
+                if valid_set
                 else np.mod(ds.time.dt.dayofyear // 14, 2) == 0
             )
             ds = ds.sel(time=mask)

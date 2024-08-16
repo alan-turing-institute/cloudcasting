@@ -211,8 +211,14 @@ def download_satellite_data(
         ds = ds.chunk(target_chunks_dict)
 
         # Save data
-        test_set_file_str = "test" if test_2022_set else "training"
+        if test_2022_set: 
+            test_set_file_str = "test"
+        elif verify_2023_set:
+            test_set_file_str = "verification"
+        else: 
+            test_set_file_str = "training"
         output_zarr_file = f"{output_directory}/{year}_{test_set_file_str}_{file_end}"
+        logger.info("Downloading data for %s", year)
         with ProgressBar(dt=1):
             ds.to_zarr(output_zarr_file)
         logger.info("Data for %s saved to %s.", year, output_zarr_file)

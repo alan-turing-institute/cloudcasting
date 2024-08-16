@@ -20,7 +20,7 @@ def test_score_model_on_all_metrics(val_sat_zarr_path, model, nan_to_num):
         nan_to_num=nan_to_num,
         batch_size=2,
         num_workers=0,
-        num_termination_batches=3,
+        batch_limit=3,
     )
 
     # Check all the expected keys are there

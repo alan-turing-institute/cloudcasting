@@ -106,6 +106,6 @@ class PersistenceModel(VariableHorizonModel):
         latest_frame = latest_frame.clip(0, 1)
 
         return np.repeat(latest_frame, self.rollout_steps, axis=-3)
-    
+
     def hyperparameters_dict(self):
         return {"history_steps": self.history_steps}

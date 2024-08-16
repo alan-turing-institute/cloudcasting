@@ -175,7 +175,7 @@ def download_satellite_data(
             logger.info("%s set selected: Starting day will be %s", set_str, day_str)
             # Integer division by 14 will tell us the fortnight we're on.
             # checking the mod wrt 2 will let us select every 2 weeks
-            # Valid set is defined as from week 2-3, 6-7 etc. 
+            # Valid set is defined as from week 2-3, 6-7 etc.
             # Weeks 0-1, 4-5 etc. are included in training set
             mask = (
                 np.mod(ds.time.dt.dayofyear // 14, 2) == 1

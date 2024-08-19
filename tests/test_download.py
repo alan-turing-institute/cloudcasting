@@ -14,8 +14,8 @@ def temp_output_dir(tmp_path):
 
 def test_download_satellite_data(temp_output_dir):
     # Define test parameters
-    start_date = "2023-01-01 00:00"
-    end_date = "2023-01-01 00:30"
+    start_date = "2021-01-01 00:00"
+    end_date = "2021-01-01 00:30"
 
     # Run the function to download the file
     download_satellite_data(
@@ -30,7 +30,7 @@ def test_download_satellite_data(temp_output_dir):
     )
 
     # Check if the output file was created
-    expected_file = os.path.join(temp_output_dir, "2023_training_nonhrv.zarr")
+    expected_file = os.path.join(temp_output_dir, "2021_training_nonhrv.zarr")
     assert os.path.exists(expected_file)
 
 
@@ -96,10 +96,51 @@ def test_download_satellite_data_2022_nontest_set(temp_output_dir):
         assert day in ds.time.dt.dayofyear.values
 
 
+def test_download_satellite_data_test_2021_set(temp_output_dir):
+    # Want to make sure that the --test-2022-set flag works as expected.
+    start_date = "2021-01-01 00:00"
+    end_date = "2021-01-01 00:30"
+
+    # Run the function with the --test-2022-set flag
+    # Check if the expected error was raised
+    with pytest.raises(ValueError, match=r"Test data is only defined for 2022"):
+        download_satellite_data(
+            start_date,
+            end_date,
+            temp_output_dir,
+            download_frequency="15min",
+            lon_min=-1,
+            lon_max=1,
+            lat_min=50,
+            lat_max=51,
+            test_2022_set=True,
+        )
+
+def test_download_satellite_data_verify_set(temp_output_dir):
+    # Want to make sure that the --verify-2023-set flag works as expected.
+    start_date = "2023-01-01 00:00"
+    end_date = "2023-01-01 00:30"
+
+    # Run the function with the --verify-2023-set flag
+    # Check if the expected error was raised
+    with pytest.raises(ValueError, match=r"Verification data requires a start date of '2023-01-01 00:00' and an end date of '2023-12-31 23:55'"):
+        download_satellite_data(
+            start_date,
+            end_date,
+            temp_output_dir,
+            download_frequency="15min",
+            lon_min=-1,
+            lon_max=1,
+            lat_min=50,
+            lat_max=51,
+            verify_2023_set=True,
+        )
+
+
 def test_irregular_start_date(temp_output_dir):
     # Define test parameters
-    start_date = "2023-01-01 00:02"
-    end_date = "2023-01-01 00:30"
+    start_date = "2021-01-01 00:02"
+    end_date = "2021-01-01 00:30"
 
     # Run the function to download the file
     download_satellite_data(
@@ -114,7 +155,7 @@ def test_irregular_start_date(temp_output_dir):
     )
 
     # Check if the output file was created
-    expected_file = os.path.join(temp_output_dir, "2023_training_nonhrv.zarr")
+    expected_file = os.path.join(temp_output_dir, "2021_training_nonhrv.zarr")
     assert os.path.exists(expected_file)
 
     ds = xr.open_zarr(expected_file)

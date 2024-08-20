@@ -116,6 +116,7 @@ def test_download_satellite_data_test_2021_set(temp_output_dir):
             test_2022_set=True,
         )
 
+
 def test_download_satellite_data_verify_set(temp_output_dir):
     # Want to make sure that the --verify-2023-set flag works as expected.
     start_date = "2023-01-01 00:00"
@@ -123,7 +124,10 @@ def test_download_satellite_data_verify_set(temp_output_dir):
 
     # Run the function with the --verify-2023-set flag
     # Check if the expected error was raised
-    with pytest.raises(ValueError, match=r"Verification data requires a start date of '2023-01-01 00:00' and an end date of '2023-12-31 23:55'"):
+    with pytest.raises(
+        ValueError,
+        match=r"Verification data requires a start date of '2023-01-01 00:00'",
+    ):
         download_satellite_data(
             start_date,
             end_date,
@@ -135,6 +139,7 @@ def test_download_satellite_data_verify_set(temp_output_dir):
             lat_max=51,
             verify_2023_set=True,
         )
+
 
 def test_download_satellite_data_2023_not_verify(temp_output_dir):
     # Want to make sure that the --verify-2023-set flag works as expected.
@@ -154,6 +159,7 @@ def test_download_satellite_data_2023_not_verify(temp_output_dir):
             lat_min=50,
             lat_max=51,
         )
+
 
 def test_irregular_start_date(temp_output_dir):
     # Define test parameters

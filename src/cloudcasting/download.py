@@ -57,7 +57,7 @@ def download_satellite_data(
     verify_2023_set: Annotated[
         bool,
         typer.Option(
-            help="Whether to download the verification data from 2023. Only used at the end of the project"
+            help="Whether to download the verification data from 2023. Only used at project end"
         ),
     ] = False,
 ) -> None:
@@ -79,7 +79,7 @@ def download_satellite_data(
         get_hrv: Whether to download the HRV data, else non-HRV is downloaded.
         override_date_bounds: Whether to override the date range limits.
         test_2022_set: Whether to filter data from 2022 to download the test set (every 2 weeks).
-        verify_2023_set: Whether to download the verification data from 2023. Only used at the end of the project.
+        verify_2023_set: Whether to download verification data from 2023. Only used at project end.
 
     Raises:
         FileNotFoundError: If the output directory doesn't exist.
@@ -113,26 +113,26 @@ def download_satellite_data(
             "To override this error set `override_date_bounds=True`"
         )
         raise ValueError(msg)
-    
+
     # Check the year is 2022 if test data is being downloaded
     if test_2022_set and start_date_stamp.year != 2022 and end_date_stamp.year != 2022:
-        msg = (
-            "Test data is only defined for 2022"
-        )
+        msg = "Test data is only defined for 2022"
         raise ValueError(msg)
-    
+
     # Check the start / end dates are correct if verification data is being downloaded
-    if verify_2023_set and (start_date_stamp != pd.Timestamp("2023-01-01 00:00") or end_date_stamp != pd.Timestamp("2023-12-31 23:55")):
+    if verify_2023_set and (
+        start_date_stamp != pd.Timestamp("2023-01-01 00:00")
+        or end_date_stamp != pd.Timestamp("2023-12-31 23:55")
+    ):
         msg = (
-            "Verification data requires a start date of '2023-01-01 00:00' and an end date of '2023-12-31 23:55'"
+            "Verification data requires a start date of '2023-01-01 00:00'"
+            "and an end date of '2023-12-31 23:55'"
         )
         raise ValueError(msg)
-    
+
     # Check the year is not 2023 unless verification data is being downloaded
     if (start_date_stamp.year == 2023 or end_date_stamp.year == 2023) and not verify_2023_set:
-        msg = (
-            "2023 data is reserved for the verification process"
-        )
+        msg = "2023 data is reserved for the verification process"
         raise ValueError(msg)
 
     years = range(start_date_stamp.year, end_date_stamp.year + 1)
@@ -211,11 +211,11 @@ def download_satellite_data(
         ds = ds.chunk(target_chunks_dict)
 
         # Save data
-        if test_2022_set: 
+        if test_2022_set:
             test_set_file_str = "test"
         elif verify_2023_set:
             test_set_file_str = "verification"
-        else: 
+        else:
             test_set_file_str = "training"
         output_zarr_file = f"{output_directory}/{year}_{test_set_file_str}_{file_end}"
         logger.info("Downloading data for %s", year)

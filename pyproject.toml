@@ -49,6 +49,7 @@ dev = [
   "pytest-cov >=3",
   "pre-commit",
   "scipy",
+  "pyright",
 ]
 
 [project.scripts]

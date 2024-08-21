@@ -69,6 +69,7 @@ filterwarnings = [
   "ignore:pkg_resources:DeprecationWarning",                                        # lightning
   "ignore:Deprecated call to `pkg_resources.declare_namespace:DeprecationWarning",  # lightning
   "ignore:ast.Str is deprecated:DeprecationWarning",             # jaxtyping
+  "ignore::matplotlib._api.deprecation.MatplotlibDeprecationWarning:pydev",
 ]
 log_cli_level = "INFO"
 testpaths = [

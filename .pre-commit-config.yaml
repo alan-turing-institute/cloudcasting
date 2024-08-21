@@ -46,3 +46,4 @@ repos:
           - torch
           - jaxtyping
           - scikit-image
+          - numpy<2.0.0

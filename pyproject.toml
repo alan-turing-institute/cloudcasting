@@ -37,10 +37,10 @@ dependencies = [
     "ocf-blosc2>=0.0.10",  # for no-import codec register
     "typer",
     "lightning",
-    "torch",
+    "torch>=2.3.0", # needed for numpy 2.0
     "scikit-image",
     "jaxtyping",
-    "numpy<2.0.0", # numpy 2 causing issues with torch
+    "numpy",
     "matplotlib",
 ]
 [project.optional-dependencies]
@@ -69,7 +69,6 @@ filterwarnings = [
   "ignore:pkg_resources:DeprecationWarning",                                        # lightning
   "ignore:Deprecated call to `pkg_resources.declare_namespace:DeprecationWarning",  # lightning
   "ignore:ast.Str is deprecated:DeprecationWarning",             # jaxtyping
-  "ignore::matplotlib._api.deprecation.MatplotlibDeprecationWarning:pydev",
 ]
 log_cli_level = "INFO"
 testpaths = [

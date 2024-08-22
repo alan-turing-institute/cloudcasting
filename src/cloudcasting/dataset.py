@@ -107,6 +107,7 @@ class SatelliteDataset(Dataset[tuple[NDArray[np.float32], NDArray[np.float32]]])
             history_mins: How many minutes of history will be used as input features
             forecast_mins: How many minutes of future will be used as target features
             sample_freq_mins: The sample frequency to use for the satellite data
+            variables: The variables to load from the satellite data (defaults to all)
             preshuffle: Whether to shuffle the data - useful for validation
             nan_to_num: Whether to convert NaNs to -1.
         """
@@ -209,6 +210,7 @@ class SatelliteDataModule(LightningDataModule):
             sample_freq_mins: The sample frequency to use for the satellite data
             batch_size: Batch size.
             num_workers: Number of workers to use in multiprocess batch loading.
+            variables: The variables to load from the satellite data (defaults to all)
             prefetch_factor: Number of data will be prefetched at the end of each worker process.
             train_period: Date range filter for train dataloader.
             val_period: Date range filter for val dataloader.

@@ -1,4 +1,4 @@
-"""This script finds the 2022 validation set t0 times and saves them to the cloudcasting package."""
+"""This script finds the 2022 test set t0 times and saves them to the cloudcasting package."""
 
 import importlib.util
 import os
@@ -39,8 +39,8 @@ valid_t0_times = find_valid_t0_times(
 )
 
 # Print the valid t0 times to sanity check
-print(len(valid_t0_times))
-print(valid_t0_times)
+print(f"Number of available t0 times: {len(valid_t0_times)}")
+print(f"Actual available t0 times: {valid_t0_times}")
 
 
 # Find the path of the cloudcasting package so we can save the valid times into it
@@ -52,7 +52,7 @@ else:
     raise ModuleNotFoundError(msg)
 
 # Save the valid t0 times
-filename = "2022_t0_val_times.csv"
+filename = "test_2022_t0_times.csv"
 df = pd.DataFrame(valid_t0_times, columns=["t0_time"]).set_index("t0_time")
 df.to_csv(
     f"{package_path}/data/{filename}.zip",

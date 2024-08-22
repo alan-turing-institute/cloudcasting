@@ -2,7 +2,14 @@ import numpy as np
 import pytest
 from conftest import PersistenceModel
 
-from cloudcasting.validation import calc_mean_metrics, score_model_on_all_metrics, validate
+from cloudcasting.dataset import ValidationSatelliteDataset
+from cloudcasting.validation import (
+    DATA_INTERVAL_SPACING_MINUTES,
+    FORECAST_HORIZON_MINUTES,
+    calc_mean_metrics,
+    score_model_on_all_metrics,
+    validate,
+)
 
 ROLLOUT_STEPS_TEST = 12
 
@@ -13,12 +20,20 @@ def model():
 
 
 @pytest.mark.parametrize("nan_to_num", [True, False])
-def test_score_model_on_all_metrics(val_sat_zarr_path, model, nan_to_num):
+def test_score_model_on_all_metrics(model, val_sat_zarr_path, nan_to_num):
+    # Create valid dataset
+    valid_dataset = ValidationSatelliteDataset(
+        zarr_path=val_sat_zarr_path,
+        history_mins=model.history_steps * DATA_INTERVAL_SPACING_MINUTES,
+        forecast_mins=FORECAST_HORIZON_MINUTES,
+        sample_freq_mins=DATA_INTERVAL_SPACING_MINUTES,
+        nan_to_num=nan_to_num,
+    )
+
     # Call the score_model_on_all_metrics function
     metrics_dict = score_model_on_all_metrics(
         model=model,
-        data_path=val_sat_zarr_path,
-        nan_to_num=nan_to_num,
+        valid_dataset=valid_dataset,
         batch_size=2,
         num_workers=0,
         batch_limit=3,

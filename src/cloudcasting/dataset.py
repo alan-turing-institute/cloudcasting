@@ -94,6 +94,7 @@ class SatelliteDataset(Dataset[tuple[NDArray[np.float32], NDArray[np.float32]]])
         history_mins: int,
         forecast_mins: int,
         sample_freq_mins: int,
+        variables: list[str] | str | None = None,
         preshuffle: bool = False,
         nan_to_num: bool = False,
     ):
@@ -106,12 +107,20 @@ class SatelliteDataset(Dataset[tuple[NDArray[np.float32], NDArray[np.float32]]])
             history_mins: How many minutes of history will be used as input features
             forecast_mins: How many minutes of future will be used as target features
             sample_freq_mins: The sample frequency to use for the satellite data
+            variables: The variables to load from the satellite data (defaults to all)
             preshuffle: Whether to shuffle the data - useful for validation
             nan_to_num: Whether to convert NaNs to -1.
         """
 
         # Load the sat zarr file or list of files and slice the data to the given period
-        self.ds = load_satellite_zarrs(zarr_path).sel(time=slice(start_time, end_time))
+        ds = load_satellite_zarrs(zarr_path).sel(time=slice(start_time, end_time))
+
+        if variables is not None:
+            if isinstance(variables, str):
+                variables = [variables]
+            self.ds = ds.sel(variable=variables)
+        else:
+            self.ds = ds
 
         # Convert the satellite data to the given time frequency by selection
         mask = np.mod(self.ds.time.dt.minute, sample_freq_mins) == 0
@@ -185,6 +194,7 @@ class SatelliteDataModule(LightningDataModule):
         sample_freq_mins: int,
         batch_size: int = 16,
         num_workers: int = 0,
+        variables: list[str] | str | None = None,
         prefetch_factor: int | None = None,
         train_period: list[str | None] | tuple[str | None] | None = None,
         val_period: list[str | None] | tuple[str | None] | None = None,
@@ -200,6 +210,7 @@ class SatelliteDataModule(LightningDataModule):
             sample_freq_mins: The sample frequency to use for the satellite data
             batch_size: Batch size.
             num_workers: Number of workers to use in multiprocess batch loading.
+            variables: The variables to load from the satellite data (defaults to all)
             prefetch_factor: Number of data will be prefetched at the end of each worker process.
             train_period: Date range filter for train dataloader.
             val_period: Date range filter for val dataloader.
@@ -241,19 +252,21 @@ class SatelliteDataModule(LightningDataModule):
         )
 
         self.nan_to_num = nan_to_num
+        self.variables = variables
 
     def _make_dataset(
         self, start_date: str | None, end_date: str | None, preshuffle: bool = False
     ) -> SatelliteDataset:
         return SatelliteDataset(
-            self.zarr_path,
-            start_date,
-            end_date,
-            self.history_mins,
-            self.forecast_mins,
-            self.sample_freq_mins,
-            preshuffle,
-            self.nan_to_num,
+            zarr_path=self.zarr_path,
+            start_time=start_date,
+            end_time=end_date,
+            history_mins=self.history_mins,
+            forecast_mins=self.forecast_mins,
+            sample_freq_mins=self.sample_freq_mins,
+            preshuffle=preshuffle,
+            nan_to_num=self.nan_to_num,
+            variables=self.variables,
         )
 
     def train_dataloader(self) -> DataLoader[tuple[NDArray[np.float32], NDArray[np.float32]]]:

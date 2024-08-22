@@ -68,7 +68,7 @@ def log_prediction_video_to_wandb(
     video_name: str,
     channel_ind: int = 8,
     fps: int = 1,
-):
+) -> None:
     """Upload a video comparing the true and predicted future satellite data to wandb
 
     Args:
@@ -286,7 +286,7 @@ def validate(
         )
 
     # Log selected video samples to wandb
-    channel_inds = valid_dataset.ds.get_index("variable").get_indexer(VIDEO_SAMPLE_CHANNELS)
+    channel_inds = valid_dataset.ds.get_index("variable").get_indexer(VIDEO_SAMPLE_CHANNELS)  # type: ignore[no-untyped-call]
 
     for date in VIDEO_SAMPLE_DATES:
         X, y = valid_dataset[date]

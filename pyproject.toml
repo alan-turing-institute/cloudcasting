@@ -34,12 +34,10 @@ dependencies = [
     "dask",
     "pyresample",
     "pyproj",
-    "ocf-blosc2>=0.0.10",
-    # for no-import codec register
+    "ocf-blosc2>=0.0.10",  # for no-import codec register
     "typer",
     "lightning",
-    "torch>=2.3.0",
-    # needed for numpy 2.0
+    "torch>=2.3.0",  # needed for numpy 2.0
     "scikit-image",
     "jaxtyping",
     "wandb",

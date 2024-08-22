@@ -179,7 +179,7 @@ def download_satellite_data(
             # Weeks 0-1, 4-5 etc. are included in training set
             mask = (
                 np.mod(ds.time.dt.dayofyear // 14, 2) == 1
-                if valid_set
+                if test_2022_set
                 else np.mod(ds.time.dt.dayofyear // 14, 2) == 0
             )
             ds = ds.sel(time=mask)

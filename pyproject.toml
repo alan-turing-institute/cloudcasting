@@ -82,6 +82,7 @@ filterwarnings = [
   "ignore:Deprecated call to `pkg_resources.declare_namespace:DeprecationWarning",  # lightning
   "ignore:ast.Str is deprecated:DeprecationWarning",                                # jaxtyping
   "ignore:`newshape` keyword argument is deprecated:DeprecationWarning",            # wandb using numpy 2.1.0
+  "ignore:The keyword `fps` is no longer supported:DeprecationWarning",             # wandb.Video
 ]
 log_cli_level = "INFO"
 testpaths = [

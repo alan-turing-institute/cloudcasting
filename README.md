@@ -86,15 +86,25 @@ Full options:
 │ --lat-max                       FLOAT  Maximum       │
 │                                        latitude      │
 │                                        [default: 70] │
-│ --valid-set      --no-valid…           Whether to    │
+│ --test-2022-…    --no-test-…           Whether to    │
 │                                        filter data   │
 │                                        from 2022 to  │
 │                                        download the  │
-│                                        validation    │
-│                                        set (every 2  │
+│                                        test set      │
+│                                        (every 2      │
 │                                        weeks).       │
 │                                        [default:     │
-│                                        no-valid-set] │
+│                                        no-test-2022… │
+│ --verify-202…    --no-verif…           Whether to    │
+│                                        download the  │
+│                                        verification  │
+│                                        data from     │
+│                                        2023. Only    │
+│                                        used at the   │
+│                                        end of the    │
+│                                        project       │
+│                                        [default:     │
+│                                        no-verify-20… |
 │ --help                                 Show this     │
 │                                        message and   │
 │                                        exit.         │

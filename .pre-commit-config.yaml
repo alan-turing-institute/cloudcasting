@@ -46,3 +46,5 @@ repos:
           - torch
           - jaxtyping
           - types-tqdm
+          - scikit-image
+          - numpy

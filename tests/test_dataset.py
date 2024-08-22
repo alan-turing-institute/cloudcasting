@@ -99,6 +99,28 @@ def test_satellite_datamodule(sat_zarr_path):
     assert y.shape == (2, 11, 24, 20, 49)
 
 
+def test_satellite_datamodule_variables(sat_zarr_path):
+    variables = ["VIS006", "VIS008"]
+
+    datamodule = SatelliteDataModule(
+        zarr_path=sat_zarr_path,
+        history_mins=60,
+        forecast_mins=120,
+        sample_freq_mins=5,
+        batch_size=2,
+        num_workers=2,
+        prefetch_factor=None,
+        variables=variables,
+    )
+
+    dl = datamodule.train_dataloader()
+
+    X, y = next(iter(dl))
+
+    assert X.shape == (2, 2, 13, 20, 49)
+    assert y.shape == (2, 2, 24, 20, 49)
+
+
 def test_satellite_dataset_nan_to_num(sat_zarr_path):
     dataset = SatelliteDataset(
         zarr_path=sat_zarr_path,

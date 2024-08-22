@@ -18,8 +18,8 @@ def temp_output_dir(tmp_path):
 
 def test_download_satellite_data(runner, temp_output_dir):
     # Define test parameters
-    start_date = "2023-01-01 00:00"
-    end_date = "2023-01-01 00:30"
+    start_date = "2021-01-01 00:00"
+    end_date = "2021-01-01 00:30"
 
     # Run the CLI command to download the file
     result = runner.invoke(
@@ -41,5 +41,5 @@ def test_download_satellite_data(runner, temp_output_dir):
     assert result.exit_code == 0
 
     # Check if the output file was created
-    expected_file = os.path.join(temp_output_dir, "2023_training_nonhrv.zarr")
+    expected_file = os.path.join(temp_output_dir, "2021_training_nonhrv.zarr")
     assert os.path.exists(expected_file)

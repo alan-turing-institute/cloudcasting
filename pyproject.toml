@@ -44,6 +44,7 @@ dependencies = [
     "tqdm",
     "moviepy>=1.0.3",
     "imageio>=2.35.1",
+    "numpy <2.1.0",  # https://github.com/wandb/wandb/issues/8166
 ]
 [project.optional-dependencies]
 dev = [
@@ -79,7 +80,8 @@ filterwarnings = [
   "error",
   "ignore:pkg_resources:DeprecationWarning",                                        # lightning
   "ignore:Deprecated call to `pkg_resources.declare_namespace:DeprecationWarning",  # lightning
-  "ignore:ast.Str is deprecated:DeprecationWarning",             # jaxtyping
+  "ignore:ast.Str is deprecated:DeprecationWarning",                                # jaxtyping
+  "ignore:`newshape` keyword argument is deprecated:DeprecationWarning",            # wandb using numpy 2.1.0
 ]
 log_cli_level = "INFO"
 testpaths = [

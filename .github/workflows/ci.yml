@@ -47,7 +47,7 @@ jobs:
 
       - name: Install nightly build of torch
         if: matrix.runs-on == 'windows-latest'
-        run: pip install --pre torch --extra-index-url https://download.pytorch.org/whl/nightly/cpu
+        run: pip install --pre torch --extra-index-url https://download.pytorch.org/whl/nightly/cpu --force-reinstall --upgrade
 
       - name: Test package
         run: >-

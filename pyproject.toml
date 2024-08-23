@@ -128,7 +128,7 @@ disallow_untyped_calls = false
 
 [tool.ruff]
 src = ["src"]
-exclude = []
+exclude = ["notebooks/*.ipynb"]
 line-length = 100 # how long you want lines to be
 
 [tool.ruff.format]

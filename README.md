@@ -10,7 +10,7 @@ Tooling and infrastructure to enable cloud nowcasting.
 
 From source (development mode):
 
-On macOS you first need to install `ffmpeg` with the following command. On other platforms this is 
+On macOS you first need to install `ffmpeg` with the following command. On other platforms this is
 not necessary.
 
 ```bash

@@ -135,6 +135,7 @@ line-length = 100 # how long you want lines to be
 docstring-code-format = true  # code snippets in docstrings will be formatted
 
 [tool.ruff.lint]
+exclude = ["notebooks/*.ipynb"]
 select = [
   "E", "F", "W", # flake8
   "B",           # flake8-bugbear

@@ -165,7 +165,7 @@ def score_model_on_all_metrics(
 
         # If nan_to_num is used in the dataset, the model will output -1 for NaNs. We need to
         # convert these back to NaNs for the metrics
-        y[y==-1] = np.nan
+        y[y == -1] = np.nan
 
         for metric_name, metric_func in metric_funcs.items():
             metrics[metric_name].append(metric_func(y_hat, y))

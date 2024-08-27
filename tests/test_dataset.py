@@ -158,8 +158,8 @@ def test_validation_dataset(val_sat_zarr_path, val_dataset_hyperparams):
         sample_freq_mins=15,
     )
 
-    # There are 15237 init times which all models must make predictions for
-    assert len(dataset) == 15237
+    # There are 14949 init times which all models must make predictions for
+    assert len(dataset) == 14949
 
     X, y = dataset[0]
 

@@ -218,7 +218,7 @@ class ValidationSatelliteDataset(SatelliteDataset):
             history_mins=history_mins,
             forecast_mins=forecast_mins,
             sample_freq_mins=sample_freq_mins,
-            preshuffle=False,
+            preshuffle=True,
             nan_to_num=nan_to_num,
         )
 
@@ -270,7 +270,7 @@ def _get_t0_times(path: str) -> pd.DatetimeIndex:
 
 def get_required_validation_t0_times() -> pd.DatetimeIndex:
     """Get the required validation t0 times"""
-    return _get_t0_times("data/2022_t0_val_times.csv.zip")
+    return _get_t0_times("data/test_2022_t0_times.csv.zip")
 
 
 # def get_required_test_t0_times() -> pd.DatetimeIndex: ...

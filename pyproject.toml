@@ -37,13 +37,14 @@ dependencies = [
     "ocf-blosc2>=0.0.10",  # for no-import codec register
     "typer",
     "lightning",
-    "torch>=2.3.0", # needed for numpy 2.0
+    "torch>=2.3.0",  # needed for numpy 2.0
     "scikit-image",
     "jaxtyping",
-    "numpy",
-    "matplotlib",
     "wandb",
     "tqdm",
+    "moviepy>=1.0.3",
+    "imageio>=2.35.1",
+    "numpy <2.1.0",  # https://github.com/wandb/wandb/issues/8166
 ]
 [project.optional-dependencies]
 dev = [
@@ -79,7 +80,9 @@ filterwarnings = [
   "error",
   "ignore:pkg_resources:DeprecationWarning",                                        # lightning
   "ignore:Deprecated call to `pkg_resources.declare_namespace:DeprecationWarning",  # lightning
-  "ignore:ast.Str is deprecated:DeprecationWarning",             # jaxtyping
+  "ignore:ast.Str is deprecated:DeprecationWarning",                                # jaxtyping
+  "ignore:`newshape` keyword argument is deprecated:DeprecationWarning",            # wandb using numpy 2.1.0
+  "ignore:The keyword `fps` is no longer supported:DeprecationWarning",             # wandb.Video
 ]
 log_cli_level = "INFO"
 testpaths = [
@@ -125,13 +128,14 @@ disallow_untyped_calls = false
 
 [tool.ruff]
 src = ["src"]
-exclude = []
+exclude = ["notebooks/*.ipynb"]
 line-length = 100 # how long you want lines to be
 
 [tool.ruff.format]
 docstring-code-format = true  # code snippets in docstrings will be formatted
 
 [tool.ruff.lint]
+exclude = ["notebooks/*.ipynb"]
 select = [
   "E", "F", "W", # flake8
   "B",           # flake8-bugbear

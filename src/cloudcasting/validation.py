@@ -68,7 +68,7 @@ def log_prediction_video_to_wandb(
     video_name: str,
     channel_ind: int = 8,
     fps: int = 1,
-):
+) -> None:
     """Upload a video comparing the true and predicted future satellite data to wandb
 
     Args:
@@ -162,6 +162,11 @@ def score_model_on_all_metrics(
 
     for i, (X, y) in tqdm(enumerate(valid_dataloader), total=loop_steps):
         y_hat = model(X)
+
+        # If nan_to_num is used in the dataset, the model will output -1 for NaNs. We need to
+        # convert these back to NaNs for the metrics
+        y[y == -1] = np.nan
+
         for metric_name, metric_func in metric_funcs.items():
             metrics[metric_name].append(metric_func(y_hat, y))
 
@@ -286,7 +291,7 @@ def validate(
         )
 
     # Log selected video samples to wandb
-    channel_inds = valid_dataset.ds.get_index("variable").get_indexer(VIDEO_SAMPLE_CHANNELS)
+    channel_inds = valid_dataset.ds.get_index("variable").get_indexer(VIDEO_SAMPLE_CHANNELS)  # type: ignore[no-untyped-call]
 
     for date in VIDEO_SAMPLE_DATES:
         X, y = valid_dataset[date]

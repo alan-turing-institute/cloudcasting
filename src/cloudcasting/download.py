@@ -95,7 +95,7 @@ def download_satellite_data(
         raise FileNotFoundError(msg)
 
     # Check download frequency is valid (i.e. is a pandas frequency + multiple of 5 minutes)
-    if np.mod(pd.Timedelta(download_frequency).value, pd.Timedelta("5min").value) != 0:
+    if np.mod(pd.Timedelta(download_frequency).seconds, pd.Timedelta("5min").seconds) != 0:
         msg = (
             f"Download frequency {download_frequency} is not a multiple of 5 minutes. "
             "Please choose a valid frequency."

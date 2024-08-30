@@ -232,8 +232,8 @@ class ValidationSatelliteDataset(SatelliteDataset):
             date_range, history_mins, forecast_mins, sample_freq_mins
         )
 
-        # Get the required validation t0 times
-        val_t0_times_from_csv = get_required_validation_t0_times()
+        # Get the required 2022 test dataset t0 times
+        val_t0_times_from_csv = get_required_test2022_t0_times()
 
         # Find the intersection of the available t0 times and the required validation t0 times
         val_time_available = val_t0_times_from_csv.isin(available_t0_times)
@@ -268,12 +268,12 @@ def _get_t0_times(path: str) -> pd.DatetimeIndex:
     return pd.DatetimeIndex(df.t0_time)
 
 
-def get_required_validation_t0_times() -> pd.DatetimeIndex:
-    """Get the required validation t0 times"""
+def get_required_test2022_t0_times() -> pd.DatetimeIndex:
+    """Get the required 2022 test dataset t0 times"""
     return _get_t0_times("data/test_2022_t0_times.csv.zip")
 
 
-# def get_required_test_t0_times() -> pd.DatetimeIndex: ...
+# def get_required_verify2023_t0_times() -> pd.DatetimeIndex: ...
 
 
 class SatelliteDataModule(LightningDataModule):

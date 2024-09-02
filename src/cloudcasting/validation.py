@@ -6,6 +6,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 import cloudcasting
+from cloudcasting.constants import DATA_INTERVAL_SPACING_MINUTES, FORECAST_HORIZON_MINUTES
 from cloudcasting.dataset import ValidationSatelliteDataset
 from cloudcasting.metrics import mae_batch, mse_batch
 from cloudcasting.models import AbstractModel
@@ -13,8 +14,6 @@ from cloudcasting.types import BatchOutputArray, SampleOutputArray, TimeArray
 from cloudcasting.utils import numpy_validation_collate_fn
 
 # defined in manchester prize technical document
-FORECAST_HORIZON_MINUTES = 180
-DATA_INTERVAL_SPACING_MINUTES = 15
 WANDB_ENTITY = "manchester_prize"
 VIDEO_SAMPLE_DATES = [
     "2022-01-17 10:30",

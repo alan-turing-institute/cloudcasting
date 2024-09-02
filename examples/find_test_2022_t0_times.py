@@ -7,9 +7,9 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
+from cloudcasting.constants import DATA_INTERVAL_SPACING_MINUTES, FORECAST_HORIZON_MINUTES
 from cloudcasting.dataset import find_valid_t0_times
 from cloudcasting.download import _get_sat_public_dataset_path
-from cloudcasting.validation import DATA_INTERVAL_SPACING_MINUTES, FORECAST_HORIZON_MINUTES
 
 # Set a max history length which we will support in the validation process
 # We will not be able to fairly score models which require a longer history than this

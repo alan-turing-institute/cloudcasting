@@ -2,21 +2,18 @@ import numpy as np
 import pytest
 from conftest import PersistenceModel
 
-from cloudcasting.dataset import ValidationSatelliteDataset
-from cloudcasting.validation import (
+from cloudcasting.constants import (
     DATA_INTERVAL_SPACING_MINUTES,
     FORECAST_HORIZON_MINUTES,
-    calc_mean_metrics,
-    score_model_on_all_metrics,
-    validate,
+    NUM_FORECAST_STEPS,
 )
-
-ROLLOUT_STEPS_TEST = 12
+from cloudcasting.dataset import ValidationSatelliteDataset
+from cloudcasting.validation import calc_mean_metrics, score_model_on_all_metrics, validate
 
 
 @pytest.fixture()
 def model():
-    return PersistenceModel(history_steps=1, rollout_steps=ROLLOUT_STEPS_TEST)
+    return PersistenceModel(history_steps=1, rollout_steps=NUM_FORECAST_STEPS)
 
 
 @pytest.mark.parametrize("nan_to_num", [True, False])
@@ -49,7 +46,7 @@ def test_score_model_on_all_metrics(model, val_sat_zarr_path, nan_to_num):
     for metric_name, metric_array in metrics_dict.items():
         # check all the items have the expected shape
         assert metric_array.shape == (
-            ROLLOUT_STEPS_TEST,
+            NUM_FORECAST_STEPS,
         ), f"Metric {metric_name} has the wrong shape"
 
 

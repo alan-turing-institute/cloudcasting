@@ -144,8 +144,8 @@ def numpy_validation_collate_fn(
     """
 
     # Create empty stores for the compiled batch
-    X_all = np.empty((len(samples), *samples[0][0].shape))
-    y_all = np.empty((len(samples), *samples[0][1].shape))
+    X_all = np.empty((len(samples), *samples[0][0].shape), dtype=np.float32)
+    y_all = np.empty((len(samples), *samples[0][1].shape), dtype=np.float32)
 
     # Fill the stores with the samples
     for i, (X, y) in enumerate(samples):

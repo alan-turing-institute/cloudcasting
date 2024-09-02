@@ -18,6 +18,7 @@ from lightning import LightningDataModule
 from numpy.typing import NDArray
 from torch.utils.data import DataLoader, Dataset
 
+from cloudcasting.constants import DATA_INTERVAL_SPACING_MINUTES, FORECAST_HORIZON_MINUTES
 from cloudcasting.utils import find_contiguous_t0_time_periods, find_contiguous_time_periods
 
 
@@ -197,8 +198,8 @@ class ValidationSatelliteDataset(SatelliteDataset):
         self,
         zarr_path: list[str] | str,
         history_mins: int,
-        forecast_mins: int = 180,
-        sample_freq_mins: int = 15,
+        forecast_mins: int = FORECAST_HORIZON_MINUTES,
+        sample_freq_mins: int = DATA_INTERVAL_SPACING_MINUTES,
         nan_to_num: bool = False,
     ):
         """A torch Dataset used only in the validation proceedure.

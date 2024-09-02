@@ -2,6 +2,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from cloudcasting.constants import (
+    DATA_INTERVAL_SPACING_MINUTES,
+    FORECAST_HORIZON_MINUTES,
+    NUM_CHANNELS,
+    NUM_FORECAST_STEPS,
+)
 from cloudcasting.dataset import (
     SatelliteDataModule,
     SatelliteDataset,
@@ -154,8 +160,8 @@ def test_validation_dataset(val_sat_zarr_path, val_dataset_hyperparams):
     dataset = ValidationSatelliteDataset(
         zarr_path=val_sat_zarr_path,
         history_mins=60,
-        forecast_mins=180,
-        sample_freq_mins=15,
+        forecast_mins=FORECAST_HORIZON_MINUTES,
+        sample_freq_mins=DATA_INTERVAL_SPACING_MINUTES,
     )
 
     # There are 14949 init times which all models must make predictions for
@@ -169,14 +175,14 @@ def test_validation_dataset(val_sat_zarr_path, val_dataset_hyperparams):
     # (60 / 15) + 1 = 5 history steps
     # (180 / 15) = 12 forecast steps
     assert X.shape == (
-        11,
+        NUM_CHANNELS,
         5,
         val_dataset_hyperparams["y_geostationary_size"],
         val_dataset_hyperparams["x_geostationary_size"],
     )
     assert y.shape == (
-        11,
-        12,
+        NUM_CHANNELS,
+        NUM_FORECAST_STEPS,
         val_dataset_hyperparams["y_geostationary_size"],
         val_dataset_hyperparams["x_geostationary_size"],
     )
@@ -187,6 +193,6 @@ def test_validation_dataset_raises_error(sat_zarr_path):
         ValidationSatelliteDataset(
             zarr_path=sat_zarr_path,
             history_mins=60,
-            forecast_mins=180,
-            sample_freq_mins=15,
+            forecast_mins=FORECAST_HORIZON_MINUTES,
+            sample_freq_mins=DATA_INTERVAL_SPACING_MINUTES,
         )

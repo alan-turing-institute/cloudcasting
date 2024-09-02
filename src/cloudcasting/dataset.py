@@ -233,7 +233,7 @@ class ValidationSatelliteDataset(SatelliteDataset):
         )
 
         # Get the required 2022 test dataset t0 times
-        val_t0_times_from_csv = get_required_test2022_t0_times()
+        val_t0_times_from_csv = ValidationSatelliteDataset._get_test_2022_t0_times()
 
         # Find the intersection of the available t0 times and the required validation t0 times
         val_time_available = val_t0_times_from_csv.isin(available_t0_times)
@@ -249,31 +249,33 @@ class ValidationSatelliteDataset(SatelliteDataset):
 
         return val_t0_times_from_csv
 
+    @staticmethod
+    def _get_t0_times(path: str) -> pd.DatetimeIndex:
+        """Load the required validation t0 times from library path"""
 
-def _get_t0_times(path: str) -> pd.DatetimeIndex:
-    """Get the required validation t0 times"""
+        # Load the zipped csv file as a byte stream
+        data = pkgutil.get_data("cloudcasting", path)
+        if data is not None:
+            byte_stream = io.BytesIO(data)
+        else:
+            # Handle the case where data is None
+            msg = f"No data found for path: {path}"
+            raise ValueError(msg)
 
-    # Load the zipped csv file as a byte stream
-    data = pkgutil.get_data("cloudcasting", path)
-    if data is not None:
-        byte_stream = io.BytesIO(data)
-    else:
-        # Handle the case where data is None
-        msg = f"No data found for path: {path}"
-        raise ValueError(msg)
+        # Load the times into pandas
+        df = pd.read_csv(byte_stream, encoding="utf8", compression="zip")
 
-    # Load the times into pandas
-    df = pd.read_csv(byte_stream, encoding="utf8", compression="zip")
+        return pd.DatetimeIndex(df.t0_time)
 
-    return pd.DatetimeIndex(df.t0_time)
+    @staticmethod
+    def _get_test_2022_t0_times() -> pd.DatetimeIndex:
+        """Load the required 2022 test dataset t0 times from their location in the library"""
+        return ValidationSatelliteDataset._get_t0_times("data/test_2022_t0_times.csv.zip")
 
-
-def get_required_test2022_t0_times() -> pd.DatetimeIndex:
-    """Get the required 2022 test dataset t0 times"""
-    return _get_t0_times("data/test_2022_t0_times.csv.zip")
-
-
-# def get_required_verify2023_t0_times() -> pd.DatetimeIndex: ...
+    @staticmethod
+    def _get_verify_2023_t0_times() -> pd.DatetimeIndex:
+        msg = "The required 2023 verification dataset t0 times are not available"
+        raise NotImplementedError(msg)
 
 
 class SatelliteDataModule(LightningDataModule):

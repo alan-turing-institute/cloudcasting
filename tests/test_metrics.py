@@ -2,7 +2,6 @@ import jaxtyping
 import numpy as np
 import pytest
 
-# import torch
 from cloudcasting.metrics import (
     mae_batch,
     mae_single,

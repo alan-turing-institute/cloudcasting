@@ -126,7 +126,6 @@ def find_contiguous_t0_time_periods(
     return contiguous_time_periods
 
 
-# possibly slow (?)
 def numpy_validation_collate_fn(
     samples: list[tuple[SampleInputArray, SampleOutputArray]],
 ) -> tuple[BatchInputArray, BatchOutputArray]:
@@ -143,11 +142,13 @@ def numpy_validation_collate_fn(
         np.ndarray: The collated batch of X samples
         np.ndarray: The collated batch of y samples
     """
-    X_list = []
-    y_list = []
-    for X, y in samples:
-        X_list.append(X)
-        y_list.append(y)
-    X = np.stack(X_list)
-    y = np.stack(y_list)
-    return X, y
+
+    # Create empty stores for the compiled batch
+    X_all = np.empty((len(samples), *samples[0][0].shape))
+    y_all = np.empty((len(samples), *samples[0][1].shape))
+
+    # Fill the stores with the samples
+    for i, (X, y) in enumerate(samples):
+        X_all[i] = X
+        y_all[i] = y
+    return X_all, y_all

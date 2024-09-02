@@ -3,10 +3,10 @@
 import numpy as np
 from skimage.metrics import structural_similarity  # type: ignore[import-not-found]
 
-from cloudcasting.types import BatchArray, InputArray, SingleArray, TimeArray
+from cloudcasting.types import BatchOutputArray, OutputArray, SampleOutputArray, TimeArray
 
 
-def mae_single(input: SingleArray, target: SingleArray) -> TimeArray:
+def mae_single(input: SampleOutputArray, target: SampleOutputArray) -> TimeArray:
     """Mean absolute error for single (non-batched) image sequences.
 
     Args:
@@ -21,7 +21,7 @@ def mae_single(input: SingleArray, target: SingleArray) -> TimeArray:
     return arr
 
 
-def mae_batch(input: BatchArray, target: BatchArray) -> TimeArray:
+def mae_batch(input: BatchOutputArray, target: BatchOutputArray) -> TimeArray:
     """Mean absolute error for batched image sequences.
 
     Args:
@@ -36,7 +36,7 @@ def mae_batch(input: BatchArray, target: BatchArray) -> TimeArray:
     return arr
 
 
-def mse_single(input: SingleArray, target: SingleArray) -> TimeArray:
+def mse_single(input: SampleOutputArray, target: SampleOutputArray) -> TimeArray:
     """Mean squared error for single (non-batched) image sequences.
 
     Args:
@@ -51,7 +51,7 @@ def mse_single(input: SingleArray, target: SingleArray) -> TimeArray:
     return arr
 
 
-def mse_batch(input: BatchArray, target: BatchArray) -> TimeArray:
+def mse_batch(input: BatchOutputArray, target: BatchOutputArray) -> TimeArray:
     """Mean squared error for batched image sequences.
 
     Args:
@@ -66,7 +66,9 @@ def mse_batch(input: BatchArray, target: BatchArray) -> TimeArray:
     return arr
 
 
-def ssim_single(input: SingleArray, target: SingleArray, win_size: int | None = None) -> TimeArray:
+def ssim_single(
+    input: SampleOutputArray, target: SampleOutputArray, win_size: int | None = None
+) -> TimeArray:
     """Structural similarity for single (non-batched) image sequences.
 
     Args:
@@ -81,6 +83,7 @@ def ssim_single(input: SingleArray, target: SingleArray, win_size: int | None = 
     _check_input_target_ranges(input, target)
     ssim_seq = []
     for i_t in range(input.shape[1]):
+        # Calculate the SSIM array for this time step
         _, ssim_array = structural_similarity(
             input[:, i_t, :, :],
             target[:, i_t, :, :],
@@ -89,14 +92,16 @@ def ssim_single(input: SingleArray, target: SingleArray, win_size: int | None = 
             full=True,
             win_size=win_size,
         )
-        # isinstance check for channels/height/width arr
-
+        # Take the mean of the SSIM array over channels, height, and width
         ssim_seq.append(np.nanmean(ssim_array, axis=(0, 1, 2)))
+
     arr: TimeArray = np.stack(ssim_seq, axis=0)
     return arr
 
 
-def ssim_batch(input: BatchArray, target: BatchArray, win_size: int | None = None) -> TimeArray:
+def ssim_batch(
+    input: BatchOutputArray, target: BatchOutputArray, win_size: int | None = None
+) -> TimeArray:
     """Structural similarity for batched image sequences.
 
     Args:
@@ -117,7 +122,7 @@ def ssim_batch(input: BatchArray, target: BatchArray, win_size: int | None = Non
     return arr
 
 
-def _check_input_target_ranges(input: InputArray, target: InputArray) -> None:
+def _check_input_target_ranges(input: OutputArray, target: OutputArray) -> None:
     """Validate input and target arrays are within the 0-1 range.
 
     Args:

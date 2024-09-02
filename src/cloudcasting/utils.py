@@ -14,7 +14,12 @@ import pyproj
 import pyresample
 import xarray as xr
 
-from cloudcasting.types import BatchArray, ForecastArray, SingleArray, SingleForecastArray
+from cloudcasting.types import (
+    BatchInputArray,
+    BatchOutputArray,
+    SampleInputArray,
+    SampleOutputArray,
+)
 
 
 # taken from ocf_datapipes
@@ -123,8 +128,8 @@ def find_contiguous_t0_time_periods(
 
 # possibly slow (?)
 def numpy_validation_collate_fn(
-    samples: list[tuple[SingleArray, SingleForecastArray]],
-) -> tuple[BatchArray, ForecastArray]:
+    samples: list[tuple[SampleInputArray, SampleOutputArray]],
+) -> tuple[BatchInputArray, BatchOutputArray]:
     """Collate a list of data + targets into a batch.
         input: list of (X, y) samples, with sizes
         X: (batch, channels, time, height, width)

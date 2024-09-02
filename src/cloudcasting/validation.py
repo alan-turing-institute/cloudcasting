@@ -9,7 +9,7 @@ import cloudcasting
 from cloudcasting.dataset import ValidationSatelliteDataset
 from cloudcasting.metrics import mae_batch, mse_batch
 from cloudcasting.models import AbstractModel
-from cloudcasting.types import ForecastArray, SingleForecastArray, TimeArray
+from cloudcasting.types import BatchOutputArray, SampleOutputArray, TimeArray
 from cloudcasting.utils import numpy_validation_collate_fn
 
 # defined in manchester prize technical document
@@ -63,8 +63,8 @@ def log_mean_metrics_to_wandb(
 
 
 def log_prediction_video_to_wandb(
-    y_hat: SingleForecastArray,
-    y: SingleForecastArray,
+    y_hat: SampleOutputArray,
+    y: SampleOutputArray,
     video_name: str,
     channel_ind: int = 8,
     fps: int = 1,
@@ -150,7 +150,7 @@ def score_model_on_all_metrics(
         drop_last=False,
     )
 
-    metric_funcs: dict[str, Callable[[ForecastArray, ForecastArray], TimeArray]] = {
+    metric_funcs: dict[str, Callable[[BatchOutputArray, BatchOutputArray], TimeArray]] = {
         "mae": mae_batch,
         "mse": mse_batch,
         # "ssim": ssim_batch,  # currently unstable with nans

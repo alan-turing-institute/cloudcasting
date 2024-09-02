@@ -3,7 +3,7 @@ from typing import Any
 
 import numpy as np
 
-from cloudcasting.types import BatchArray, ForecastArray
+from cloudcasting.types import BatchInputArray, BatchOutputArray
 
 
 # model interface
@@ -16,7 +16,7 @@ class AbstractModel(ABC):
         self.history_steps: int = history_steps
 
     @abstractmethod
-    def forward(self, X: BatchArray) -> ForecastArray:
+    def forward(self, X: BatchInputArray) -> BatchOutputArray:
         """Abstract method for the forward pass of the model.
 
         Args:
@@ -30,7 +30,7 @@ class AbstractModel(ABC):
                 rollout_steps = {t'_{1}, ..., t'_{horizon}}
         """
 
-    def check_predictions(self, y_hat: ForecastArray) -> None:
+    def check_predictions(self, y_hat: BatchOutputArray) -> None:
         """Checks the predictions conform to expectations"""
         # Check no NaNs in the predictions
         if np.isnan(y_hat).any():
@@ -46,7 +46,7 @@ class AbstractModel(ABC):
             )
             raise ValueError(msg)
 
-    def __call__(self, X: BatchArray) -> ForecastArray:
+    def __call__(self, X: BatchInputArray) -> BatchOutputArray:
         y_hat = self.forward(X)
 
         # Carry out a set of checks on the predictions to make sure they conform to the
@@ -64,7 +64,3 @@ class VariableHorizonModel(AbstractModel):
     def __init__(self, rollout_steps: int, history_steps: int) -> None:
         self.rollout_steps: int = rollout_steps
         super().__init__(history_steps)
-
-
-# some examples of a model following this process
-# (and producing meaningful output, e.g. videos)

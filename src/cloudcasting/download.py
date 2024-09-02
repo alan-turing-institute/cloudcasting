@@ -94,8 +94,26 @@ def download_satellite_data(
         )
         raise FileNotFoundError(msg)
 
+    # Build the formatable string for the output file path.
+    # We can insert year later using `output_file_root.format(year=year)``
+    output_file_root = output_directory + "/{year}_"
+
+    # Add training split label
+    if test_2022_set:
+        output_file_root += "test_"
+    elif verify_2023_set:
+        output_file_root += "verification_"
+    else:
+        output_file_root += "training_"
+
+    # Add HRV or non-HRV label and file extension
+    if get_hrv:
+        output_file_root += "hrv.zarr"
+    else:
+        output_file_root += "nonhrv.zarr"
+
     # Check download frequency is valid (i.e. is a pandas frequency + multiple of 5 minutes)
-    if np.mod(pd.Timedelta(download_frequency).seconds, pd.Timedelta("5min").seconds) != 0:
+    if pd.Timedelta(download_frequency) % pd.Timedelta("5min") != pd.Timedelta(0):
         msg = (
             f"Download frequency {download_frequency} is not a multiple of 5 minutes. "
             "Please choose a valid frequency."
@@ -105,8 +123,13 @@ def download_satellite_data(
     start_date_stamp = pd.Timestamp(start_date)
     end_date_stamp = pd.Timestamp(end_date)
 
-    # Check date range for known errors
-    if not override_date_bounds and start_date_stamp < pd.Timestamp("2018"):
+    # Check start date is before end date
+    if start_date_stamp > end_date_stamp:
+        msg = "Start date ({start_date_stamp}) must be before end date ({end_date_stamp})."
+        raise ValueError(msg)
+
+    # Check date range for known limitations
+    if not override_date_bounds and start_date_stamp.year < 2019:
         msg = (
             "There are currently some issues with the EUMETSAT data before 2019/01/01. "
             "We recommend only using data from this date forward. "
@@ -114,8 +137,8 @@ def download_satellite_data(
         )
         raise ValueError(msg)
 
-    # Check the year is 2022 if test data is being downloaded
-    if test_2022_set and start_date_stamp.year != 2022 and end_date_stamp.year != 2022:
+    # Check the year is 2022 if test_2022 data is being downloaded
+    if test_2022_set and (start_date_stamp.year != 2022 or end_date_stamp.year != 2022):
         msg = "Test data is only defined for 2022"
         raise ValueError(msg)
 
@@ -130,8 +153,8 @@ def download_satellite_data(
         )
         raise ValueError(msg)
 
-    # Check the year is not 2023 unless verification data is being downloaded
-    if (start_date_stamp.year == 2023 or end_date_stamp.year == 2023) and not verify_2023_set:
+    # Check the year 2023 is not included unless verification data is being downloaded
+    if (not verify_2023_set) and (end_date_stamp.year >= 2023):
         msg = "2023 data is reserved for the verification process"
         raise ValueError(msg)
 
@@ -149,9 +172,8 @@ def download_satellite_data(
     dates_to_download = pd.date_range(range_start, end_date_stamp, freq=download_frequency)
 
     # Check that none of the filenames we will save to already exist
-    file_end = "hrv.zarr" if get_hrv else "nonhrv.zarr"
     for year in years:
-        output_zarr_file = f"{output_directory}/{year}_{file_end}"
+        output_zarr_file = output_file_root.format(year=year)
         if os.path.exists(output_zarr_file):
             msg = (
                 f"The zarr file {output_zarr_file} already exists. "
@@ -159,8 +181,9 @@ def download_satellite_data(
             )
             raise ValueError(msg)
 
+    # Begin download loop
     for year in years:
-        logger.info("Downloading data from %s...", year)
+        logger.info("Downloading data from %s", year)
         path = _get_sat_public_dataset_path(year, is_hrv=get_hrv)
 
         # Slice the data from this year which are between the start and end dates.
@@ -170,18 +193,17 @@ def download_satellite_data(
 
         if year == 2022:
             set_str = "Test_2022" if test_2022_set else "Training"
-            day_str = "15" if test_2022_set else "1"
+            day_str = "14" if test_2022_set else "1"
             logger.info("Data in 2022 will be downloaded every 2 weeks due to train/test split.")
-            logger.info("%s set selected: Starting day will be %s", set_str, day_str)
+            logger.info("%s set selected: Starting day will be %s.", set_str, day_str)
             # Integer division by 14 will tell us the fortnight we're on.
             # checking the mod wrt 2 will let us select every 2 weeks
             # Test set is defined as from week 2-3, 6-7 etc.
             # Weeks 0-1, 4-5 etc. are included in training set
-            mask = (
-                np.mod(ds.time.dt.dayofyear // 14, 2) == 1
-                if test_2022_set
-                else np.mod(ds.time.dt.dayofyear // 14, 2) == 0
-            )
+            if test_2022_set:
+                mask = np.mod(ds.time.dt.dayofyear // 14, 2) == 1
+            else:
+                mask = np.mod(ds.time.dt.dayofyear // 14, 2) == 0
             ds = ds.sel(time=mask)
 
         # Convert lon-lat bounds to geostationary-coords
@@ -211,15 +233,8 @@ def download_satellite_data(
 
         ds = ds.chunk(target_chunks_dict)
 
-        # Save data
-        if test_2022_set:
-            test_set_file_str = "test"
-        elif verify_2023_set:
-            test_set_file_str = "verification"
-        else:
-            test_set_file_str = "training"
-        output_zarr_file = f"{output_directory}/{year}_{test_set_file_str}_{file_end}"
-        logger.info("Downloading data for %s", year)
+        # Save data to zarr
+        output_zarr_file = output_file_root.format(year=year)
         with ProgressBar(dt=1):
             ds.to_zarr(output_zarr_file)
-        logger.info("Data for %s saved to %s.", year, output_zarr_file)
+        logger.info("Data for %s saved to %s", year, output_zarr_file)

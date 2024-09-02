@@ -9,6 +9,16 @@ Tooling and infrastructure to enable cloud nowcasting.
 ## Installation
 
 From source (development mode):
+
+On macOS you first need to install `ffmpeg` with the following command. On other platforms this is
+not necessary.
+
+```bash
+brew install ffmpeg
+```
+
+Clone and install the repo.
+
 ```bash
 git clone https://github.com/climetrend/cloudcasting
 cd cloudcasting
@@ -28,7 +38,7 @@ For making changes, see the [guidance on development](https://github.com/alan-tu
 Example:
 
 ```bash
-cloudcasting download "2020-06-01 00:00" "2020-06-30 23:55" "path/to/my/dir/data.zarr"
+cloudcasting download "2020-06-01 00:00" "2020-06-30 23:55" "path/to/data/save/dir"
 ```
 
 Full options:

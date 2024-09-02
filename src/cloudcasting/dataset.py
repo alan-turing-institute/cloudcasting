@@ -3,8 +3,11 @@
 __all__ = (
     "SatelliteDataModule",
     "SatelliteDataset",
+    "ValidationSatelliteDataset",
 )
 
+import io
+import pkgutil
 from datetime import datetime, timedelta
 from typing import TypedDict
 
@@ -15,6 +18,7 @@ from lightning import LightningDataModule
 from numpy.typing import NDArray
 from torch.utils.data import DataLoader, Dataset
 
+from cloudcasting.constants import DATA_INTERVAL_SPACING_MINUTES, FORECAST_HORIZON_MINUTES
 from cloudcasting.utils import find_contiguous_t0_time_periods, find_contiguous_time_periods
 
 
@@ -101,7 +105,7 @@ class SatelliteDataset(Dataset[tuple[NDArray[np.float32], NDArray[np.float32]]])
         """A torch Dataset for loading past and future satellite data
 
         Args:
-            zarr_path: Path the satellite data. Can be a string or list
+            zarr_path: Path to the satellite data. Can be a string or list
             start_time: The satellite data is filtered to exclude timestamps before this
             end_time: The satellite data is filtered to exclude timestamps after this
             history_mins: How many minutes of history will be used as input features
@@ -128,7 +132,7 @@ class SatelliteDataset(Dataset[tuple[NDArray[np.float32], NDArray[np.float32]]])
 
         # Find the valid t0 times for the available data. This avoids trying to take samples where
         # there would be a missing timestamp in the sat data required for the sample
-        self.t0_times = find_valid_t0_times(
+        self.t0_times = self._find_t0_times(
             pd.DatetimeIndex(self.ds.time), history_mins, forecast_mins, sample_freq_mins
         )
 
@@ -139,6 +143,12 @@ class SatelliteDataset(Dataset[tuple[NDArray[np.float32], NDArray[np.float32]]])
         self.forecast_mins = forecast_mins
         self.sample_freq_mins = sample_freq_mins
         self.nan_to_num = nan_to_num
+
+    @staticmethod
+    def _find_t0_times(
+        date_range: pd.DatetimeIndex, history_mins: int, forecast_mins: int, sample_freq_mins: int
+    ) -> pd.DatetimeIndex:
+        return find_valid_t0_times(date_range, history_mins, forecast_mins, sample_freq_mins)
 
     def __len__(self) -> int:
         return len(self.t0_times)
@@ -181,6 +191,92 @@ class SatelliteDataset(Dataset[tuple[NDArray[np.float32], NDArray[np.float32]]])
             assert t0 in self.t0_times
 
         return self._get_datetime(t0)
+
+
+class ValidationSatelliteDataset(SatelliteDataset):
+    def __init__(
+        self,
+        zarr_path: list[str] | str,
+        history_mins: int,
+        forecast_mins: int = FORECAST_HORIZON_MINUTES,
+        sample_freq_mins: int = DATA_INTERVAL_SPACING_MINUTES,
+        nan_to_num: bool = False,
+    ):
+        """A torch Dataset used only in the validation proceedure.
+
+        Args:
+            zarr_path: Path to the satellite data for validation. Can be a string or list
+            history_mins: How many minutes of history will be used as input features
+            forecast_mins: How many minutes of future will be used as target features
+            sample_freq_mins: The sample frequency to use for the satellite data
+            nan_to_num: Whether to convert NaNs to -1.
+        """
+
+        super().__init__(
+            zarr_path=zarr_path,
+            start_time=None,
+            end_time=None,
+            history_mins=history_mins,
+            forecast_mins=forecast_mins,
+            sample_freq_mins=sample_freq_mins,
+            preshuffle=True,
+            nan_to_num=nan_to_num,
+        )
+
+    @staticmethod
+    def _find_t0_times(
+        date_range: pd.DatetimeIndex, history_mins: int, forecast_mins: int, sample_freq_mins: int
+    ) -> pd.DatetimeIndex:
+        # Find the valid t0 times for the available data. This avoids trying to take samples where
+        # there would be a missing timestamp in the sat data required for the sample
+        available_t0_times = find_valid_t0_times(
+            date_range, history_mins, forecast_mins, sample_freq_mins
+        )
+
+        # Get the required 2022 test dataset t0 times
+        val_t0_times_from_csv = ValidationSatelliteDataset._get_test_2022_t0_times()
+
+        # Find the intersection of the available t0 times and the required validation t0 times
+        val_time_available = val_t0_times_from_csv.isin(available_t0_times)
+
+        # Make sure all of the required validation times are available in the data
+        if not val_time_available.all():
+            msg = (
+                "The following validation t0 times are not available in the satellite data: \n"
+                f"{val_t0_times_from_csv[~val_time_available]}\n"
+                "The validation proceedure requires these t0 times to be available."
+            )
+            raise ValueError(msg)
+
+        return val_t0_times_from_csv
+
+    @staticmethod
+    def _get_t0_times(path: str) -> pd.DatetimeIndex:
+        """Load the required validation t0 times from library path"""
+
+        # Load the zipped csv file as a byte stream
+        data = pkgutil.get_data("cloudcasting", path)
+        if data is not None:
+            byte_stream = io.BytesIO(data)
+        else:
+            # Handle the case where data is None
+            msg = f"No data found for path: {path}"
+            raise ValueError(msg)
+
+        # Load the times into pandas
+        df = pd.read_csv(byte_stream, encoding="utf8", compression="zip")
+
+        return pd.DatetimeIndex(df.t0_time)
+
+    @staticmethod
+    def _get_test_2022_t0_times() -> pd.DatetimeIndex:
+        """Load the required 2022 test dataset t0 times from their location in the library"""
+        return ValidationSatelliteDataset._get_t0_times("data/test_2022_t0_times.csv.zip")
+
+    @staticmethod
+    def _get_verify_2023_t0_times() -> pd.DatetimeIndex:
+        msg = "The required 2023 verification dataset t0 times are not available"
+        raise NotImplementedError(msg)
 
 
 class SatelliteDataModule(LightningDataModule):

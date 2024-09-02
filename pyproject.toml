@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cloudcasting"
-version = "0.1.0"
+version = "0.2.0"
 authors = [
   { name = "cloudcasting Maintainers", email = "nsimpson@turing.ac.uk" },
 ]

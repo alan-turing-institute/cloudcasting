@@ -38,7 +38,7 @@ For making changes, see the [guidance on development](https://github.com/alan-tu
 Example:
 
 ```bash
-cloudcasting download "2020-06-01 00:00" "2020-06-30 23:55" "path/to/my/dir/data.zarr"
+cloudcasting download "2020-06-01 00:00" "2020-06-30 23:55" "path/to/data/save/dir"
 ```
 
 Full options:

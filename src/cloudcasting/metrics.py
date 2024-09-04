@@ -105,7 +105,7 @@ def ssim_single(input: SampleOutputArray, target: SampleOutputArray) -> TimeArra
             use_sample_covariance=use_sample_covariance,
             sigma=sigma,
             win_size=win_size,
-        )  # type: ignore[no-untyped-call]
+        )
 
         # To avoid edge effects from the Gaussian filter we trim off the border
         trim_width = (win_size - 1) // 2

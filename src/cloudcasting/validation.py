@@ -10,7 +10,7 @@ from cloudcasting.constants import DATA_INTERVAL_SPACING_MINUTES, FORECAST_HORIZ
 from cloudcasting.dataset import ValidationSatelliteDataset
 from cloudcasting.metrics import mae_batch, mse_batch
 from cloudcasting.models import AbstractModel
-from cloudcasting.types import BatchOutputArray, SampleOutputArray, TimeArray
+from cloudcasting.types import BatchOutputArray, SampleOutputArray, MetricArray, ChannelArray, TimeArray
 from cloudcasting.utils import numpy_validation_collate_fn
 
 # defined in manchester prize technical document
@@ -59,6 +59,22 @@ def log_mean_metrics_to_wandb(
     data = [[metric_name, metric_value]]
     table = wandb.Table(data=data, columns=["metric name", "value"])
     wandb.log({plot_name: wandb.plot.bar(table, "metric name", "value", title=plot_name)})
+
+def log_per_channel_metrics_to_wandb(
+    metric_value: ChannelArray,
+    plot_name: str,
+    channel_names: list[str],
+) -> None:
+    """Upload a bar plot of metric value to wandb
+
+    Args:
+        metric_values: The mean metric value to upload
+        plot_name: The name under which to save the plot to wandb
+        channel_names: List of channel names for ordering purposes
+    """
+    data = list(zip(channel_names, metric_value))
+    table = wandb.Table(data=data, columns=["channel name", "value"])
+    wandb.log({plot_name: wandb.plot.bar(table, "channel name", "value", title=plot_name)})
 
 
 def log_prediction_video_to_wandb(
@@ -119,7 +135,7 @@ def score_model_on_all_metrics(
     batch_size: int = 1,
     num_workers: int = 0,
     batch_limit: int | None = None,
-) -> dict[str, TimeArray]:
+) -> tuple[dict[str, MetricArray], list[str]]:
     """Calculate the scoreboard metrics for the given model on the validation dataset.
 
     Args:
@@ -149,12 +165,13 @@ def score_model_on_all_metrics(
         drop_last=False,
     )
 
-    metric_funcs: dict[str, Callable[[BatchOutputArray, BatchOutputArray], TimeArray]] = {
+    metric_funcs: dict[str, Callable[[BatchOutputArray, BatchOutputArray], MetricArray]] = {
         "mae": mae_batch,
         "mse": mse_batch,
         # "ssim": ssim_batch,  # currently unstable with nans
     }
-    metrics: dict[str, list[TimeArray]] = {k: [] for k in metric_funcs}
+
+    metrics: dict[str, list[MetricArray]] = {metric:[] for metric in metric_funcs}
 
     # we probably want to accumulate metrics here instead of taking the mean of means!
     loop_steps = len(valid_dataloader) if batch_limit is None else batch_limit
@@ -176,17 +193,19 @@ def score_model_on_all_metrics(
 
     num_timesteps = FORECAST_HORIZON_MINUTES // DATA_INTERVAL_SPACING_MINUTES
 
+    names = valid_dataset.ds.variable.values
+
     # technically, if we've made a mistake in the shapes/reduction dim, this would silently fail
     # if the number of batches equals the number of timesteps
     for v in res.values():
         assert v.shape == (
-            num_timesteps,
-        ), f"metric {v.shape} is not the correct shape (should be {(num_timesteps,)})"
+            len(names), num_timesteps,
+        ), f"metric {v.shape} is not the correct shape (should be {(len(names), num_timesteps,)})"
 
-    return res
+    return res, names.tolist()
 
 
-def calc_mean_metrics(horizon_metrics_dict: dict[str, TimeArray]) -> dict[str, float]:
+def calc_mean_metrics(horizon_metrics_dict: dict[str, MetricArray]) -> dict[str, float]:
     """Calculate the mean of each metric over the forecast horizon.
 
     Args:
@@ -196,6 +215,28 @@ def calc_mean_metrics(horizon_metrics_dict: dict[str, TimeArray]) -> dict[str, f
         dict: metric names and their mean values
     """
     return {k: float(np.mean(v)) for k, v in horizon_metrics_dict.items()}
+
+def calc_mean_metrics_per_horizon(horizon_metrics_dict: dict[str, MetricArray]) -> dict[str, TimeArray]:
+    """Calculate the mean of each metric over the forecast horizon.
+
+    Args:
+        horizon_metrics_dict: dict of metric names and arrays of metric values
+
+    Returns:
+        dict: metric names and their mean values over time
+    """
+    return {k: np.mean(v, axis=0) for k, v in horizon_metrics_dict.items()}
+
+def calc_mean_metrics_per_channel(horizon_metrics_dict: dict[str, MetricArray]) -> dict[str, ChannelArray]:
+    """Calculate the mean of each metric over the forecast horizon.
+
+    Args:
+        horizon_metrics_dict: dict of metric names and arrays of metric values
+
+    Returns:
+        dict: metric names and their mean values across time, indexed per-channel
+    """
+    return {k: np.mean(v, axis=1) for k, v in horizon_metrics_dict.items()}
 
 
 def validate(
@@ -232,7 +273,7 @@ def validate(
     )
 
     # Calculate the metrics before logging to wandb
-    horizon_metrics_dict = score_model_on_all_metrics(
+    channel_horizon_metrics_dict, names = score_model_on_all_metrics(
         model,
         valid_dataset,
         batch_size=batch_size,
@@ -240,8 +281,14 @@ def validate(
         batch_limit=batch_limit,
     )
 
-    # Calculate the mean of each metric over the forecast horizon
-    mean_metrics_dict = calc_mean_metrics(horizon_metrics_dict)
+    # Calculate the mean of each metric over the forecast horizon 
+    horizon_metrics_dict = calc_mean_metrics_per_horizon(channel_horizon_metrics_dict)
+
+    # Calculate the mean of each metric over the forecast horizon + channels
+    mean_metrics_dict = calc_mean_metrics(channel_horizon_metrics_dict)
+
+    # Calculate mean, but preserve channel axis
+    channel_metrics_dict = calc_mean_metrics_per_channel(channel_horizon_metrics_dict)
 
     # Append to the wandb run name if we are limiting the number of batches
     if batch_limit is not None:
@@ -288,6 +335,14 @@ def validate(
             plot_name=f"{metric_name}-mean",
             metric_name=metric_name,
         )
+
+    # Log mean metrics per-channel
+    for metric_name, metric_value in channel_metrics_dict.items():
+        log_per_channel_metrics_to_wandb(
+            metric_value=metric_value,
+            plot_name=f"{metric_name}-mean",
+            channel_names=names,
+        ) 
 
     # Log selected video samples to wandb
     channel_inds = valid_dataset.ds.get_index("variable").get_indexer(VIDEO_SAMPLE_CHANNELS)  # type: ignore[no-untyped-call]

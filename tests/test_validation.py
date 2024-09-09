@@ -28,7 +28,7 @@ def test_score_model_on_all_metrics(model, val_sat_zarr_path, nan_to_num):
     )
 
     # Call the score_model_on_all_metrics function
-    metrics_dict = score_model_on_all_metrics(
+    metrics_dict, _channels = score_model_on_all_metrics(
         model=model,
         valid_dataset=valid_dataset,
         batch_size=2,

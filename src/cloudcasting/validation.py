@@ -10,7 +10,13 @@ from cloudcasting.constants import DATA_INTERVAL_SPACING_MINUTES, FORECAST_HORIZ
 from cloudcasting.dataset import ValidationSatelliteDataset
 from cloudcasting.metrics import mae_batch, mse_batch
 from cloudcasting.models import AbstractModel
-from cloudcasting.types import BatchOutputArray, SampleOutputArray, MetricArray, ChannelArray, TimeArray
+from cloudcasting.types import (
+    BatchOutputArray,
+    ChannelArray,
+    MetricArray,
+    SampleOutputArray,
+    TimeArray,
+)
 from cloudcasting.utils import numpy_validation_collate_fn
 
 # defined in manchester prize technical document
@@ -60,6 +66,7 @@ def log_mean_metrics_to_wandb(
     table = wandb.Table(data=data, columns=["metric name", "value"])
     wandb.log({plot_name: wandb.plot.bar(table, "metric name", "value", title=plot_name)})
 
+
 def log_per_channel_metrics_to_wandb(
     metric_value: ChannelArray,
     plot_name: str,
@@ -72,7 +79,7 @@ def log_per_channel_metrics_to_wandb(
         plot_name: The name under which to save the plot to wandb
         channel_names: List of channel names for ordering purposes
     """
-    data = list(zip(channel_names, metric_value))
+    data = list(zip(channel_names, metric_value, strict=False))
     table = wandb.Table(data=data, columns=["channel name", "value"])
     wandb.log({plot_name: wandb.plot.bar(table, "channel name", "value", title=plot_name)})
 
@@ -171,7 +178,7 @@ def score_model_on_all_metrics(
         # "ssim": ssim_batch,  # currently unstable with nans
     }
 
-    metrics: dict[str, list[MetricArray]] = {metric:[] for metric in metric_funcs}
+    metrics: dict[str, list[MetricArray]] = {metric: [] for metric in metric_funcs}
 
     # we probably want to accumulate metrics here instead of taking the mean of means!
     loop_steps = len(valid_dataloader) if batch_limit is None else batch_limit
@@ -199,7 +206,8 @@ def score_model_on_all_metrics(
     # if the number of batches equals the number of timesteps
     for v in res.values():
         assert v.shape == (
-            len(names), num_timesteps,
+            len(names),
+            num_timesteps,
         ), f"metric {v.shape} is not the correct shape (should be {(len(names), num_timesteps,)})"
 
     return res, names.tolist()
@@ -216,7 +224,10 @@ def calc_mean_metrics(horizon_metrics_dict: dict[str, MetricArray]) -> dict[str,
     """
     return {k: float(np.mean(v)) for k, v in horizon_metrics_dict.items()}
 
-def calc_mean_metrics_per_horizon(horizon_metrics_dict: dict[str, MetricArray]) -> dict[str, TimeArray]:
+
+def calc_mean_metrics_per_horizon(
+    horizon_metrics_dict: dict[str, MetricArray],
+) -> dict[str, TimeArray]:
     """Calculate the mean of each metric over the forecast horizon.
 
     Args:
@@ -227,7 +238,10 @@ def calc_mean_metrics_per_horizon(horizon_metrics_dict: dict[str, MetricArray]) 
     """
     return {k: np.mean(v, axis=0) for k, v in horizon_metrics_dict.items()}
 
-def calc_mean_metrics_per_channel(horizon_metrics_dict: dict[str, MetricArray]) -> dict[str, ChannelArray]:
+
+def calc_mean_metrics_per_channel(
+    horizon_metrics_dict: dict[str, MetricArray],
+) -> dict[str, ChannelArray]:
     """Calculate the mean of each metric over the forecast horizon.
 
     Args:
@@ -281,7 +295,7 @@ def validate(
         batch_limit=batch_limit,
     )
 
-    # Calculate the mean of each metric over the forecast horizon 
+    # Calculate the mean of each metric over the forecast horizon
     horizon_metrics_dict = calc_mean_metrics_per_horizon(channel_horizon_metrics_dict)
 
     # Calculate the mean of each metric over the forecast horizon + channels
@@ -342,7 +356,7 @@ def validate(
             metric_value=metric_value,
             plot_name=f"{metric_name}-mean",
             channel_names=names,
-        ) 
+        )
 
     # Log selected video samples to wandb
     channel_inds = valid_dataset.ds.get_index("variable").get_indexer(VIDEO_SAMPLE_CHANNELS)  # type: ignore[no-untyped-call]

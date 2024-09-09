@@ -3,7 +3,7 @@
 import numpy as np
 from skimage.metrics import structural_similarity  # type: ignore[import-not-found]
 
-from cloudcasting.types import BatchOutputArray, OutputArray, SampleOutputArray, MetricArray
+from cloudcasting.types import BatchOutputArray, MetricArray, OutputArray, SampleOutputArray
 
 
 def mae_single(input: SampleOutputArray, target: SampleOutputArray) -> MetricArray:

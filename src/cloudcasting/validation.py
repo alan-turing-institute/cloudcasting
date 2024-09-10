@@ -192,7 +192,7 @@ def score_model_on_all_metrics(
 
         for metric_name, metric_func in metric_funcs.items():
             metrics[metric_name].append(metric_func(y_hat, y))
-        
+
         if batch_limit is not None and i >= batch_limit:
             break
 
@@ -334,26 +334,26 @@ def validate(
         dtype=np.float32,
     )
 
-    for metric_name, metric_array in horizon_metrics_dict.items():
+    for metric_name, horizon_array in horizon_metrics_dict.items():
         log_horizon_metric_plot_to_wandb(
             horizon_mins=horizon_mins,
-            metric_values=metric_array,
+            metric_values=horizon_array,
             plot_name=f"{metric_name}-horizon",
             metric_name=metric_name,
         )
 
     # Log the mean metrics to wandb
-    for metric_name, metric_value in mean_metrics_dict.items():
+    for metric_name, value in mean_metrics_dict.items():
         log_mean_metrics_to_wandb(
-            metric_value=metric_value,
+            metric_value=value,
             plot_name=f"{metric_name}-mean",
             metric_name=metric_name,
         )
 
     # Log mean metrics per-channel
-    for metric_name, metric_value in channel_metrics_dict.items():
+    for metric_name, channel_array in channel_metrics_dict.items():
         log_per_channel_metrics_to_wandb(
-            metric_value=metric_value,
+            metric_value=channel_array,
             plot_name=f"{metric_name}-mean",
             channel_names=names,
         )

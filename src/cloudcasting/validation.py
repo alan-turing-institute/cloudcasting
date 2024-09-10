@@ -192,11 +192,11 @@ def score_model_on_all_metrics(
 
         for metric_name, metric_func in metric_funcs.items():
             metrics[metric_name].append(metric_func(y_hat, y))
-
+        
         if batch_limit is not None and i >= batch_limit:
             break
 
-    res = {k: np.mean(v, axis=0) for k, v in metrics.items()}
+    res = {k: np.mean(np.array(v), axis=0) for k, v in metrics.items()}
 
     num_timesteps = FORECAST_HORIZON_MINUTES // DATA_INTERVAL_SPACING_MINUTES
 

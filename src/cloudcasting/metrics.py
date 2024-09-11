@@ -3,10 +3,10 @@
 import numpy as np
 from skimage.metrics import structural_similarity  # type: ignore[import-not-found]
 
-from cloudcasting.types import BatchOutputArray, OutputArray, SampleOutputArray, TimeArray
+from cloudcasting.types import BatchOutputArray, MetricArray, OutputArray, SampleOutputArray
 
 
-def mae_single(input: SampleOutputArray, target: SampleOutputArray) -> TimeArray:
+def mae_single(input: SampleOutputArray, target: SampleOutputArray) -> MetricArray:
     """Mean absolute error for single (non-batched) image sequences.
 
     Args:
@@ -14,14 +14,14 @@ def mae_single(input: SampleOutputArray, target: SampleOutputArray) -> TimeArray
         target: Array of shape [channels, time, height, width]
 
     Returns:
-        Array of MAE values along the time dimension
+        Array of MAE values of shape [channel, time]
     """
     absolute_error = np.abs(input - target)
-    arr: TimeArray = np.nanmean(absolute_error, axis=(0, 2, 3))
+    arr: MetricArray = np.nanmean(absolute_error, axis=(2, 3))
     return arr
 
 
-def mae_batch(input: BatchOutputArray, target: BatchOutputArray) -> TimeArray:
+def mae_batch(input: BatchOutputArray, target: BatchOutputArray) -> MetricArray:
     """Mean absolute error for batched image sequences.
 
     Args:
@@ -29,14 +29,14 @@ def mae_batch(input: BatchOutputArray, target: BatchOutputArray) -> TimeArray:
         target: Array of shape [batch, channels, time, height, width]
 
     Returns:
-        Array of MAE values along the time dimension
+        Array of MAE values of shape [channel, time]
     """
     absolute_error = np.abs(input - target)
-    arr: TimeArray = np.nanmean(absolute_error, axis=(0, 1, 3, 4))
+    arr: MetricArray = np.nanmean(absolute_error, axis=(0, 3, 4))
     return arr
 
 
-def mse_single(input: SampleOutputArray, target: SampleOutputArray) -> TimeArray:
+def mse_single(input: SampleOutputArray, target: SampleOutputArray) -> MetricArray:
     """Mean squared error for single (non-batched) image sequences.
 
     Args:
@@ -44,14 +44,14 @@ def mse_single(input: SampleOutputArray, target: SampleOutputArray) -> TimeArray
         target: Array of shape [channels, time, height, width]
 
     Returns:
-        Array of MSE values along the time dimension
+        Array of MSE values of shape [channel, time]
     """
     square_error = (input - target) ** 2
-    arr: TimeArray = np.nanmean(square_error, axis=(0, 2, 3))
+    arr: MetricArray = np.nanmean(square_error, axis=(2, 3))
     return arr
 
 
-def mse_batch(input: BatchOutputArray, target: BatchOutputArray) -> TimeArray:
+def mse_batch(input: BatchOutputArray, target: BatchOutputArray) -> MetricArray:
     """Mean squared error for batched image sequences.
 
     Args:
@@ -59,14 +59,16 @@ def mse_batch(input: BatchOutputArray, target: BatchOutputArray) -> TimeArray:
         target: Array of shape [batch, channels, time, height, width]
 
     Returns:
-        Array of MSE values along the time dimension
+        Array of MSE values of shape [channel, time]
     """
     square_error = (input - target) ** 2
-    arr: TimeArray = np.nanmean(square_error, axis=(0, 1, 3, 4))
+    arr: MetricArray = np.nanmean(square_error, axis=(0, 3, 4))
     return arr
 
 
-def ssim_single(input: SampleOutputArray, target: SampleOutputArray) -> TimeArray:
+
+def ssim_single(
+    input: SampleOutputArray, target: SampleOutputArray) -> MetricArray:
     """Computes the Structural Similarity (SSIM) index for single (non-batched) image sequences.
 
     Args:
@@ -74,14 +76,14 @@ def ssim_single(input: SampleOutputArray, target: SampleOutputArray) -> TimeArra
         target: Array of shape [channels, time, height, width]
 
     Returns:
-        Array of SSIM values along the time dimension
+        Array of SSIM values of shape [channel, time]
 
     References:
         Wang, Z., Bovik, A. C., Sheikh, H. R., & Simoncelli, E. P. (2004).
         Image quality assessment: From error visibility to structural similarity.
         IEEE Transactions on Image Processing, 13, 600-612.
         https://ece.uwaterloo.ca/~z70wang/publications/ssim.pdf,
-        DOI: 10.1109/TIP.2003.819861
+        DOI: 10.1109/TIP.2003.819861        
     """
 
     # This function assumes the data will be in the range 0-1 and will give invalid results if not
@@ -110,14 +112,14 @@ def ssim_single(input: SampleOutputArray, target: SampleOutputArray) -> TimeArra
         # To avoid edge effects from the Gaussian filter we trim off the border
         trim_width = (win_size - 1) // 2
         ssim_array = ssim_array[:, trim_width:-trim_width, trim_width:-trim_width]
-
-        ssim_seq.append(np.nanmean(ssim_array))
-
-    arr: TimeArray = np.stack(ssim_seq, axis=0)
+        # Take the mean of the SSIM array over channels, height, and width
+        ssim_seq.append(np.nanmean(ssim_array, axis=(1, 2)))
+    # stack along channel dimension
+    arr: MetricArray = np.stack(ssim_seq, axis=1)
     return arr
 
 
-def ssim_batch(input: BatchOutputArray, target: BatchOutputArray) -> TimeArray:
+def ssim_batch(input: BatchOutputArray, target: BatchOutputArray) -> MetricArray:
     """Structural similarity for batched image sequences.
 
     Args:
@@ -126,7 +128,7 @@ def ssim_batch(input: BatchOutputArray, target: BatchOutputArray) -> TimeArray:
         win_size: Side-length of the sliding window for comparison (must be odd)
 
     Returns:
-        Array of SSIM values along the time dimension
+        Array of SSIM values of shape [channel, time]
     """
     # This function assumes the data will be in the range 0-1 and will give invalid results if not
     _check_input_target_ranges(input, target)
@@ -134,7 +136,7 @@ def ssim_batch(input: BatchOutputArray, target: BatchOutputArray) -> TimeArray:
     ssim_samples = []
     for i_b in range(input.shape[0]):
         ssim_samples.append(ssim_single(input[i_b], target[i_b]))
-    arr: TimeArray = np.stack(ssim_samples, axis=0).mean(axis=0)
+    arr: MetricArray = np.stack(ssim_samples, axis=0).mean(axis=0)
     return arr
 
 

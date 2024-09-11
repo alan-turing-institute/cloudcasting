@@ -28,7 +28,7 @@ def test_score_model_on_all_metrics(model, val_sat_zarr_path, nan_to_num):
     )
 
     # Call the score_model_on_all_metrics function
-    metrics_dict = score_model_on_all_metrics(
+    metrics_dict, channels = score_model_on_all_metrics(
         model=model,
         valid_dataset=valid_dataset,
         batch_size=2,
@@ -46,6 +46,7 @@ def test_score_model_on_all_metrics(model, val_sat_zarr_path, nan_to_num):
     for metric_name, metric_array in metrics_dict.items():
         # check all the items have the expected shape
         assert metric_array.shape == (
+            len(channels),
             NUM_FORECAST_STEPS,
         ), f"Metric {metric_name} has the wrong shape"
 

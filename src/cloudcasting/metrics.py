@@ -66,9 +66,7 @@ def mse_batch(input: BatchOutputArray, target: BatchOutputArray) -> MetricArray:
     return arr
 
 
-
-def ssim_single(
-    input: SampleOutputArray, target: SampleOutputArray) -> MetricArray:
+def ssim_single(input: SampleOutputArray, target: SampleOutputArray) -> MetricArray:
     """Computes the Structural Similarity (SSIM) index for single (non-batched) image sequences.
 
     Args:
@@ -83,7 +81,7 @@ def ssim_single(
         Image quality assessment: From error visibility to structural similarity.
         IEEE Transactions on Image Processing, 13, 600-612.
         https://ece.uwaterloo.ca/~z70wang/publications/ssim.pdf,
-        DOI: 10.1109/TIP.2003.819861        
+        DOI: 10.1109/TIP.2003.819861
     """
 
     # This function assumes the data will be in the range 0-1 and will give invalid results if not

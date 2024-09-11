@@ -66,32 +66,50 @@ def mse_batch(input: BatchOutputArray, target: BatchOutputArray) -> MetricArray:
     return arr
 
 
-def ssim_single(
-    input: SampleOutputArray, target: SampleOutputArray, win_size: int | None = None
-) -> MetricArray:
-    """Structural similarity for single (non-batched) image sequences.
+def ssim_single(input: SampleOutputArray, target: SampleOutputArray) -> MetricArray:
+    """Computes the Structural Similarity (SSIM) index for single (non-batched) image sequences.
 
     Args:
         input: Array of shape [channels, time, height, width]
         target: Array of shape [channels, time, height, width]
-        win_size: Side-length of the sliding window for comparison (must be odd)
 
     Returns:
         Array of SSIM values of shape [channel, time]
+
+    References:
+        Wang, Z., Bovik, A. C., Sheikh, H. R., & Simoncelli, E. P. (2004).
+        Image quality assessment: From error visibility to structural similarity.
+        IEEE Transactions on Image Processing, 13, 600-612.
+        https://ece.uwaterloo.ca/~z70wang/publications/ssim.pdf,
+        DOI: 10.1109/TIP.2003.819861
     """
+
     # This function assumes the data will be in the range 0-1 and will give invalid results if not
     _check_input_target_ranges(input, target)
+
+    # The following param setting match Wang et. al. 2004
+    gaussian_weights = True
+    use_sample_covariance = False
+    sigma = 1.5
+    win_size = 11
+
     ssim_seq = []
     for i_t in range(input.shape[1]):
-        # Calculate the SSIM array for this time step
         _, ssim_array = structural_similarity(
-            input[:, i_t, :, :],
-            target[:, i_t, :, :],
+            input[:, i_t],
+            target[:, i_t],
             data_range=1,
             channel_axis=0,
             full=True,
+            gaussian_weights=gaussian_weights,
+            use_sample_covariance=use_sample_covariance,
+            sigma=sigma,
             win_size=win_size,
         )
+
+        # To avoid edge effects from the Gaussian filter we trim off the border
+        trim_width = (win_size - 1) // 2
+        ssim_array = ssim_array[:, trim_width:-trim_width, trim_width:-trim_width]
         # Take the mean of the SSIM array over channels, height, and width
         ssim_seq.append(np.nanmean(ssim_array, axis=(1, 2)))
     # stack along channel dimension
@@ -99,9 +117,7 @@ def ssim_single(
     return arr
 
 
-def ssim_batch(
-    input: BatchOutputArray, target: BatchOutputArray, win_size: int | None = None
-) -> MetricArray:
+def ssim_batch(input: BatchOutputArray, target: BatchOutputArray) -> MetricArray:
     """Structural similarity for batched image sequences.
 
     Args:
@@ -117,7 +133,7 @@ def ssim_batch(
 
     ssim_samples = []
     for i_b in range(input.shape[0]):
-        ssim_samples.append(ssim_single(input[i_b], target[i_b], win_size=win_size))
+        ssim_samples.append(ssim_single(input[i_b], target[i_b]))
     arr: MetricArray = np.stack(ssim_samples, axis=0).mean(axis=0)
     return arr
 

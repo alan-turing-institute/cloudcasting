@@ -1,4 +1,6 @@
 __all__ = (
+    "MetricArray",
+    "ChannelArray",
     "TimeArray",
     "SampleInputArray",
     "BatchInputArray",
@@ -15,6 +17,8 @@ from jaxtyping import Float as Float32
 # Type aliases for clarity + reuse
 Array = npt.NDArray[np.float32]  # the type arg is ignored by jaxtyping, but is here for clarity
 TimeArray = Float32[Array, "time"]
+MetricArray = Float32[Array, "channels time"]
+ChannelArray = Float32[Array, "channels"]
 
 SampleInputArray = Float32[Array, "channels time height width"]
 BatchInputArray = Float32[Array, "batch channels time height width"]

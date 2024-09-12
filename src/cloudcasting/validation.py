@@ -12,11 +12,13 @@ import numpy as np
 import wandb  # type: ignore[import-not-found]
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+import dm_pix
+import jax.numpy as jnp
+from jax import vmap
 
 import cloudcasting
 from cloudcasting.constants import DATA_INTERVAL_SPACING_MINUTES, FORECAST_HORIZON_MINUTES
 from cloudcasting.dataset import ValidationSatelliteDataset
-from cloudcasting.metrics import mae_batch, mse_batch
 from cloudcasting.models import AbstractModel
 from cloudcasting.types import (
     BatchOutputArray,
@@ -152,6 +154,7 @@ def score_model_on_all_metrics(
     batch_size: int = 1,
     num_workers: int = 0,
     batch_limit: int | None = None,
+    metric_names: tuple[str, ...] | list[str] = ("mae", "mse", "ssim"),
 ) -> tuple[dict[str, MetricArray], list[str]]:
     """Calculate the scoreboard metrics for the given model on the validation dataset.
 
@@ -183,10 +186,10 @@ def score_model_on_all_metrics(
         drop_last=False,
     )
 
+    # double vmap to broadcast over batch, time, and channels
+    # (pix will already broadcast over the leading dim in 4-D arrays)
     metric_funcs: dict[str, Callable[[BatchOutputArray, BatchOutputArray], MetricArray]] = {
-        "mae": mae_batch,
-        "mse": mse_batch,
-        # "ssim": ssim_batch,  # currently unstable with nans
+        name:vmap(vmap(getattr(dm_pix, name))) for name in metric_names
     }
 
     metrics: dict[str, list[MetricArray]] = {metric: [] for metric in metric_funcs}
@@ -201,12 +204,21 @@ def score_model_on_all_metrics(
         # convert these back to NaNs for the metrics
         y[y == -1] = np.nan
 
+        # pix accepts arrays of shape [batch, height, width, channels].
+        # our arrays are of shape [batch, channels, time, height, width].
+        # channel dim would be reduced; we add a new axis to satisfy the shape reqs.
+        # our metric funcs will then vmap over the first three dims.
+        y = jnp.array(y)[..., np.newaxis]
+        y_hat = jnp.array(y_hat)[..., np.newaxis]
+
         for metric_name, metric_func in metric_funcs.items():
-            metrics[metric_name].append(metric_func(y_hat, y))
+            batch_reduced_metric = metric_func(y_hat, y).mean(axis=0)
+            metrics[metric_name].append(batch_reduced_metric)
 
         if batch_limit is not None and i >= batch_limit:
             break
 
+    # convert back to numpy and reduce over all batches
     res = {k: np.mean(np.array(v), axis=0) for k, v in metrics.items()}
 
     num_timesteps = FORECAST_HORIZON_MINUTES // DATA_INTERVAL_SPACING_MINUTES

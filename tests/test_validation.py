@@ -27,6 +27,8 @@ def test_score_model_on_all_metrics(model, val_sat_zarr_path, nan_to_num):
         nan_to_num=nan_to_num,
     )
 
+    metric_names = ("mae", "mse", "ssim")
+
     # Call the score_model_on_all_metrics function
     metrics_dict, channels = score_model_on_all_metrics(
         model=model,
@@ -34,14 +36,11 @@ def test_score_model_on_all_metrics(model, val_sat_zarr_path, nan_to_num):
         batch_size=2,
         num_workers=0,
         batch_limit=3,
+        metric_names=metric_names
     )
 
     # Check all the expected keys are there
-    assert metrics_dict.keys() == {
-        "mae",
-        "mse",
-        # "ssim",  # currently unstable with nans
-    }
+    assert tuple(metrics_dict.keys()) == metric_names
 
     for metric_name, metric_array in metrics_dict.items():
         # check all the items have the expected shape

@@ -45,4 +45,6 @@ repos:
           - lightning
           - torch
           - jaxtyping
+          - jax
+          - dm_pix
           - types-tqdm

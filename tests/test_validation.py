@@ -51,10 +51,10 @@ def test_score_model_on_all_metrics(model, val_sat_zarr_path, nan_to_num):
 
 
 def test_calc_mean_metrics():
-    # Create a test dictionary of metrics
+    # Create a test dictionary of metrics (channels, time)
     test_metrics_dict = {
-        "mae": np.array([1.0, 2.0, 3.0]),
-        "mse": np.array([4.0, 5.0, 6.0]),
+        "mae": np.array([[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]]),
+        "mse": np.array([[4.0, 5.0, 6.0], [4.0, 5.0, 6.0]]),
     }
 
     # Call the calc_mean_metrics function

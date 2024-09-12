@@ -36,7 +36,7 @@ def test_score_model_on_all_metrics(model, val_sat_zarr_path, nan_to_num):
         batch_size=2,
         num_workers=0,
         batch_limit=3,
-        metric_names=metric_names
+        metric_names=metric_names,
     )
 
     # Check all the expected keys are there

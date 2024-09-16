@@ -1,12 +1,13 @@
 import inspect
 from collections.abc import Callable
 from functools import partial
+from typing import Any, cast
 
 import dm_pix
 import jax.numpy as jnp
 import numpy as np
 import wandb  # type: ignore[import-not-found]
-from jax import jit, tree, vmap
+from jax import tree
 from jaxtyping import Array, Float32
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -157,6 +158,7 @@ def score_model_on_all_metrics(
     num_workers: int = 0,
     batch_limit: int | None = None,
     metric_names: tuple[str, ...] | list[str] = ("mae", "mse", "ssim"),
+    metric_kwargs: dict[str, dict[str, Any]] | None = None,
 ) -> tuple[dict[str, MetricArray], list[str]]:
     """Calculate the scoreboard metrics for the given model on the validation dataset.
 
@@ -188,23 +190,35 @@ def score_model_on_all_metrics(
         drop_last=False,
     )
 
+    if metric_kwargs is None:
+        metric_kwargs_dict: dict[str, dict[str, Any]] = {}
+    else:
+        metric_kwargs_dict = metric_kwargs
+
     def get_pix_function(
         name: str,
+        pix_kwargs: dict[str, dict[str, Any]],
     ) -> Callable[
         [BatchOutputArrayJAX, BatchOutputArrayJAX], Float32[Array, "batch channels time"]
     ]:
         func = getattr(dm_pix, name)
         sig = inspect.signature(func)
+        # TODO: move to hyperpars dict for each metric
         if "ignore_nans" in sig.parameters:
             func = partial(func, ignore_nans=True)
-        return jit(vmap(vmap(func)))
+        if name in pix_kwargs:
+            func = partial(func, **pix_kwargs[name])
+        return cast(
+            Callable[
+                [BatchOutputArrayJAX, BatchOutputArrayJAX], Float32[Array, "batch channels time"]
+            ],
+            func,
+        )
 
-    # double vmap to broadcast over batch, time, and channels
-    # (pix will already broadcast over the leading dim in 4-D arrays)
     metric_funcs: dict[
         str,
         Callable[[BatchOutputArrayJAX, BatchOutputArrayJAX], Float32[Array, "batch channels time"]],
-    ] = {name: get_pix_function(name) for name in metric_names}
+    ] = {name: get_pix_function(name, metric_kwargs_dict) for name in metric_names}
 
     metrics: dict[str, list[Float32[Array, "batch channels time"]]] = {
         metric: [] for metric in metric_funcs
@@ -224,11 +238,12 @@ def score_model_on_all_metrics(
         # our arrays are of shape [batch, channels, time, height, width].
         # channel dim would be reduced; we add a new axis to satisfy the shape reqs.
         # our metric funcs will then vmap over the first three dims.
-        y_jax = jnp.array(y)[..., np.newaxis]
-        y_hat_jax = jnp.array(y_hat)[..., np.newaxis]
+        y_jax = jnp.array(y).reshape(-1, *y.shape[-2:])[..., np.newaxis]
+        y_hat_jax = jnp.array(y_hat).reshape(-1, *y_hat.shape[-2:])[..., np.newaxis]
 
         for metric_name, metric_func in metric_funcs.items():
-            batch_reduced_metric = jnp.nanmean(metric_func(y_hat_jax, y_jax), axis=0)
+            metric_res = metric_func(y_hat_jax, y_jax).reshape(*y.shape[:3])
+            batch_reduced_metric = jnp.nanmean(metric_res, axis=0)
             metrics[metric_name].append(batch_reduced_metric)
 
         if batch_limit is not None and i >= batch_limit:

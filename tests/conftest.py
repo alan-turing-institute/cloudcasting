@@ -27,7 +27,7 @@ def sat_zarr_path(temp_output_dir):
 
     # Add data to dataset
     ds["data"] = xr.DataArray(
-        np.ones([len(ds[c]) for c in ds.coords], dtype=np.float32),
+        np.zeros([len(ds[c]) for c in ds.coords], dtype=np.float32),
         coords=ds.coords,
     )
 

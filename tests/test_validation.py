@@ -28,6 +28,10 @@ def test_score_model_on_all_metrics(model, val_sat_zarr_path, nan_to_num):
     )
 
     metric_names = ("mae", "mse", "ssim")
+    # use small filter size to not propagate nan to the whole image
+    # (this is only because our test images are very small (8x9) --
+    # the filter window of size 11 would be bigger than the image!)
+    metric_kwargs = {"ssim": {"fiter_size": 2}}
 
     # Call the score_model_on_all_metrics function
     metrics_dict, channels = score_model_on_all_metrics(
@@ -37,6 +41,7 @@ def test_score_model_on_all_metrics(model, val_sat_zarr_path, nan_to_num):
         num_workers=0,
         batch_limit=3,
         metric_names=metric_names,
+        metric_kwargs=metric_kwargs,
     )
 
     # Check all the expected keys are there

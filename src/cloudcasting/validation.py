@@ -1,3 +1,11 @@
+try:
+    import torch.multiprocessing as mp
+
+    mp.set_start_method("spawn", force=True)
+except RuntimeError:
+    pass
+
+
 from collections.abc import Callable
 
 import numpy as np

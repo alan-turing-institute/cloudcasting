@@ -31,7 +31,7 @@ def test_score_model_on_all_metrics(model, val_sat_zarr_path, nan_to_num):
     # use small filter size to not propagate nan to the whole image
     # (this is only because our test images are very small (8x9) --
     # the filter window of size 11 would be bigger than the image!)
-    metric_kwargs = {"ssim": {"fiter_size": 2}}
+    metric_kwargs = {"ssim": {"filter_size": 2}}
 
     # Call the score_model_on_all_metrics function
     metrics_dict, channels = score_model_on_all_metrics(

@@ -49,6 +49,8 @@ def test_score_model_on_all_metrics(model, val_sat_zarr_path, nan_to_num):
             NUM_FORECAST_STEPS,
         ), f"Metric {metric_name} has the wrong shape"
 
+        assert not np.any(np.isnan(metric_array)), f"Metric '{metric_name}' is predicting NaNs!"
+
 
 def test_calc_mean_metrics():
     # Create a test dictionary of metrics (channels, time)

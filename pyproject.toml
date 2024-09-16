@@ -161,6 +161,7 @@ select = [
 ignore = [
   "PLR",    # Design related pylint codes
   "ISC001", # Conflicts with formatter
+  "F722"    # Marks jaxtyping syntax annotations as incorrect
 ]
 unfixable = [
   "F401",   # Would remove unused imports

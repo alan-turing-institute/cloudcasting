@@ -1,11 +1,4 @@
-try:
-    import torch.multiprocessing as mp
-
-    mp.set_start_method("spawn", force=True)
-except RuntimeError:
-    pass
-
-
+import inspect
 from collections.abc import Callable
 from functools import partial
 
@@ -13,10 +6,17 @@ import dm_pix
 import jax.numpy as jnp
 import numpy as np
 import wandb  # type: ignore[import-not-found]
-from jax import tree, vmap
+from jax import jit, tree, vmap
 from jaxtyping import Array, Float32
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+
+try:
+    import torch.multiprocessing as mp
+
+    mp.set_start_method("spawn", force=True)
+except RuntimeError:
+    pass
 
 import cloudcasting
 from cloudcasting.constants import DATA_INTERVAL_SPACING_MINUTES, FORECAST_HORIZON_MINUTES
@@ -188,12 +188,23 @@ def score_model_on_all_metrics(
         drop_last=False,
     )
 
+    def get_pix_function(
+        name: str,
+    ) -> Callable[
+        [BatchOutputArrayJAX, BatchOutputArrayJAX], Float32[Array, "batch channels time"]
+    ]:
+        func = getattr(dm_pix, name)
+        sig = inspect.signature(func)
+        if "ignore_nans" in sig.parameters:
+            func = partial(func, ignore_nans=True)
+        return jit(vmap(vmap(func)))
+
     # double vmap to broadcast over batch, time, and channels
     # (pix will already broadcast over the leading dim in 4-D arrays)
     metric_funcs: dict[
         str,
         Callable[[BatchOutputArrayJAX, BatchOutputArrayJAX], Float32[Array, "batch channels time"]],
-    ] = {name: vmap(vmap(getattr(dm_pix, name))) for name in metric_names}
+    ] = {name: get_pix_function(name) for name in metric_names}
 
     metrics: dict[str, list[Float32[Array, "batch channels time"]]] = {
         metric: [] for metric in metric_funcs
@@ -222,9 +233,10 @@ def score_model_on_all_metrics(
 
         if batch_limit is not None and i >= batch_limit:
             break
-
     # convert back to numpy and reduce over all batches
-    res = tree.map(lambda x: np.mean(np.array(x), axis=0), metrics, is_leaf=lambda x: isinstance(x, list))
+    res = tree.map(
+        lambda x: np.mean(np.array(x), axis=0), metrics, is_leaf=lambda x: isinstance(x, list)
+    )
 
     num_timesteps = FORECAST_HORIZON_MINUTES // DATA_INTERVAL_SPACING_MINUTES
 

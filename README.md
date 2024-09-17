@@ -131,7 +131,7 @@ Distributed under the terms of the [MIT license](LICENSE).
 
 
 <!-- prettier-ignore-start -->
-[actions-badge]:            https://github.com/climetrend/cloudcasting/workflows/CI/badge.svg?branch=main
+[actions-badge]:            https://github.com/climetrend/cloudcasting/workflows/CI.yml/badge.svg?branch=main
 [actions-link]:             https://github.com/climetrend/cloudcasting/actions
 [pypi-link]:                https://pypi.org/project/cloudcasting/
 [pypi-platforms]:           https://img.shields.io/pypi/pyversions/cloudcasting

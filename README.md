@@ -8,7 +8,20 @@ Tooling and infrastructure to enable cloud nowcasting.
 
 ## Installation
 
-From source (development mode):
+### For users:
+
+```zsh
+git clone https://github.com/alan-turing-institute/cloudcasting
+cd cloudcasting
+python -m pip install .
+```
+
+To run metrics on GPU:
+
+```zsh
+python -m install --upgrade "jax[cuda12]"
+```
+### For making changes to the library:
 
 On macOS you first need to install `ffmpeg` with the following command. On other platforms this is
 not necessary.
@@ -20,7 +33,7 @@ brew install ffmpeg
 Clone and install the repo.
 
 ```bash
-git clone https://github.com/climetrend/cloudcasting
+git clone https://github.com/alan-turing-institute/cloudcasting
 cd cloudcasting
 python -m pip install ".[dev]"
 ```

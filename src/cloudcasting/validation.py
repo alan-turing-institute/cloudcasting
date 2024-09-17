@@ -167,7 +167,8 @@ def score_model_on_all_metrics(
         valid_dataset (ValidationSatelliteDataset): The validation dataset to score the model on.
         batch_size (int, optional): Defaults to 1.
         num_workers (int, optional): Defaults to 0.
-        batch_limit (int | None, optional): Defaults to None. For testing purposes only.
+        batch_limit (int | None, optional): Defaults to None. Stop after this many batches.
+            For testing purposes only.
         metric_names (tuple[str, ...] | list[str]: Names of metrics to calculate. Need to be defined
             in cloudcasting.metrics. Defaults to ("mae", "mse", "ssim").
         metric_kwargs (dict[str, dict[str, Any]] | None, optional): kwargs to pass to functions in

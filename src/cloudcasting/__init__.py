@@ -17,7 +17,7 @@ from jaxtyping import install_import_hook
 with install_import_hook("cloudcasting", "typeguard.typechecked"):
     from cloudcasting import models, validation
 
-from cloudcasting import cli, dataset, download
+from cloudcasting import cli, dataset, download, metrics
 
 __all__ = (
     "__version__",
@@ -26,5 +26,6 @@ __all__ = (
     "dataset",
     "models",
     "validation",
+    "metrics",
 )
 __version__ = version(__name__)

@@ -3,7 +3,6 @@ from collections.abc import Callable
 from functools import partial
 from typing import Any, cast
 
-import dm_pix
 import jax.numpy as jnp
 import numpy as np
 import wandb  # type: ignore[import-not-found]
@@ -20,6 +19,7 @@ except RuntimeError:
     pass
 
 import cloudcasting
+from cloudcasting import metrics as dm_pix  # for compatibility if our changes are upstreamed
 from cloudcasting.constants import DATA_INTERVAL_SPACING_MINUTES, FORECAST_HORIZON_MINUTES
 from cloudcasting.dataset import ValidationSatelliteDataset
 from cloudcasting.models import AbstractModel

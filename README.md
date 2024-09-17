@@ -20,7 +20,7 @@ brew install ffmpeg
 Clone and install the repo.
 
 ```bash
-git clone https://github.com/climetrend/cloudcasting
+git clone https://github.com/alan-turing-institute/cloudcasting
 cd cloudcasting
 python -m pip install ".[dev]"
 ```

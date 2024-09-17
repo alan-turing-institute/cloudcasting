@@ -46,6 +46,7 @@ dependencies = [
     "moviepy>=1.0.3",
     "imageio>=2.35.1",
     "numpy <2.1.0",  # https://github.com/wandb/wandb/issues/8166
+    "chex",
 ]
 [project.optional-dependencies]
 dev = [

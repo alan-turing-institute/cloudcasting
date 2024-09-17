@@ -64,10 +64,10 @@ dev = [
 cloudcasting = "cloudcasting.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/climetrend/cloudcasting"
-"Bug Tracker" = "https://github.com/climetrend/cloudcasting/issues"
-Discussions = "https://github.com/climetrend/cloudcasting/discussions"
-Changelog = "https://github.com/climetrend/cloudcasting/releases"
+Homepage = "https://github.com/alan-turing-institute/cloudcasting"
+"Bug Tracker" = "https://github.com/alan-turing-institute/cloudcasting/issues"
+Discussions = "https://github.com/alan-turing-institute/cloudcasting/discussions"
+Changelog = "https://github.com/alan-turing-institute/cloudcasting/releases"
 
 [tool.pytest.ini_options]
 minversion = "6.0"

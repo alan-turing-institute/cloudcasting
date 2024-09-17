@@ -168,11 +168,16 @@ def score_model_on_all_metrics(
         batch_size (int, optional): Defaults to 1.
         num_workers (int, optional): Defaults to 0.
         batch_limit (int | None, optional): Defaults to None. For testing purposes only.
+        metric_names (tuple[str, ...] | list[str]: Names of metrics to calculate. Need to be defined
+            in cloudcasting.metrics. Defaults to ("mae", "mse", "ssim").
+        metric_kwargs (dict[str, dict[str, Any]] | None, optional): kwargs to pass to functions in
+            cloudcasting.metrics. Defaults to None.
 
     Returns:
-        dict[str, MetricArray]: keys are metric names, values are arrays of results averaged over
-            all dims except horizon and channel.
-        list[str]: list of channel names
+        tuple[dict[str, MetricArray], list[str]]:
+        Element 0: keys are metric names, values are arrays of results
+            averaged over all dims except horizon and channel.
+        Element 1: list of channel names.
     """
 
     # check the the data spacing perfectly divides the forecast horizon
@@ -203,7 +208,6 @@ def score_model_on_all_metrics(
     ]:
         func = getattr(dm_pix, name)
         sig = inspect.signature(func)
-        # TODO: move to hyperpars dict for each metric
         if "ignore_nans" in sig.parameters:
             func = partial(func, ignore_nans=True)
         if name in pix_kwargs:
@@ -237,11 +241,14 @@ def score_model_on_all_metrics(
         # pix accepts arrays of shape [batch, height, width, channels].
         # our arrays are of shape [batch, channels, time, height, width].
         # channel dim would be reduced; we add a new axis to satisfy the shape reqs.
-        # our metric funcs will then vmap over the first three dims.
+        # we then reshape to squash batch, channels, and time into the leading axis,
+        # where the vmap in metrics.py will broadcast over the leading dim.
         y_jax = jnp.array(y).reshape(-1, *y.shape[-2:])[..., np.newaxis]
         y_hat_jax = jnp.array(y_hat).reshape(-1, *y_hat.shape[-2:])[..., np.newaxis]
 
         for metric_name, metric_func in metric_funcs.items():
+            # we reshape the result back into [batch, channels, time],
+            # then take the mean over the batch
             metric_res = metric_func(y_hat_jax, y_jax).reshape(*y.shape[:3])
             batch_reduced_metric = jnp.nanmean(metric_res, axis=0)
             metrics[metric_name].append(batch_reduced_metric)

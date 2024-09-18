@@ -1,11 +1,12 @@
 import inspect
 from collections.abc import Callable
 from functools import partial
-from typing import Any, cast
+from typing import Any, cast, Annotated
 
 import jax.numpy as jnp
 import numpy as np
 import wandb  # type: ignore[import-not-found]
+import typer
 from jax import tree
 from jaxtyping import Array, Float32
 from torch.utils.data import DataLoader
@@ -314,14 +315,23 @@ def calc_mean_metrics_per_channel(metrics_dict: dict[str, MetricArray]) -> dict[
 
 
 def validate(
-    model: AbstractModel,
-    data_path: list[str] | str,
-    wandb_project_name: str,
-    wandb_run_name: str,
-    nan_to_num: bool = False,
-    batch_size: int = 1,
-    num_workers: int = 0,
-    batch_limit: int | None = None,
+    model: Annotated[AbstractModel, typer.Argument(help="Model class object to validate.")],
+    data_path: Annotated[list[str] | str, typer.Argument(help="Path to the validation data.")],
+    wandb_project_name: Annotated[
+        str,
+        typer.Argument(
+            help="The folder to store results on wandb - 'cloudcasting' is the main one."
+        ),
+    ],
+    wandb_run_name: Annotated[str, typer.Argument(help="Unique name for logging your run")],
+    nan_to_num: Annotated[
+        bool, typer.Option(help="Whether to convert NaNs to -1. Defaults to False.")
+    ] = False,
+    batch_size: Annotated[int, typer.Option(help="Defaults to 1.")] = 1,
+    num_workers: Annotated[int, typer.Option(help="Defaults to 0.")] = 0,
+    batch_limit: Annotated[
+        int | None, typer.Option(help="Defaults to None. For testing purposes only.")
+    ] = None,
 ) -> None:
     """Run the full validation procedure on the model and log the results to wandb.
 

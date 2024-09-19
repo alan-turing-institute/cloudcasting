@@ -30,9 +30,9 @@ from cloudcasting.utils import numpy_validation_collate_fn
 # defined in manchester prize technical document
 WANDB_ENTITY = "manchester_prize"
 VIDEO_SAMPLE_DATES = [
-    "2022-01-17 10:30",
-    "2022-04-11 06:30",
-    "2022-06-10 10:30",
+    "2022-01-17 11:00",
+    "2022-04-11 06:00",
+    "2022-06-10 11:00",
     "2022-09-30 18:15",
 ]
 VIDEO_SAMPLE_CHANNELS = ["VIS008", "IR_087"]

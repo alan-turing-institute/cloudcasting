@@ -42,13 +42,13 @@ available_t0_times = find_valid_t0_times(
 )
 
 # Filter the t0 times so they have gaps of at least 1 hour
-filtered_t0_times = [available_t0_times[0]]
+_filtered_t0_times = [available_t0_times[0]]
 
 for t in available_t0_times[1:]:
-    if (t - filtered_t0_times[-1]) >= MIN_GAP_SIZE:
-        filtered_t0_times.append(t)
-        
-filtered_t0_times = pd.DatetimeIndex(filtered_t0_times)
+    if (t - _filtered_t0_times[-1]) >= MIN_GAP_SIZE:
+        _filtered_t0_times.append(t)
+
+filtered_t0_times = pd.DatetimeIndex(_filtered_t0_times)
 
 
 # Print the valid t0 times to sanity check

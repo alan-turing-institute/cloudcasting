@@ -1,160 +1,261 @@
-"""Metrics for model output evaluation"""
+# mypy: ignore-errors
+### Adapted by The Alan Turing Institute and Open Climate Fix, 2024.
+### Original source: https://github.com/google-deepmind/dm_pix
+# Copyright 2021 DeepMind Technologies Limited. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""Functions to compare image pairs.
 
-import numpy as np
-from skimage.metrics import structural_similarity  # type: ignore[import-not-found]
+All functions expect float-encoded images, with values in [0, 1], with NHWC
+shapes. Each image metric function returns a scalar for each image pair.
+"""
 
-from cloudcasting.types import BatchOutputArray, MetricArray, OutputArray, SampleOutputArray
+from collections.abc import Callable
+
+import chex
+import jax
+import jax.numpy as jnp
+
+# DO NOT REMOVE - Logging lib.
 
 
-def mae_single(input: SampleOutputArray, target: SampleOutputArray) -> MetricArray:
-    """Mean absolute error for single (non-batched) image sequences.
+def mae(a: chex.Array, b: chex.Array, ignore_nans: bool = False) -> chex.Numeric:
+    """Returns the Mean Absolute Error between `a` and `b`.
 
     Args:
-        input: Array of shape [channels, time, height, width]
-        target: Array of shape [channels, time, height, width]
+      a: First image (or set of images).
+      b: Second image (or set of images).
 
     Returns:
-        Array of MAE values of shape [channel, time]
+      MAE between `a` and `b`.
     """
-    absolute_error = np.abs(input - target)
-    arr: MetricArray = np.nanmean(absolute_error, axis=(2, 3))
-    return arr
+    # DO NOT REMOVE - Logging usage.
+
+    chex.assert_rank([a, b], {3, 4})
+    chex.assert_type([a, b], float)
+    chex.assert_equal_shape([a, b])
+    if ignore_nans:
+        return jnp.nanmean(jnp.abs(a - b), axis=(-3, -2, -1))
+    return jnp.mean(jnp.abs(a - b), axis=(-3, -2, -1))
 
 
-def mae_batch(input: BatchOutputArray, target: BatchOutputArray) -> MetricArray:
-    """Mean absolute error for batched image sequences.
+def mse(a: chex.Array, b: chex.Array, ignore_nans: bool = False) -> chex.Numeric:
+    """Returns the Mean Squared Error between `a` and `b`.
 
     Args:
-        input: Array of shape [batch, channels, time, height, width]
-        target: Array of shape [batch, channels, time, height, width]
+      a: First image (or set of images).
+      b: Second image (or set of images).
 
     Returns:
-        Array of MAE values of shape [channel, time]
+      MSE between `a` and `b`.
     """
-    absolute_error = np.abs(input - target)
-    arr: MetricArray = np.nanmean(absolute_error, axis=(0, 3, 4))
-    return arr
+    # DO NOT REMOVE - Logging usage.
+
+    chex.assert_rank([a, b], {3, 4})
+    chex.assert_type([a, b], float)
+    chex.assert_equal_shape([a, b])
+    if ignore_nans:
+        return jnp.nanmean(jnp.square(a - b), axis=(-3, -2, -1))
+    return jnp.mean(jnp.square(a - b), axis=(-3, -2, -1))
 
 
-def mse_single(input: SampleOutputArray, target: SampleOutputArray) -> MetricArray:
-    """Mean squared error for single (non-batched) image sequences.
+def psnr(a: chex.Array, b: chex.Array) -> chex.Numeric:
+    """Returns the Peak Signal-to-Noise Ratio between `a` and `b`.
+
+    Assumes that the dynamic range of the images (the difference between the
+    maximum and the minimum allowed values) is 1.0.
 
     Args:
-        input: Array of shape [channels, time, height, width]
-        target: Array of shape [channels, time, height, width]
+      a: First image (or set of images).
+      b: Second image (or set of images).
 
     Returns:
-        Array of MSE values of shape [channel, time]
+      PSNR in decibels between `a` and `b`.
     """
-    square_error = (input - target) ** 2
-    arr: MetricArray = np.nanmean(square_error, axis=(2, 3))
-    return arr
+    # DO NOT REMOVE - Logging usage.
+
+    chex.assert_rank([a, b], {3, 4})
+    chex.assert_type([a, b], float)
+    chex.assert_equal_shape([a, b])
+    return -10.0 * jnp.log(mse(a, b)) / jnp.log(10.0)
 
 
-def mse_batch(input: BatchOutputArray, target: BatchOutputArray) -> MetricArray:
-    """Mean squared error for batched image sequences.
+def rmse(a: chex.Array, b: chex.Array) -> chex.Numeric:
+    """Returns the Root Mean Squared Error between `a` and `b`.
 
     Args:
-        input: Array of shape [batch, channels, time, height, width]
-        target: Array of shape [batch, channels, time, height, width]
+      a: First image (or set of images).
+      b: Second image (or set of images).
 
     Returns:
-        Array of MSE values of shape [channel, time]
+      RMSE between `a` and `b`.
     """
-    square_error = (input - target) ** 2
-    arr: MetricArray = np.nanmean(square_error, axis=(0, 3, 4))
-    return arr
+    # DO NOT REMOVE - Logging usage.
+
+    chex.assert_rank([a, b], {3, 4})
+    chex.assert_type([a, b], float)
+    chex.assert_equal_shape([a, b])
+    return jnp.sqrt(mse(a, b))
 
 
-def ssim_single(input: SampleOutputArray, target: SampleOutputArray) -> MetricArray:
-    """Computes the Structural Similarity (SSIM) index for single (non-batched) image sequences.
+def simse(a: chex.Array, b: chex.Array) -> chex.Numeric:
+    """Returns the Scale-Invariant Mean Squared Error between `a` and `b`.
+
+    For each image pair, a scaling factor for `b` is computed as the solution to
+    the following problem:
+
+      min_alpha || vec(a) - alpha * vec(b) ||_2^2
+
+    where `a` and `b` are flattened, i.e., vec(x) = np.flatten(x). The MSE between
+    the optimally scaled `b` and `a` is returned: mse(a, alpha*b).
+
+    This is a scale-invariant metric, so for example: simse(x, y) == sims(x, y*5).
+
+    This metric was used in "Shape, Illumination, and Reflectance from Shading" by
+    Barron and Malik, TPAMI, '15.
 
     Args:
-        input: Array of shape [channels, time, height, width]
-        target: Array of shape [channels, time, height, width]
+      a: First image (or set of images).
+      b: Second image (or set of images).
 
     Returns:
-        Array of SSIM values of shape [channel, time]
-
-    References:
-        Wang, Z., Bovik, A. C., Sheikh, H. R., & Simoncelli, E. P. (2004).
-        Image quality assessment: From error visibility to structural similarity.
-        IEEE Transactions on Image Processing, 13, 600-612.
-        https://ece.uwaterloo.ca/~z70wang/publications/ssim.pdf,
-        DOI: 10.1109/TIP.2003.819861
+      SIMSE between `a` and `b`.
     """
+    # DO NOT REMOVE - Logging usage.
 
-    # This function assumes the data will be in the range 0-1 and will give invalid results if not
-    _check_input_target_ranges(input, target)
+    chex.assert_rank([a, b], {3, 4})
+    chex.assert_type([a, b], float)
+    chex.assert_equal_shape([a, b])
 
-    # The following param setting match Wang et. al. 2004
-    gaussian_weights = True
-    use_sample_covariance = False
-    sigma = 1.5
-    win_size = 11
-
-    ssim_seq = []
-    for i_t in range(input.shape[1]):
-        _, ssim_array = structural_similarity(
-            input[:, i_t],
-            target[:, i_t],
-            data_range=1,
-            channel_axis=0,
-            full=True,
-            gaussian_weights=gaussian_weights,
-            use_sample_covariance=use_sample_covariance,
-            sigma=sigma,
-            win_size=win_size,
-        )
-
-        # To avoid edge effects from the Gaussian filter we trim off the border
-        trim_width = (win_size - 1) // 2
-        ssim_array = ssim_array[:, trim_width:-trim_width, trim_width:-trim_width]
-        # Take the mean of the SSIM array over channels, height, and width
-        ssim_seq.append(np.nanmean(ssim_array, axis=(1, 2)))
-    # stack along channel dimension
-    arr: MetricArray = np.stack(ssim_seq, axis=1)
-    return arr
+    a_dot_b = (a * b).sum(axis=(-3, -2, -1), keepdims=True)
+    b_dot_b = (b * b).sum(axis=(-3, -2, -1), keepdims=True)
+    alpha = a_dot_b / b_dot_b
+    return mse(a, alpha * b)
 
 
-def ssim_batch(input: BatchOutputArray, target: BatchOutputArray) -> MetricArray:
-    """Structural similarity for batched image sequences.
+def ssim(
+    a: chex.Array,
+    b: chex.Array,
+    *,
+    max_val: float = 1.0,
+    filter_size: int = 11,
+    filter_sigma: float = 1.5,
+    k1: float = 0.01,
+    k2: float = 0.03,
+    return_map: bool = False,
+    precision=jax.lax.Precision.HIGHEST,
+    filter_fn: Callable[[chex.Array], chex.Array] | None = None,
+    ignore_nans: bool = False,
+) -> chex.Numeric:
+    """Computes the structural similarity index (SSIM) between image pairs.
+
+    This function is based on the standard SSIM implementation from:
+    Z. Wang, A. C. Bovik, H. R. Sheikh and E. P. Simoncelli,
+    "Image quality assessment: from error visibility to structural similarity",
+    in IEEE Transactions on Image Processing, vol. 13, no. 4, pp. 600-612, 2004.
+
+    This function was modeled after tf.image.ssim, and should produce comparable
+    output.
+
+    Note: the true SSIM is only defined on grayscale. This function does not
+    perform any colorspace transform. If the input is in a color space, then it
+    will compute the average SSIM.
 
     Args:
-        input: Array of shape [batch, channels, time, height, width]
-        target: Array of shape [batch, channels, time, height, width]
-        win_size: Side-length of the sliding window for comparison (must be odd)
+      a: First image (or set of images).
+      b: Second image (or set of images).
+      max_val: The maximum magnitude that `a` or `b` can have.
+      filter_size: Window size (>= 1). Image dims must be at least this small.
+      filter_sigma: The bandwidth of the Gaussian used for filtering (> 0.).
+      k1: One of the SSIM dampening parameters (> 0.).
+      k2: One of the SSIM dampening parameters (> 0.).
+      return_map: If True, will cause the per-pixel SSIM "map" to be returned.
+      precision: The numerical precision to use when performing convolution.
+      filter_fn: An optional argument for overriding the filter function used by
+        SSIM, which would otherwise be a 2D Gaussian blur specified by filter_size
+        and filter_sigma.
 
     Returns:
-        Array of SSIM values of shape [channel, time]
+      Each image's mean SSIM, or a tensor of individual values if `return_map`.
     """
-    # This function assumes the data will be in the range 0-1 and will give invalid results if not
-    _check_input_target_ranges(input, target)
+    # DO NOT REMOVE - Logging usage.
 
-    ssim_samples = []
-    for i_b in range(input.shape[0]):
-        ssim_samples.append(ssim_single(input[i_b], target[i_b]))
-    arr: MetricArray = np.stack(ssim_samples, axis=0).mean(axis=0)
-    return arr
+    chex.assert_rank([a, b], {3, 4})
+    chex.assert_type([a, b], float)
+    chex.assert_equal_shape([a, b])
 
+    if filter_fn is None:
+        # Construct a 1D Gaussian blur filter.
+        hw = filter_size // 2
+        shift = (2 * hw - filter_size + 1) / 2
+        f_i = ((jnp.arange(filter_size) - hw + shift) / filter_sigma) ** 2
+        filt = jnp.exp(-0.5 * f_i)
+        filt /= jnp.sum(filt)
 
-def _check_input_target_ranges(input: OutputArray, target: OutputArray) -> None:
-    """Validate input and target arrays are within the 0-1 range.
+        # Construct a 1D convolution.
+        def filter_fn_1(z):
+            return jnp.convolve(z, filt, mode="valid", precision=precision)
 
-    Args:
-        input: Input array
-        target: Target array
+        filter_fn_vmap = jax.vmap(filter_fn_1)
 
-    Raises:
-        ValueError: If input or target values are outside the 0-1 range.
-    """
-    input_max, input_min = input.max(), input.min()
-    target_max, target_min = target.max(), target.min()
+        # Apply the vectorized filter along the y axis.
+        def filter_fn_y(z):
+            z_flat = jnp.moveaxis(z, -3, -1).reshape((-1, z.shape[-3]))
+            z_filtered_shape = ((z.shape[-4],) if z.ndim == 4 else ()) + (
+                z.shape[-2],
+                z.shape[-1],
+                -1,
+            )
+            return jnp.moveaxis(filter_fn_vmap(z_flat).reshape(z_filtered_shape), -1, -3)
 
-    if (input_min < 0) | (input_max > 1) | (target_min < 0) | (target_max > 1):
-        msg = (
-            f"Input and target must be in 0-1 range. "
-            f"Input range: {input_min}-{input_max}. "
-            f"Target range: {target_min}-{target_max}"
-        )
-        raise ValueError(msg)
+        # Apply the vectorized filter along the x axis.
+        def filter_fn_x(z):
+            z_flat = jnp.moveaxis(z, -2, -1).reshape((-1, z.shape[-2]))
+            z_filtered_shape = ((z.shape[-4],) if z.ndim == 4 else ()) + (
+                z.shape[-3],
+                z.shape[-1],
+                -1,
+            )
+            return jnp.moveaxis(filter_fn_vmap(z_flat).reshape(z_filtered_shape), -1, -2)
+
+        # Apply the blur in both x and y.
+        def filter_fn(z):
+            return filter_fn_y(filter_fn_x(z))
+
+    mu0 = filter_fn(a)
+    mu1 = filter_fn(b)
+    mu00 = mu0 * mu0
+    mu11 = mu1 * mu1
+    mu01 = mu0 * mu1
+    sigma00 = filter_fn(a**2) - mu00
+    sigma11 = filter_fn(b**2) - mu11
+    sigma01 = filter_fn(a * b) - mu01
+
+    # Clip the variances and covariances to valid values.
+    # Variance must be non-negative:
+    epsilon = jnp.finfo(jnp.float32).eps ** 2
+    sigma00 = jnp.maximum(epsilon, sigma00)
+    sigma11 = jnp.maximum(epsilon, sigma11)
+    sigma01 = jnp.sign(sigma01) * jnp.minimum(jnp.sqrt(sigma00 * sigma11), jnp.abs(sigma01))
+
+    c1 = (k1 * max_val) ** 2
+    c2 = (k2 * max_val) ** 2
+    numer = (2 * mu01 + c1) * (2 * sigma01 + c2)
+    denom = (mu00 + mu11 + c1) * (sigma00 + sigma11 + c2)
+    ssim_map = numer / denom
+
+    if ignore_nans:
+        ssim_value = jnp.nanmean(ssim_map, axis=tuple(range(-3, 0)))
+    else:
+        ssim_value = jnp.mean(ssim_map, axis=tuple(range(-3, 0)))
+    return ssim_map if return_map else ssim_value

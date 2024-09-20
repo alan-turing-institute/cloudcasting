@@ -7,9 +7,11 @@ __all__ = (
     "InputArray",
     "SampleOutputArray",
     "BatchOutputArray",
+    "BatchOutputArrayJAX",
     "OutputArray",
 )
 
+import jaxtyping
 import numpy as np
 import numpy.typing as npt
 from jaxtyping import Float as Float32
@@ -24,6 +26,9 @@ SampleInputArray = Float32[Array, "channels time height width"]
 BatchInputArray = Float32[Array, "batch channels time height width"]
 InputArray = SampleInputArray | BatchInputArray
 
+
 SampleOutputArray = Float32[Array, "channels rollout_steps height width"]
 BatchOutputArray = Float32[Array, "batch channels rollout_steps height width"]
+BatchOutputArrayJAX = Float32[jaxtyping.Array, "batch channels rollout_steps height width"]
+
 OutputArray = SampleOutputArray | BatchOutputArray

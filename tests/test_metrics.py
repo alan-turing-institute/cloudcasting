@@ -1,161 +1,80 @@
-import jaxtyping
+"""Test if metrics match the legacy metrics"""
+
+import inspect
+from functools import partial
+from typing import cast
+
+import jax.numpy as jnp
+import jax.random as jr
 import numpy as np
 import pytest
+from jaxtyping import Array, Float32
+from legacy_metrics import mae_batch, mse_batch, ssim_batch
 
-from cloudcasting.metrics import (
-    mae_batch,
-    mae_single,
-    mse_batch,
-    mse_single,
-    ssim_batch,
-    ssim_single,
+from cloudcasting.metrics import mae, mse, ssim
+
+
+def apply_pix_metric(metric_func, y_hat, y) -> Float32[Array, "batch channels time"]:
+    """Apply a pix metric to a sample of satellite data
+    Args:
+        metric_func: The pix metric function to apply
+        y_hat: The predicted sequence of satellite data
+        y: The true sequence of satellite data
+
+    Returns:
+        The pix metric value for the sample
+    """
+    # pix accepts arrays of shape [batch, height, width, channels].
+    # our arrays are of shape [batch, channels, time, height, width].
+    # channel dim would be reduced; we add a new axis to satisfy the shape reqs.
+    # we then reshape to squash batch, channels, and time into the leading axis,
+    # where the vmap in metrics.py will broadcast over the leading dim.
+    y_jax = jnp.array(y).reshape(-1, *y.shape[-2:])[..., np.newaxis]
+    y_hat_jax = jnp.array(y_hat).reshape(-1, *y_hat.shape[-2:])[..., np.newaxis]
+
+    sig = inspect.signature(metric_func)
+    if "ignore_nans" in sig.parameters:
+        metric_func = partial(metric_func, ignore_nans=True)
+
+    # we reshape the result back into [batch, channels, time],
+    # then take the mean over the batch
+    return cast(Float32[Array, "batch channels time"], metric_func(y_hat_jax, y_jax)).reshape(
+        *y.shape[:3]
+    )
+
+
+@pytest.mark.parametrize(
+    ("metric_func", "legacy_func"),
+    [
+        (mae, mae_batch),
+        (mse, mse_batch),
+        (ssim, ssim_batch),
+    ],
 )
+def test_metrics(metric_func, legacy_func):
+    """Test if metrics match the legacy metrics"""
+    # Create a sample input batch
+    shape = (1, 3, 10, 100, 100)
+    key = jr.key(321)
+    key, k1, k2 = jr.split(key, 3)
+    y_hat = jr.uniform(k1, shape, minval=0, maxval=1)
+    y = jr.uniform(k2, shape, minval=0, maxval=1)
 
+    # Add NaNs to the input
+    y = y.at[:, :, :, 0, 0].set(np.nan)
 
-@pytest.fixture()
-def zeros_sample():
-    # shape: channels, time, height, width
-    return np.zeros((2, 6, 24, 24), dtype=np.float32)
+    # Call the metric function
+    metric = apply_pix_metric(metric_func, y_hat, y).mean(axis=0)
 
+    # Check the shape of the output
+    assert metric.shape == (3, 10)
 
-@pytest.fixture()
-def ones_sample():
-    # shape: channels, time, height, width
-    return np.ones((2, 6, 24, 24), dtype=np.float32)
+    # Check the values of the output
+    legacy_res = legacy_func(y_hat, y)
 
+    # Lower tolerance for ssim (differences in implementation)
+    rtol = 0.001 if metric_func == ssim else 1e-5
 
-@pytest.fixture()
-def zeros_missing_sample():
-    # shape: channels, time, height, width
-    x = np.zeros((2, 6, 24, 24), dtype=np.float32)
-    x[:, :, 0, 0] = np.nan
-    return x
-
-
-@pytest.fixture()
-def zeros_batch():
-    # shape: batch, channels, time, height, width
-    return np.zeros((4, 2, 6, 24, 24), dtype=np.float32)
-
-
-@pytest.fixture()
-def ones_batch():
-    # shape: batch, channels, time, height, width
-    return np.ones((4, 2, 6, 24, 24), dtype=np.float32)
-
-
-def test_calc_mae_sample(zeros_sample, ones_sample, zeros_missing_sample):
-    result = mae_single(zeros_sample, zeros_sample)
-    assert (result == 0).all()
-
-    result = mae_single(ones_sample, zeros_sample)
-    assert (result == 1).all()
-
-    result = mae_single(zeros_sample, zeros_missing_sample)
-    assert (result == 0).all()
-
-
-def test_calc_mae_batch(zeros_batch, ones_batch):
-    result = mae_batch(zeros_batch, zeros_batch)
-    assert (result == 0).all()
-
-    result = mae_batch(ones_batch, zeros_batch)
-    assert (result == 1).all()
-
-
-def test_calc_mse_sample(zeros_sample, ones_sample, zeros_missing_sample):
-    result = mse_single(zeros_sample, zeros_sample)
-    assert (result == 0).all()
-
-    result = mse_single(ones_sample, zeros_sample)
-    assert (result == 1).all()
-
-    result = mse_single(ones_sample * 2, zeros_sample)
-    assert (result == 4).all()
-
-    result = mse_single(zeros_sample, zeros_missing_sample)
-    assert (result == 0).all()
-
-
-def test_calc_mse_batch(zeros_batch, ones_batch):
-    result = mse_batch(zeros_batch, zeros_batch)
-    assert (result == 0).all()
-
-    result = mse_batch(ones_batch, zeros_batch)
-    assert (result == 1).all()
-
-    result = mse_batch(ones_batch * 2, zeros_batch)
-    assert (result == 4).all()
-
-
-def test_calc_ssim_sample(zeros_sample, ones_sample, zeros_missing_sample):
-    result = ssim_single(zeros_sample, zeros_sample)
-    np.testing.assert_almost_equal(result, 1, decimal=4)
-
-    result = ssim_single(ones_sample, ones_sample)
-    np.testing.assert_almost_equal(result, 1, decimal=4)
-
-    result = ssim_single(zeros_sample, ones_sample)
-    np.testing.assert_almost_equal(result, 0, decimal=4)
-
-    result = ssim_single(zeros_sample, zeros_missing_sample)
-    np.testing.assert_almost_equal(result, 1, decimal=4)
-
-
-def test_calc_ssim_batch(zeros_batch, ones_batch):
-    result = ssim_batch(zeros_batch, zeros_batch)
-    np.testing.assert_almost_equal(result, 1, decimal=4)
-
-    result = ssim_batch(ones_batch, ones_batch)
-    np.testing.assert_almost_equal(result, 1, decimal=4)
-
-    result = ssim_batch(zeros_batch, ones_batch)
-    np.testing.assert_almost_equal(result, 0, decimal=4)
-
-
-def test_wrong_shapes(zeros_sample, ones_batch):
-    with pytest.raises(jaxtyping.TypeCheckError):
-        mae_single(zeros_sample, ones_batch)
-
-    with pytest.raises(jaxtyping.TypeCheckError):
-        mae_batch(zeros_sample, ones_batch)
-
-    with pytest.raises(jaxtyping.TypeCheckError):
-        mse_single(zeros_sample, ones_batch)
-
-    with pytest.raises(jaxtyping.TypeCheckError):
-        mse_batch(zeros_sample, ones_batch)
-
-    with pytest.raises(jaxtyping.TypeCheckError):
-        ssim_single(zeros_sample, ones_batch)
-
-    with pytest.raises(jaxtyping.TypeCheckError):
-        ssim_batch(zeros_sample, ones_batch)
-
-
-def test_input_ranges_ssim_single(zeros_sample, ones_sample):
-    with pytest.raises(ValueError, match="Input and target must be in 0-1 range"):
-        ssim_single(zeros_sample - 1, ones_sample)
-
-    with pytest.raises(ValueError, match="Input and target must be in 0-1 range"):
-        ssim_single(ones_sample, zeros_sample - 1)
-
-    with pytest.raises(ValueError, match="Input and target must be in 0-1 range"):
-        ssim_single(zeros_sample, ones_sample + 1)
-
-    with pytest.raises(ValueError, match="Input and target must be in 0-1 range"):
-        ssim_single(ones_sample + 1, zeros_sample)
-
-
-def test_input_ranges_ssim_batch(zeros_batch, ones_batch):
-    with pytest.raises(ValueError, match="Input and target must be in 0-1 range"):
-        ssim_batch(zeros_batch - 1, ones_batch)
-
-    with pytest.raises(ValueError, match="Input and target must be in 0-1 range"):
-        ssim_batch(ones_batch, zeros_batch - 1)
-
-    with pytest.raises(ValueError, match="Input and target must be in 0-1 range"):
-        ssim_batch(zeros_batch, ones_batch + 1)
-
-    with pytest.raises(ValueError, match="Input and target must be in 0-1 range"):
-        ssim_batch(ones_batch + 1, zeros_batch)
+    assert np.allclose(
+        metric, legacy_res, rtol=rtol
+    ), f"Metric {metric_func} does not match legacy metric {legacy_func}"

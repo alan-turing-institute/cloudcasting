@@ -1,3 +1,16 @@
+import inspect
+from collections.abc import Callable
+from functools import partial
+from typing import Any, cast
+
+import jax.numpy as jnp
+import numpy as np
+import wandb  # type: ignore[import-not-found]
+from jax import tree
+from jaxtyping import Array, Float32
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+
 try:
     import torch.multiprocessing as mp
 
@@ -5,21 +18,13 @@ try:
 except RuntimeError:
     pass
 
-
-from collections.abc import Callable
-
-import numpy as np
-import wandb  # type: ignore[import-not-found]
-from torch.utils.data import DataLoader
-from tqdm import tqdm
-
 import cloudcasting
+from cloudcasting import metrics as dm_pix  # for compatibility if our changes are upstreamed
 from cloudcasting.constants import DATA_INTERVAL_SPACING_MINUTES, FORECAST_HORIZON_MINUTES
 from cloudcasting.dataset import ValidationSatelliteDataset
-from cloudcasting.metrics import mae_batch, mse_batch
 from cloudcasting.models import AbstractModel
 from cloudcasting.types import (
-    BatchOutputArray,
+    BatchOutputArrayJAX,
     ChannelArray,
     MetricArray,
     SampleOutputArray,
@@ -152,6 +157,8 @@ def score_model_on_all_metrics(
     batch_size: int = 1,
     num_workers: int = 0,
     batch_limit: int | None = None,
+    metric_names: tuple[str, ...] | list[str] = ("mae", "mse", "ssim"),
+    metric_kwargs: dict[str, dict[str, Any]] | None = None,
 ) -> tuple[dict[str, MetricArray], list[str]]:
     """Calculate the scoreboard metrics for the given model on the validation dataset.
 
@@ -160,12 +167,18 @@ def score_model_on_all_metrics(
         valid_dataset (ValidationSatelliteDataset): The validation dataset to score the model on.
         batch_size (int, optional): Defaults to 1.
         num_workers (int, optional): Defaults to 0.
-        batch_limit (int | None, optional): Defaults to None. For testing purposes only.
+        batch_limit (int | None, optional): Defaults to None. Stop after this many batches.
+            For testing purposes only.
+        metric_names (tuple[str, ...] | list[str]: Names of metrics to calculate. Need to be defined
+            in cloudcasting.metrics. Defaults to ("mae", "mse", "ssim").
+        metric_kwargs (dict[str, dict[str, Any]] | None, optional): kwargs to pass to functions in
+            cloudcasting.metrics. Defaults to None.
 
     Returns:
-        dict[str, MetricArray]: keys are metric names, values are arrays of results averaged over
-            all dims except horizon and channel.
-        list[str]: list of channel names
+        tuple[dict[str, MetricArray], list[str]]:
+        Element 0: keys are metric names, values are arrays of results
+            averaged over all dims except horizon and channel.
+        Element 1: list of channel names.
     """
 
     # check the the data spacing perfectly divides the forecast horizon
@@ -183,13 +196,38 @@ def score_model_on_all_metrics(
         drop_last=False,
     )
 
-    metric_funcs: dict[str, Callable[[BatchOutputArray, BatchOutputArray], MetricArray]] = {
-        "mae": mae_batch,
-        "mse": mse_batch,
-        # "ssim": ssim_batch,  # currently unstable with nans
-    }
+    if metric_kwargs is None:
+        metric_kwargs_dict: dict[str, dict[str, Any]] = {}
+    else:
+        metric_kwargs_dict = metric_kwargs
 
-    metrics: dict[str, list[MetricArray]] = {metric: [] for metric in metric_funcs}
+    def get_pix_function(
+        name: str,
+        pix_kwargs: dict[str, dict[str, Any]],
+    ) -> Callable[
+        [BatchOutputArrayJAX, BatchOutputArrayJAX], Float32[Array, "batch channels time"]
+    ]:
+        func = getattr(dm_pix, name)
+        sig = inspect.signature(func)
+        if "ignore_nans" in sig.parameters:
+            func = partial(func, ignore_nans=True)
+        if name in pix_kwargs:
+            func = partial(func, **pix_kwargs[name])
+        return cast(
+            Callable[
+                [BatchOutputArrayJAX, BatchOutputArrayJAX], Float32[Array, "batch channels time"]
+            ],
+            func,
+        )
+
+    metric_funcs: dict[
+        str,
+        Callable[[BatchOutputArrayJAX, BatchOutputArrayJAX], Float32[Array, "batch channels time"]],
+    ] = {name: get_pix_function(name, metric_kwargs_dict) for name in metric_names}
+
+    metrics: dict[str, list[Float32[Array, "batch channels time"]]] = {
+        metric: [] for metric in metric_funcs
+    }
 
     # we probably want to accumulate metrics here instead of taking the mean of means!
     loop_steps = len(valid_dataloader) if batch_limit is None else batch_limit
@@ -201,13 +239,27 @@ def score_model_on_all_metrics(
         # convert these back to NaNs for the metrics
         y[y == -1] = np.nan
 
+        # pix accepts arrays of shape [batch, height, width, channels].
+        # our arrays are of shape [batch, channels, time, height, width].
+        # channel dim would be reduced; we add a new axis to satisfy the shape reqs.
+        # we then reshape to squash batch, channels, and time into the leading axis,
+        # where the vmap in metrics.py will broadcast over the leading dim.
+        y_jax = jnp.array(y).reshape(-1, *y.shape[-2:])[..., np.newaxis]
+        y_hat_jax = jnp.array(y_hat).reshape(-1, *y_hat.shape[-2:])[..., np.newaxis]
+
         for metric_name, metric_func in metric_funcs.items():
-            metrics[metric_name].append(metric_func(y_hat, y))
+            # we reshape the result back into [batch, channels, time],
+            # then take the mean over the batch
+            metric_res = metric_func(y_hat_jax, y_jax).reshape(*y.shape[:3])
+            batch_reduced_metric = jnp.nanmean(metric_res, axis=0)
+            metrics[metric_name].append(batch_reduced_metric)
 
         if batch_limit is not None and i >= batch_limit:
             break
-
-    res = {k: np.mean(np.array(v), axis=0) for k, v in metrics.items()}
+    # convert back to numpy and reduce over all batches
+    res = tree.map(
+        lambda x: np.mean(np.array(x), axis=0), metrics, is_leaf=lambda x: isinstance(x, list)
+    )
 
     num_timesteps = FORECAST_HORIZON_MINUTES // DATA_INTERVAL_SPACING_MINUTES
 
@@ -381,6 +433,6 @@ def validate(
                 y_hat=y_hat,
                 y=y,
                 video_name=f"sample_videos/{date} - {channel_name}",
-                channel_ind=channel_ind,
+                channel_ind=int(channel_ind),
                 fps=1,
             )

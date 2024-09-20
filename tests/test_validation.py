@@ -27,6 +27,12 @@ def test_score_model_on_all_metrics(model, val_sat_zarr_path, nan_to_num):
         nan_to_num=nan_to_num,
     )
 
+    metric_names = ("mae", "mse", "ssim")
+    # use small filter size to not propagate nan to the whole image
+    # (this is only because our test images are very small (8x9) --
+    # the filter window of size 11 would be bigger than the image!)
+    metric_kwargs = {"ssim": {"filter_size": 2}}
+
     # Call the score_model_on_all_metrics function
     metrics_dict, channels = score_model_on_all_metrics(
         model=model,
@@ -34,14 +40,12 @@ def test_score_model_on_all_metrics(model, val_sat_zarr_path, nan_to_num):
         batch_size=2,
         num_workers=0,
         batch_limit=3,
+        metric_names=metric_names,
+        metric_kwargs=metric_kwargs,
     )
 
     # Check all the expected keys are there
-    assert metrics_dict.keys() == {
-        "mae",
-        "mse",
-        # "ssim",  # currently unstable with nans
-    }
+    assert tuple(metrics_dict.keys()) == metric_names
 
     for metric_name, metric_array in metrics_dict.items():
         # check all the items have the expected shape
@@ -50,12 +54,14 @@ def test_score_model_on_all_metrics(model, val_sat_zarr_path, nan_to_num):
             NUM_FORECAST_STEPS,
         ), f"Metric {metric_name} has the wrong shape"
 
+        assert not np.any(np.isnan(metric_array)), f"Metric '{metric_name}' is predicting NaNs!"
+
 
 def test_calc_mean_metrics():
-    # Create a test dictionary of metrics
+    # Create a test dictionary of metrics (channels, time)
     test_metrics_dict = {
-        "mae": np.array([1.0, 2.0, 3.0]),
-        "mse": np.array([4.0, 5.0, 6.0]),
+        "mae": np.array([[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]]),
+        "mse": np.array([[4.0, 5.0, 6.0], [4.0, 5.0, 6.0]]),
     }
 
     # Call the calc_mean_metrics function

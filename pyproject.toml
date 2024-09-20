@@ -39,13 +39,13 @@ dependencies = [
     "typer",
     "lightning",
     "torch>=2.3.0",  # needed for numpy 2.0
-    "scikit-image",
     "jaxtyping",
     "wandb",
     "tqdm",
     "moviepy>=1.0.3",
     "imageio>=2.35.1",
     "numpy <2.1.0",  # https://github.com/wandb/wandb/issues/8166
+    "chex",
 ]
 [project.optional-dependencies]
 dev = [
@@ -54,6 +54,7 @@ dev = [
   "pre-commit",
   "scipy",
   "pytest-mock",
+  "scikit-image",
 ]
 
 [tool.setuptools.package-data]
@@ -63,10 +64,10 @@ dev = [
 cloudcasting = "cloudcasting.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/climetrend/cloudcasting"
-"Bug Tracker" = "https://github.com/climetrend/cloudcasting/issues"
-Discussions = "https://github.com/climetrend/cloudcasting/discussions"
-Changelog = "https://github.com/climetrend/cloudcasting/releases"
+Homepage = "https://github.com/alan-turing-institute/cloudcasting"
+"Bug Tracker" = "https://github.com/alan-turing-institute/cloudcasting/issues"
+Discussions = "https://github.com/alan-turing-institute/cloudcasting/discussions"
+Changelog = "https://github.com/alan-turing-institute/cloudcasting/releases"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
@@ -161,6 +162,7 @@ select = [
 ignore = [
   "PLR",    # Design related pylint codes
   "ISC001", # Conflicts with formatter
+  "F722"    # Marks jaxtyping syntax annotations as incorrect
 ]
 unfixable = [
   "F401",   # Would remove unused imports

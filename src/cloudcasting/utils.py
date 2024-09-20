@@ -26,7 +26,7 @@ from cloudcasting.types import (
 def lon_lat_to_geostationary_area_coords(
     x: Sequence[float],
     y: Sequence[float],
-    xr_data: xr.Dataset,
+    xr_data: xr.Dataset | xr.DataArray,
 ) -> tuple[Sequence[float], Sequence[float]]:
     """Loads geostationary area and change from lon-lat to geostationaery coords
     Args:

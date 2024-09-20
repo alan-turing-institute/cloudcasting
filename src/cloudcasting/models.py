@@ -60,6 +60,11 @@ class AbstractModel(ABC):
         """Return a dictionary of the hyperparameters used to train the model"""
 
 
+# class to be used in the CLI
+def parse_abstract_model(value: str) -> AbstractModel:
+    return AbstractModel(value)
+
+
 class VariableHorizonModel(AbstractModel):
     def __init__(self, rollout_steps: int, history_steps: int) -> None:
         self.rollout_steps: int = rollout_steps

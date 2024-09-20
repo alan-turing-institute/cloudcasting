@@ -315,7 +315,10 @@ def calc_mean_metrics_per_channel(metrics_dict: dict[str, MetricArray]) -> dict[
 
 
 def validate(
-    model: Annotated[AbstractModel, typer.Argument(help="Model class object to validate.")],
+    model: Annotated[
+        AbstractModel,
+        typer.Argument(parser=parse_abstract_model, help="Model class object to validate."),
+    ],
     data_path: Annotated[list[str] | str, typer.Argument(help="Path to the validation data.")],
     wandb_project_name: Annotated[
         str,

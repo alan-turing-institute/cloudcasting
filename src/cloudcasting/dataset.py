@@ -43,14 +43,15 @@ def load_satellite_zarrs(zarr_path: list[str] | tuple[str] | str) -> xr.Dataset:
     """
 
     if isinstance(zarr_path, list | tuple):
-        ds = xr.combine_nested(
+        ds = xr.concat(
             [xr.open_dataset(path, engine="zarr", chunks="auto") for path in zarr_path],
-            concat_dim="time",
+            dim="time",
+            coords="minimal",
+            compat="identical",
             combine_attrs="override",
-            join="override",
-        )
+        ).sortby("time")
     else:
-        ds = xr.open_dataset(zarr_path, engine="zarr")
+        ds = xr.open_dataset(zarr_path, engine="zarr", chunks="auto").sortby("time")
 
     return ds
 

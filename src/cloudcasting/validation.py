@@ -1,12 +1,16 @@
+__all__ = ("validate", "validate_from_config")
+
+import importlib
 import inspect
 from collections.abc import Callable
 from functools import partial
-from typing import Any, cast, Annotated
+from typing import Annotated, Any, cast
 
 import jax.numpy as jnp
 import numpy as np
-import wandb  # type: ignore[import-not-found]
 import typer
+import wandb  # type: ignore[import-not-found]
+import yaml
 from jax import tree
 from jaxtyping import Array, Float32
 from torch.utils.data import DataLoader
@@ -236,6 +240,9 @@ def score_model_on_all_metrics(
     for i, (X, y) in tqdm(enumerate(valid_dataloader), total=loop_steps):
         y_hat = model(X)
 
+        # assert shapes are the same
+        assert y.shape == y_hat.shape, f"{y.shape=} != {y_hat.shape=}"
+
         # If nan_to_num is used in the dataset, the model will output -1 for NaNs. We need to
         # convert these back to NaNs for the metrics
         y[y == -1] = np.nan
@@ -315,26 +322,14 @@ def calc_mean_metrics_per_channel(metrics_dict: dict[str, MetricArray]) -> dict[
 
 
 def validate(
-    model: Annotated[
-        AbstractModel,
-        typer.Argument(parser=parse_abstract_model, help="Model class object to validate."),
-    ],
-    data_path: Annotated[list[str] | str, typer.Argument(help="Path to the validation data.")],
-    wandb_project_name: Annotated[
-        str,
-        typer.Argument(
-            help="The folder to store results on wandb - 'cloudcasting' is the main one."
-        ),
-    ],
-    wandb_run_name: Annotated[str, typer.Argument(help="Unique name for logging your run")],
-    nan_to_num: Annotated[
-        bool, typer.Option(help="Whether to convert NaNs to -1. Defaults to False.")
-    ] = False,
-    batch_size: Annotated[int, typer.Option(help="Defaults to 1.")] = 1,
-    num_workers: Annotated[int, typer.Option(help="Defaults to 0.")] = 0,
-    batch_limit: Annotated[
-        int | None, typer.Option(help="Defaults to None. For testing purposes only.")
-    ] = None,
+    model: AbstractModel,
+    data_path: list[str] | str,
+    wandb_project_name: str,
+    wandb_run_name: str,
+    nan_to_num: bool = False,
+    batch_size: int = 1,
+    num_workers: int = 0,
+    batch_limit: int | None = None,
 ) -> None:
     """Run the full validation procedure on the model and log the results to wandb.
 
@@ -346,6 +341,13 @@ def validate(
         num_workers (int, optional): Defaults to 0.
         batch_limit (int | None, optional): Defaults to None. For testing purposes only.
     """
+
+    # Verify we can run the model forward
+    try:
+        model(np.zeros((1, 3, 10, 100, 100), dtype=np.float32))
+    except Exception as err:
+        msg = f"Failed to run the model forward due to the following error: {err}"
+        raise ValueError(msg) from err
 
     # Login to wandb
     wandb.login()
@@ -449,3 +451,28 @@ def validate(
                 channel_ind=int(channel_ind),
                 fps=1,
             )
+
+
+def validate_from_config(
+    config_file: Annotated[str, typer.Option(help="Path to config file")] = "validate_config.yml",
+    model_file: Annotated[
+        str, typer.Option(help="Name of Python file with model definition (without .py)")
+    ] = "model",
+) -> None:
+    """CLI function to validate a model from a config file.
+
+    Args:
+        config_file: Path to config file
+        model_file: Name of Python file with model definition (without .py)
+    """
+    with open(config_file) as f:
+        config: dict[str, Any] = yaml.safe_load(f)
+
+    if model_file.strip()[-3:] == ".py":
+        model_file = model_file.split(".py")[0].strip()
+
+    module = importlib.import_module(model_file)
+    ModelClass = getattr(module, config["model"]["name"])
+    model = ModelClass(**(config["model"]["params"] or {}))
+
+    validate(model, **config["validation"])

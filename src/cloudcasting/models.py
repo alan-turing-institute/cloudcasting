@@ -3,6 +3,11 @@ from typing import Any
 
 import numpy as np
 
+from cloudcasting.constants import (
+    DATA_INTERVAL_SPACING_MINUTES,
+    FORECAST_HORIZON_MINUTES,
+    NUM_FORECAST_STEPS,
+)
 from cloudcasting.types import BatchInputArray, BatchOutputArray
 
 
@@ -46,6 +51,14 @@ class AbstractModel(ABC):
             )
             raise ValueError(msg)
 
+        if y_hat.shape[-3] != NUM_FORECAST_STEPS:
+            msg = (
+                f"The number of forecast steps in the model ({y_hat.shape[2]}) does not match "
+                f"{NUM_FORECAST_STEPS=}, defined from "
+                f"{FORECAST_HORIZON_MINUTES=} // {DATA_INTERVAL_SPACING_MINUTES=}."
+            )
+            raise ValueError(msg)
+
     def __call__(self, X: BatchInputArray) -> BatchOutputArray:
         y_hat = self.forward(X)
 
@@ -58,11 +71,6 @@ class AbstractModel(ABC):
     @abstractmethod
     def hyperparameters_dict(self) -> dict[str, Any]:
         """Return a dictionary of the hyperparameters used to train the model"""
-
-
-# class to be used in the CLI
-def parse_abstract_model(value: str) -> AbstractModel:
-    return AbstractModel(value)
 
 
 class VariableHorizonModel(AbstractModel):

@@ -3,6 +3,9 @@ import pytest
 from conftest import PersistenceModel
 from jaxtyping import TypeCheckError
 
+from cloudcasting.constants import NUM_FORECAST_STEPS
+from cloudcasting.models import AbstractModel
+
 
 @pytest.fixture()
 def model():
@@ -72,4 +75,30 @@ def test_incorrect_shapes(model):
 
     # Call the __call__ method and expect a TypeCheckError
     with pytest.raises(TypeCheckError):
+        model(X)
+
+
+def test_incorrect_horizon():
+    # define a model with a different forecast horizon
+    class Model(AbstractModel):
+        def __init__(self, history_steps: int) -> None:
+            super().__init__(history_steps)
+
+        def forward(self, X):
+            # Grab the most recent frame from the input data
+            latest_frame = X[..., -1:, :, :]
+
+            # The NaN values in the input data could be filled with -1. Clip these to zero
+            latest_frame = latest_frame.clip(0, 1)
+
+            return np.repeat(latest_frame, NUM_FORECAST_STEPS + 1, axis=-3)
+
+        def hyperparameters_dict(self):
+            return {"history_steps": self.history_steps}
+
+    model = Model(history_steps=1)
+    X = np.random.rand(1, 3, 10, 100, 100).astype(np.float32)
+
+    # Call the __call__ method and expect a ValueError
+    with pytest.raises(ValueError, match="The number of forecast steps in the model"):
         model(X)

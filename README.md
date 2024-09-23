@@ -48,8 +48,12 @@ For making changes, see the [guidance on development](https://github.com/alan-tu
 
 ## Usage
 
-Example:
+### Validating a model
+```bash
+cloudcasting validate "path/to/config/file.yml" "path/to/model/file.py"
+```
 
+### Downloading data
 ```bash
 cloudcasting download "2020-06-01 00:00" "2020-06-30 23:55" "path/to/data/save/dir"
 ```

@@ -4,6 +4,8 @@ cloudcasting: Tooling and infrastructure to enable cloud nowcasting.
 
 from __future__ import annotations
 
+from importlib.metadata import version
+
 from jaxtyping import install_import_hook
 
 # Any module imported inside this `with` block, whose
@@ -17,8 +19,6 @@ with install_import_hook("cloudcasting", "typeguard.typechecked"):
 
 from cloudcasting import cli, dataset, download, metrics
 
-from ._version import version as __version__
-
 __all__ = (
     "__version__",
     "download",
@@ -28,3 +28,4 @@ __all__ = (
     "validation",
     "metrics",
 )
+__version__ = version(__name__)

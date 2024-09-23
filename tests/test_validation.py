@@ -26,7 +26,7 @@ def test_score_model_on_all_metrics(model, val_sat_zarr_path, nan_to_num):
     # Create valid dataset
     valid_dataset = ValidationSatelliteDataset(
         zarr_path=val_sat_zarr_path,
-        history_mins=model.history_steps * DATA_INTERVAL_SPACING_MINUTES,
+        history_mins=(model.history_steps - 1) * DATA_INTERVAL_SPACING_MINUTES,
         forecast_mins=FORECAST_HORIZON_MINUTES,
         sample_freq_mins=DATA_INTERVAL_SPACING_MINUTES,
         nan_to_num=nan_to_num,
@@ -107,6 +107,7 @@ def test_validate_cli(val_sat_zarr_path, mocker):
         f.write(
             """
 from cloudcasting.models import AbstractModel
+from cloudcasting.constants import NUM_FORECAST_STEPS
 import numpy as np
 
 class Model(AbstractModel):
@@ -115,7 +116,8 @@ class Model(AbstractModel):
         self.sigma = sigma
 
     def forward(self, X):
-        return np.ones_like(X)
+        shape = X.shape
+        return np.ones((shape[0], shape[1], NUM_FORECAST_STEPS, shape[3], shape[4]))
 
     def hyperparameters_dict(self):
         return {"sigma": self.sigma}

@@ -9,7 +9,7 @@ from cloudcasting.models import AbstractModel
 
 @pytest.fixture()
 def model():
-    return PersistenceModel(history_steps=1, rollout_steps=5)
+    return PersistenceModel(history_steps=1, rollout_steps=NUM_FORECAST_STEPS)
 
 
 def test_forward(model):
@@ -60,7 +60,7 @@ def test_check_predictions_outside_range(model):
 
 def test_call(model):
     # Create a sample input batch
-    X = np.random.rand(1, 3, 10, 100, 100)
+    X = np.random.rand(1, 3, model.history_steps, 100, 100)
 
     # Call the __call__ method
     y_hat = model(X)
@@ -97,7 +97,7 @@ def test_incorrect_horizon():
             return {"history_steps": self.history_steps}
 
     model = Model(history_steps=1)
-    X = np.random.rand(1, 3, 10, 100, 100).astype(np.float32)
+    X = np.random.rand(1, 3, 1, 100, 100).astype(np.float32)
 
     # Call the __call__ method and expect a ValueError
     with pytest.raises(ValueError, match="The number of forecast steps in the model"):

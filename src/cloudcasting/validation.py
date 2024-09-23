@@ -25,7 +25,10 @@ except RuntimeError:
 
 import cloudcasting
 from cloudcasting import metrics as dm_pix  # for compatibility if our changes are upstreamed
-from cloudcasting.constants import DATA_INTERVAL_SPACING_MINUTES, FORECAST_HORIZON_MINUTES
+from cloudcasting.constants import (
+    DATA_INTERVAL_SPACING_MINUTES,
+    FORECAST_HORIZON_MINUTES,
+)
 from cloudcasting.dataset import ValidationSatelliteDataset
 from cloudcasting.models import AbstractModel
 from cloudcasting.types import (
@@ -344,7 +347,7 @@ def validate(
 
     # Verify we can run the model forward
     try:
-        model(np.zeros((1, 3, 10, 100, 100), dtype=np.float32))
+        model(np.zeros((1, 11, model.history_steps, 100, 100), dtype=np.float32))
     except Exception as err:
         msg = f"Failed to run the model forward due to the following error: {err}"
         raise ValueError(msg) from err

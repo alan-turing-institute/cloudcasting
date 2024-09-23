@@ -288,7 +288,7 @@ def validate(
     # Set up the validation dataset
     valid_dataset = ValidationSatelliteDataset(
         zarr_path=data_path,
-        history_mins=model.history_steps * DATA_INTERVAL_SPACING_MINUTES,
+        history_mins=(model.history_steps - 1) * DATA_INTERVAL_SPACING_MINUTES,
         forecast_mins=FORECAST_HORIZON_MINUTES,
         sample_freq_mins=DATA_INTERVAL_SPACING_MINUTES,
         nan_to_num=nan_to_num,

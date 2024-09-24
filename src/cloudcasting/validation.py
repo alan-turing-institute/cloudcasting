@@ -1,7 +1,8 @@
 __all__ = ("validate", "validate_from_config")
 
-import importlib
+import importlib.util
 import inspect
+import sys
 from collections.abc import Callable
 from functools import partial
 from typing import Annotated, Any, cast
@@ -28,6 +29,8 @@ from cloudcasting import metrics as dm_pix  # for compatibility if our changes a
 from cloudcasting.constants import (
     DATA_INTERVAL_SPACING_MINUTES,
     FORECAST_HORIZON_MINUTES,
+    IMAGE_SIZE_TUPLE,
+    NUM_CHANNELS,
 )
 from cloudcasting.dataset import ValidationSatelliteDataset
 from cloudcasting.models import AbstractModel
@@ -347,7 +350,7 @@ def validate(
 
     # Verify we can run the model forward
     try:
-        model(np.zeros((1, 11, model.history_steps, 100, 100), dtype=np.float32))
+        model(np.zeros((1, NUM_CHANNELS, model.history_steps, *IMAGE_SIZE_TUPLE), dtype=np.float32))
     except Exception as err:
         msg = f"Failed to run the model forward due to the following error: {err}"
         raise ValueError(msg) from err
@@ -457,24 +460,32 @@ def validate(
 
 
 def validate_from_config(
-    config_file: Annotated[str, typer.Option(help="Path to config file")] = "validate_config.yml",
+    config_file: Annotated[
+        str, typer.Option(help="Path to config file. Defaults to 'validate_config.yml'.")
+    ] = "validate_config.yml",
     model_file: Annotated[
-        str, typer.Option(help="Name of Python file with model definition (without .py)")
-    ] = "model",
+        str, typer.Option(help="Path to Python file with model definition. Defaults to 'model.py'.")
+    ] = "model.py",
 ) -> None:
     """CLI function to validate a model from a config file.
 
     Args:
-        config_file: Path to config file
-        model_file: Name of Python file with model definition (without .py)
+        config_file: Path to config file. Defaults to "validate_config.yml".
+        model_file: Path to Python file with model definition. Defaults to "model.py".
     """
     with open(config_file) as f:
         config: dict[str, Any] = yaml.safe_load(f)
 
-    if model_file.strip()[-3:] == ".py":
-        model_file = model_file.split(".py")[0].strip()
+    # import the model definition from file
+    spec = importlib.util.spec_from_file_location("usermodel", model_file)
+    # type narrowing
+    if spec is None or spec.loader is None:
+        msg = f"Error importing {model_file}"
+        raise ImportError(msg)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["usermodel"] = module
+    spec.loader.exec_module(module)
 
-    module = importlib.import_module(model_file)
     ModelClass = getattr(module, config["model"]["name"])
     model = ModelClass(**(config["model"]["params"] or {}))
 

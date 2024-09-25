@@ -8,7 +8,12 @@ from cloudcasting.constants import (
     NUM_FORECAST_STEPS,
 )
 from cloudcasting.dataset import ValidationSatelliteDataset
-from cloudcasting.validation import calc_mean_metrics, score_model_on_all_metrics, validate
+from cloudcasting.validation import (
+    calc_mean_metrics,
+    score_model_on_all_metrics,
+    validate,
+    validate_from_config,
+)
 
 
 @pytest.fixture()
@@ -21,7 +26,7 @@ def test_score_model_on_all_metrics(model, val_sat_zarr_path, nan_to_num):
     # Create valid dataset
     valid_dataset = ValidationSatelliteDataset(
         zarr_path=val_sat_zarr_path,
-        history_mins=model.history_steps * DATA_INTERVAL_SPACING_MINUTES,
+        history_mins=(model.history_steps - 1) * DATA_INTERVAL_SPACING_MINUTES,
         forecast_mins=FORECAST_HORIZON_MINUTES,
         sample_freq_mins=DATA_INTERVAL_SPACING_MINUTES,
         nan_to_num=nan_to_num,
@@ -94,3 +99,58 @@ def test_validate(model, val_sat_zarr_path, mocker):
         num_workers=0,
         batch_limit=4,
     )
+
+
+def test_validate_cli(val_sat_zarr_path, mocker):
+    # write out an example model.py file
+    with open("model.py", "w") as f:
+        f.write(
+            """
+from cloudcasting.models import AbstractModel
+from cloudcasting.constants import NUM_FORECAST_STEPS
+import numpy as np
+
+class Model(AbstractModel):
+    def __init__(self, history_steps: int, sigma: float) -> None:
+        super().__init__(history_steps)
+        self.sigma = sigma
+
+    def forward(self, X):
+        shape = X.shape
+        return np.ones((shape[0], shape[1], NUM_FORECAST_STEPS, shape[3], shape[4]))
+
+    def hyperparameters_dict(self):
+        return {"sigma": self.sigma}
+"""
+        )
+
+    # write out an example validate_config.yml file
+    with open("validate_config.yml", "w") as f:
+        f.write(
+            f"""
+model:
+  name: Model
+  params:
+    history_steps: 1
+    sigma: 0.1
+validation:
+  data_path: {val_sat_zarr_path}
+  wandb_project_name: cloudcasting-pytest
+  wandb_run_name: test_validate
+  nan_to_num: False
+  batch_size: 2
+  num_workers: 0
+  batch_limit: 4
+"""
+        )
+
+    # Mock the wandb functions so they aren't run in testing
+    mocker.patch("wandb.login")
+    mocker.patch("wandb.init")
+    mocker.patch("wandb.config")
+    mocker.patch("wandb.log")
+    mocker.patch("wandb.plot.line")
+    mocker.patch("wandb.plot.bar")
+
+    # run the validate_from_config function
+    validate_from_config()

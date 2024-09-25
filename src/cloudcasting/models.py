@@ -3,6 +3,11 @@ from typing import Any
 
 import numpy as np
 
+from cloudcasting.constants import (
+    DATA_INTERVAL_SPACING_MINUTES,
+    FORECAST_HORIZON_MINUTES,
+    NUM_FORECAST_STEPS,
+)
 from cloudcasting.types import BatchInputArray, BatchOutputArray
 
 
@@ -46,10 +51,28 @@ class AbstractModel(ABC):
             )
             raise ValueError(msg)
 
+        if y_hat.shape[-3] != NUM_FORECAST_STEPS:
+            msg = (
+                f"The number of forecast steps in the model ({y_hat.shape[2]}) does not match "
+                f"{NUM_FORECAST_STEPS=}, defined from "
+                f"{FORECAST_HORIZON_MINUTES=} // {DATA_INTERVAL_SPACING_MINUTES=}."
+                f"Found shape {y_hat.shape}."
+            )
+            raise ValueError(msg)
+
     def __call__(self, X: BatchInputArray) -> BatchOutputArray:
+        # check the shape of the input
+        if X.shape[-3] != self.history_steps:
+            msg = (
+                f"The number of history steps in the input ({X.shape[-3]}) does not match "
+                f"{self.history_steps=}."
+            )
+            raise ValueError(msg)
+
+        # run the forward pass
         y_hat = self.forward(X)
 
-        # Carry out a set of checks on the predictions to make sure they conform to the
+        # carry out a set of checks on the predictions to make sure they conform to the
         # expectations of the validation script
         self.check_predictions(y_hat)
 

@@ -48,3 +48,4 @@ repos:
           - jaxtyping
           - types-tqdm
           - chex
+          - types-PyYAML

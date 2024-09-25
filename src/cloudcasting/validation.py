@@ -1,11 +1,17 @@
+__all__ = ("validate", "validate_from_config")
+
+import importlib.util
 import inspect
+import sys
 from collections.abc import Callable
 from functools import partial
-from typing import Any, cast
+from typing import Annotated, Any, cast
 
 import jax.numpy as jnp
 import numpy as np
+import typer
 import wandb  # type: ignore[import-not-found]
+import yaml
 from jax import tree
 from jaxtyping import Array, Float32
 from torch.utils.data import DataLoader
@@ -20,7 +26,12 @@ except RuntimeError:
 
 import cloudcasting
 from cloudcasting import metrics as dm_pix  # for compatibility if our changes are upstreamed
-from cloudcasting.constants import DATA_INTERVAL_SPACING_MINUTES, FORECAST_HORIZON_MINUTES
+from cloudcasting.constants import (
+    DATA_INTERVAL_SPACING_MINUTES,
+    FORECAST_HORIZON_MINUTES,
+    IMAGE_SIZE_TUPLE,
+    NUM_CHANNELS,
+)
 from cloudcasting.dataset import ValidationSatelliteDataset
 from cloudcasting.models import AbstractModel
 from cloudcasting.types import (
@@ -235,6 +246,9 @@ def score_model_on_all_metrics(
     for i, (X, y) in tqdm(enumerate(valid_dataloader), total=loop_steps):
         y_hat = model(X)
 
+        # assert shapes are the same
+        assert y.shape == y_hat.shape, f"{y.shape=} != {y_hat.shape=}"
+
         # If nan_to_num is used in the dataset, the model will output -1 for NaNs. We need to
         # convert these back to NaNs for the metrics
         y[y == -1] = np.nan
@@ -333,6 +347,13 @@ def validate(
         num_workers (int, optional): Defaults to 0.
         batch_limit (int | None, optional): Defaults to None. For testing purposes only.
     """
+
+    # Verify we can run the model forward
+    try:
+        model(np.zeros((1, NUM_CHANNELS, model.history_steps, *IMAGE_SIZE_TUPLE), dtype=np.float32))
+    except Exception as err:
+        msg = f"Failed to run the model forward due to the following error: {err}"
+        raise ValueError(msg) from err
 
     # Login to wandb
     wandb.login()
@@ -436,3 +457,36 @@ def validate(
                 channel_ind=int(channel_ind),
                 fps=1,
             )
+
+
+def validate_from_config(
+    config_file: Annotated[
+        str, typer.Option(help="Path to config file. Defaults to 'validate_config.yml'.")
+    ] = "validate_config.yml",
+    model_file: Annotated[
+        str, typer.Option(help="Path to Python file with model definition. Defaults to 'model.py'.")
+    ] = "model.py",
+) -> None:
+    """CLI function to validate a model from a config file.
+
+    Args:
+        config_file: Path to config file. Defaults to "validate_config.yml".
+        model_file: Path to Python file with model definition. Defaults to "model.py".
+    """
+    with open(config_file) as f:
+        config: dict[str, Any] = yaml.safe_load(f)
+
+    # import the model definition from file
+    spec = importlib.util.spec_from_file_location("usermodel", model_file)
+    # type narrowing
+    if spec is None or spec.loader is None:
+        msg = f"Error importing {model_file}"
+        raise ImportError(msg)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["usermodel"] = module
+    spec.loader.exec_module(module)
+
+    ModelClass = getattr(module, config["model"]["name"])
+    model = ModelClass(**(config["model"]["params"] or {}))
+
+    validate(model, **config["validation"])

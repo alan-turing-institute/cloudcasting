@@ -19,7 +19,7 @@ python -m pip install .
 To run metrics on GPU:
 
 ```zsh
-python -m install --upgrade "jax[cuda12]"
+python -m pip install --upgrade "jax[cuda12]"
 ```
 ### For making changes to the library:
 

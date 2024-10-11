@@ -7,7 +7,7 @@ import os
 import sys
 from collections.abc import Callable
 from functools import partial
-from typing import Annotated, Any, cast
+from typing import Annotated, Any, cast, Optional
 
 import jax.numpy as jnp
 import numpy as np
@@ -482,6 +482,9 @@ def validate_from_config(
     model_file: Annotated[
         str, typer.Option(help="Path to Python file with model definition. Defaults to 'model.py'.")
     ] = "model.py",
+    model_type: Annotated[
+        Optional[str], typer.Option(help="Path needed for importing the model being used. Defaults to 'None'.")
+    ] = None
 ) -> None:
     """CLI function to validate a model from a config file.
 
@@ -491,6 +494,10 @@ def validate_from_config(
     """
     with open(config_file) as f:
         config: dict[str, Any] = yaml.safe_load(f)
+
+    # Import the model class definition
+    if model_type:
+        importlib.import_module(model_type)
 
     # import the model definition from file
     spec = importlib.util.spec_from_file_location("usermodel", model_file)

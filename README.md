@@ -9,7 +9,7 @@ Tooling and infrastructure to enable cloud nowcasting.
 ## Linked model repos
 - [Optical Flow (Farneback)](https://github.com/alan-turing-institute/ocf-optical-flow)
 - [Optical Flow (TVL1)](https://github.com/alan-turing-institute/ocf-optical-flow-tvl1)
-- [Diffusion model](https://github.com/alan-turing-institute/ocf-diffusion) 
+- [Diffusion model](https://github.com/alan-turing-institute/ocf-diffusion)
 - [ConvLSTM](https://github.com/alan-turing-institute/ocf-convLSTM)
 
 The model template repo on which these are based is found [here](https://github.com/alan-turing-institute/ocf-model-template). These repos can be used to validate the models.

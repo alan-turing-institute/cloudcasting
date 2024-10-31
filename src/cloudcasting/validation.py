@@ -10,12 +10,14 @@ from functools import partial
 from typing import Annotated, Any, cast
 
 import jax.numpy as jnp
+import matplotlib.pyplot as plt  # type: ignore[import-not-found]
 import numpy as np
 import typer
 import wandb  # type: ignore[import-not-found]
 import yaml
 from jax import tree
 from jaxtyping import Array, Float32
+from matplotlib.colors import Normalize  # type: ignore[import-not-found]
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -145,22 +147,34 @@ def log_prediction_video_to_wandb(
 
     # Tranpose the arrays so time is the first dimension and select the channel
     # Then flip the frames so they are in the correct orientation for the video
-    y_frames = y.transpose(1, 0, 2, 3)[:, channel_ind : channel_ind + 1, ::-1, ::-1]
-    y_hat_frames = y_hat.transpose(1, 0, 2, 3)[:, channel_ind : channel_ind + 1, ::-1, ::-1]
+    y_frames = y.transpose(1, 2, 3, 0)[:, ::-1, ::-1, channel_ind : channel_ind + 1]
+    y_hat_frames = y_hat.transpose(1, 2, 3, 0)[:, ::-1, ::-1, channel_ind : channel_ind + 1]
 
     # Concatenate the predicted and true frames so they are displayed side by side
-    video_array = np.concatenate([y_hat_frames, y_frames], axis=3)
+    video_array = np.concatenate([y_hat_frames, y_frames], axis=2)
 
     # Clip the values and rescale to be between 0 and 255 and repeat for RGB channels
     video_array = video_array.clip(0, 1)
-    video_array = np.repeat(video_array, 3, axis=1) * 255
+    video_array = np.repeat(video_array, 3, axis=3) * 255
+    # add Alpha channel
+    video_array = np.concatenate(
+        [video_array, np.full((*video_array[:, :, :, 0].shape, 1), 255)], axis=3
+    )
+
+    # calculate the difference between the prediction and the ground truth and add colour
+    y_diff_frames = y_hat_frames - y_frames
+    diff_ccmap = plt.get_cmap("bwr")(Normalize(vmin=-1, vmax=1)(y_diff_frames[:, :, :, 0]))
+    diff_ccmap = diff_ccmap * 255
+
+    # combine add difference to the video array
+    video_array = np.concatenate([video_array, diff_ccmap], axis=2)
     video_array = video_array.astype(np.uint8)
 
     wandb.log(
         {
             video_name: wandb.Video(
                 video_array,
-                caption="Sample prediction (left) and ground truth (right)",
+                caption="Sample prediction (left), ground truth (middle), difference (right)",
                 fps=fps,
             )
         }

@@ -168,6 +168,7 @@ def log_prediction_video_to_wandb(
 
     # combine add difference to the video array
     video_array = np.concatenate([video_array, diff_ccmap], axis=2)
+    video_array = video_array.transpose(0, 3, 1, 2)
     video_array = video_array.astype(np.uint8)
 
     wandb.log(

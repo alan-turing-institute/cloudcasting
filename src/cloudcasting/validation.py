@@ -31,6 +31,7 @@ except RuntimeError:
 import cloudcasting
 from cloudcasting import metrics as dm_pix  # for compatibility if our changes are upstreamed
 from cloudcasting.constants import (
+    CUTOUT_COORDS,
     DATA_INTERVAL_SPACING_MINUTES,
     FORECAST_HORIZON_MINUTES,
     IMAGE_SIZE_TUPLE,
@@ -45,7 +46,7 @@ from cloudcasting.types import (
     SampleOutputArray,
     TimeArray,
 )
-from cloudcasting.utils import numpy_validation_collate_fn
+from cloudcasting.utils import lon_lat_to_geostationary_area_coords, numpy_validation_collate_fn
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -218,6 +219,27 @@ def score_model_on_all_metrics(
         "(please make an issue on github if you see this!!!!)"
     )
 
+    # calculate the cutout indices for the dataset
+    lat_min, lat_max, lon_min, lon_max = CUTOUT_COORDS
+    (x_min, x_max), (y_min, y_max) = lon_lat_to_geostationary_area_coords(
+        [lon_min, lon_max],
+        [lat_min, lat_max],
+        valid_dataset.ds.data,
+    )
+
+    y_vals = np.where(
+        np.logical_and(
+            valid_dataset.ds.coords["y_geostationary"] <= y_max,
+            valid_dataset.ds.coords["y_geostationary"] >= y_min,
+        )
+    )[0]
+    x_vals = np.where(
+        np.logical_and(
+            valid_dataset.ds.coords["x_geostationary"] <= x_max,
+            valid_dataset.ds.coords["x_geostationary"] >= x_min,
+        )
+    )[0]
+
     valid_dataloader = DataLoader(
         valid_dataset,
         batch_size=batch_size,
@@ -269,25 +291,29 @@ def score_model_on_all_metrics(
     for i, (X, y) in tqdm(enumerate(valid_dataloader), total=loop_steps):
         y_hat = model(X)
 
+        # cutout the GB area
+        y_cutout = y[..., x_vals, y_vals]
+        y_hat = y_hat[..., x_vals, y_vals]
+
         # assert shapes are the same
-        assert y.shape == y_hat.shape, f"{y.shape=} != {y_hat.shape=}"
+        assert y_cutout.shape == y_hat.shape, f"{y_cutout.shape=} != {y_hat.shape=}"
 
         # If nan_to_num is used in the dataset, the model will output -1 for NaNs. We need to
         # convert these back to NaNs for the metrics
-        y[y == -1] = np.nan
+        y_cutout[y_cutout == -1] = np.nan
 
         # pix accepts arrays of shape [batch, height, width, channels].
         # our arrays are of shape [batch, channels, time, height, width].
         # channel dim would be reduced; we add a new axis to satisfy the shape reqs.
         # we then reshape to squash batch, channels, and time into the leading axis,
         # where the vmap in metrics.py will broadcast over the leading dim.
-        y_jax = jnp.array(y).reshape(-1, *y.shape[-2:])[..., np.newaxis]
+        y_jax = jnp.array(y_cutout).reshape(-1, *y_cutout.shape[-2:])[..., np.newaxis]
         y_hat_jax = jnp.array(y_hat).reshape(-1, *y_hat.shape[-2:])[..., np.newaxis]
 
         for metric_name, metric_func in metric_funcs.items():
             # we reshape the result back into [batch, channels, time],
             # then take the mean over the batch
-            metric_res = metric_func(y_hat_jax, y_jax).reshape(*y.shape[:3])
+            metric_res = metric_func(y_hat_jax, y_jax).reshape(*y_cutout.shape[:3])
             batch_reduced_metric = jnp.nanmean(metric_res, axis=0)
             metrics[metric_name].append(batch_reduced_metric)
 

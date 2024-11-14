@@ -3,6 +3,7 @@ __all__ = (
     "DATA_INTERVAL_SPACING_MINUTES",
     "NUM_FORECAST_STEPS",
     "NUM_CHANNELS",
+    "CUTOUT_COORDS",
 )
 
 # These constants were locked as part of the project specification
@@ -16,3 +17,5 @@ NUM_FORECAST_STEPS = FORECAST_HORIZON_MINUTES // DATA_INTERVAL_SPACING_MINUTES
 NUM_CHANNELS = 11
 # Image size (height, width)
 IMAGE_SIZE_TUPLE = (372, 614)
+# Cutout coords (min lat, max lat, min lon, max lon)
+CUTOUT_COORDS = (49, 60, -6, 2)

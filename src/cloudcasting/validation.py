@@ -240,6 +240,8 @@ def score_model_on_all_metrics(
         )
     )[0]
 
+    ix = np.ix_(x_vals, y_vals)
+
     valid_dataloader = DataLoader(
         valid_dataset,
         batch_size=batch_size,
@@ -292,8 +294,8 @@ def score_model_on_all_metrics(
         y_hat = model(X)
 
         # cutout the GB area
-        y_cutout = y[..., x_vals, y_vals]
-        y_hat = y_hat[..., x_vals, y_vals]
+        y_cutout = y[..., ix[1], ix[0]]
+        y_hat = y_hat[..., ix[1], ix[0]]
 
         # assert shapes are the same
         assert y_cutout.shape == y_hat.shape, f"{y_cutout.shape=} != {y_hat.shape=}"

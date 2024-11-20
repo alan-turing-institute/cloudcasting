@@ -8,12 +8,15 @@ from cloudcasting.constants import (
     NUM_FORECAST_STEPS,
 )
 from cloudcasting.dataset import ValidationSatelliteDataset
+from cloudcasting.utils import create_cutout_mask
 from cloudcasting.validation import (
     calc_mean_metrics,
     score_model_on_all_metrics,
     validate,
     validate_from_config,
 )
+
+test_mask = create_cutout_mask((2, 6, 1, 7), (9, 8))
 
 
 @pytest.fixture()
@@ -47,6 +50,7 @@ def test_score_model_on_all_metrics(model, val_sat_zarr_path, nan_to_num):
         batch_limit=3,
         metric_names=metric_names,
         metric_kwargs=metric_kwargs,
+        mask=test_mask,
     )
 
     # Check all the expected keys are there
@@ -98,6 +102,7 @@ def test_validate(model, val_sat_zarr_path, mocker):
         batch_size=2,
         num_workers=0,
         batch_limit=4,
+        mask=test_mask,
     )
 
 
@@ -141,6 +146,7 @@ validation:
   batch_size: 2
   num_workers: 0
   batch_limit: 4
+  mask: {test_mask}
 """
         )
 

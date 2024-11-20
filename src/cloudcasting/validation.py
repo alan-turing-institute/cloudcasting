@@ -18,6 +18,7 @@ import yaml
 from jax import tree
 from jaxtyping import Array, Float32
 from matplotlib.colors import Normalize  # type: ignore[import-not-found]
+from numpy.typing import NDArray
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -31,7 +32,7 @@ except RuntimeError:
 import cloudcasting
 from cloudcasting import metrics as dm_pix  # for compatibility if our changes are upstreamed
 from cloudcasting.constants import (
-    CUTOUT_COORDS,
+    CUTOUT_MASK,
     DATA_INTERVAL_SPACING_MINUTES,
     FORECAST_HORIZON_MINUTES,
     IMAGE_SIZE_TUPLE,
@@ -46,7 +47,7 @@ from cloudcasting.types import (
     SampleOutputArray,
     TimeArray,
 )
-from cloudcasting.utils import lon_lat_to_geostationary_area_coords, numpy_validation_collate_fn
+from cloudcasting.utils import numpy_validation_collate_fn
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -191,6 +192,7 @@ def score_model_on_all_metrics(
     batch_limit: int | None = None,
     metric_names: tuple[str, ...] | list[str] = ("mae", "mse", "ssim"),
     metric_kwargs: dict[str, dict[str, Any]] | None = None,
+    mask: NDArray[np.int8] = CUTOUT_MASK,
 ) -> tuple[dict[str, MetricArray], list[str]]:
     """Calculate the scoreboard metrics for the given model on the validation dataset.
 
@@ -205,6 +207,7 @@ def score_model_on_all_metrics(
             in cloudcasting.metrics. Defaults to ("mae", "mse", "ssim").
         metric_kwargs (dict[str, dict[str, Any]] | None, optional): kwargs to pass to functions in
             cloudcasting.metrics. Defaults to None.
+        mask (np.ndarray, optional): The mask to apply to the data. Defaults to CUTOUT_MASK.
 
     Returns:
         tuple[dict[str, MetricArray], list[str]]:
@@ -218,29 +221,6 @@ def score_model_on_all_metrics(
         "forecast horizon must be a multiple of the data interval "
         "(please make an issue on github if you see this!!!!)"
     )
-
-    # calculate the cutout indices for the dataset
-    lat_min, lat_max, lon_min, lon_max = CUTOUT_COORDS
-    (x_min, x_max), (y_min, y_max) = lon_lat_to_geostationary_area_coords(
-        [lon_min, lon_max],
-        [lat_min, lat_max],
-        valid_dataset.ds.data,
-    )
-
-    y_vals = np.where(
-        np.logical_and(
-            valid_dataset.ds.coords["y_geostationary"] <= y_max,
-            valid_dataset.ds.coords["y_geostationary"] >= y_min,
-        )
-    )[0]
-    x_vals = np.where(
-        np.logical_and(
-            valid_dataset.ds.coords["x_geostationary"] <= x_max,
-            valid_dataset.ds.coords["x_geostationary"] >= x_min,
-        )
-    )[0]
-
-    ix = np.ix_(x_vals, y_vals)
 
     valid_dataloader = DataLoader(
         valid_dataset,
@@ -294,8 +274,9 @@ def score_model_on_all_metrics(
         y_hat = model(X)
 
         # cutout the GB area
-        y_cutout = y[..., ix[1], ix[0]]
-        y_hat = y_hat[..., ix[1], ix[0]]
+        mask_full = mask[np.newaxis, np.newaxis, np.newaxis, :, :]
+        y_cutout = y * mask_full
+        y_hat = y_hat * mask_full
 
         # assert shapes are the same
         assert y_cutout.shape == y_hat.shape, f"{y_cutout.shape=} != {y_hat.shape=}"
@@ -387,6 +368,7 @@ def validate(
     batch_size: int = 1,
     num_workers: int = 0,
     batch_limit: int | None = None,
+    mask: NDArray[np.int8] = CUTOUT_MASK,
 ) -> None:
     """Run the full validation procedure on the model and log the results to wandb.
 
@@ -433,6 +415,7 @@ def validate(
         batch_size=batch_size,
         num_workers=num_workers,
         batch_limit=batch_limit,
+        mask=mask,
     )
 
     # Calculate the mean of each metric reduced over forecast horizon and channels

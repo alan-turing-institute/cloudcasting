@@ -192,7 +192,7 @@ def score_model_on_all_metrics(
     batch_limit: int | None = None,
     metric_names: tuple[str, ...] | list[str] = ("mae", "mse", "ssim"),
     metric_kwargs: dict[str, dict[str, Any]] | None = None,
-    mask: NDArray[np.int8] = CUTOUT_MASK,
+    mask: NDArray[np.float64] = CUTOUT_MASK,
 ) -> tuple[dict[str, MetricArray], list[str]]:
     """Calculate the scoreboard metrics for the given model on the validation dataset.
 
@@ -368,7 +368,7 @@ def validate(
     batch_size: int = 1,
     num_workers: int = 0,
     batch_limit: int | None = None,
-    mask: NDArray[np.int8] = CUTOUT_MASK,
+    mask: NDArray[np.float64] = CUTOUT_MASK,
 ) -> None:
     """Run the full validation procedure on the model and log the results to wandb.
 

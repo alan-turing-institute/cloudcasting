@@ -158,7 +158,7 @@ def numpy_validation_collate_fn(
 def create_cutout_mask(
     mask_size: tuple[int, int, int, int],
     image_size: tuple[int, int],
-) -> NDArray[np.int8]:
+) -> NDArray[np.float64]:
     """Create a mask with a cutout in the center.
     Args:
         x: x-coordinate of the center of the cutout
@@ -173,7 +173,7 @@ def create_cutout_mask(
     height, width = image_size
     min_x, max_x, min_y, max_y = mask_size
 
-    mask = np.empty((height, width), dtype=np.int8)
+    mask = np.empty((height, width), dtype=np.float64)
     mask[:] = np.nan
     mask[min_y:max_y, min_x:max_x] = 1
     return mask

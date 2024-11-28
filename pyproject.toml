@@ -39,10 +39,10 @@ dependencies = [
     "typer",
     "lightning",
     "torch>=2.3.0",  # needed for numpy 2.0
-    "jaxtyping",
+    "jaxtyping<=0.2.34", # currently >0.2.34 causing errors
     "wandb",
     "tqdm",
-    "moviepy>=1.0.3",
+    "moviepy==1.0.3", # currently >1.0.3 not working with wandb
     "imageio>=2.35.1",
     "numpy <2.1.0",  # https://github.com/wandb/wandb/issues/8166
     "chex",

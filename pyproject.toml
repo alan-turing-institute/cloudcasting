@@ -39,7 +39,7 @@ dependencies = [
     "typer",
     "lightning",
     "torch>=2.3.0",  # needed for numpy 2.0
-    "jaxtyping",
+    "jaxtyping<=0.2.34",
     "wandb",
     "tqdm",
     "moviepy>=1.0.3",

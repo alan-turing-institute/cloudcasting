@@ -18,7 +18,6 @@ import yaml
 from jax import tree
 from jaxtyping import Array, Float32
 from matplotlib.colors import Normalize  # type: ignore[import-not-found]
-from numpy.typing import NDArray
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -32,6 +31,8 @@ except RuntimeError:
 import cloudcasting
 from cloudcasting import metrics as dm_pix  # for compatibility if our changes are upstreamed
 from cloudcasting.constants import (
+    CROPPED_CUTOUT_MASK,
+    CROPPED_IMAGE_SIZE_TUPLE,
     CUTOUT_MASK,
     DATA_INTERVAL_SPACING_MINUTES,
     FORECAST_HORIZON_MINUTES,
@@ -192,7 +193,6 @@ def score_model_on_all_metrics(
     batch_limit: int | None = None,
     metric_names: tuple[str, ...] | list[str] = ("mae", "mse", "ssim"),
     metric_kwargs: dict[str, dict[str, Any]] | None = None,
-    mask: NDArray[np.float64] = CUTOUT_MASK,
 ) -> tuple[dict[str, MetricArray], list[str]]:
     """Calculate the scoreboard metrics for the given model on the validation dataset.
 
@@ -207,7 +207,6 @@ def score_model_on_all_metrics(
             in cloudcasting.metrics. Defaults to ("mae", "mse", "ssim").
         metric_kwargs (dict[str, dict[str, Any]] | None, optional): kwargs to pass to functions in
             cloudcasting.metrics. Defaults to None.
-        mask (np.ndarray, optional): The mask to apply to the data. Defaults to CUTOUT_MASK.
 
     Returns:
         tuple[dict[str, MetricArray], list[str]]:
@@ -272,6 +271,14 @@ def score_model_on_all_metrics(
 
     for i, (X, y) in tqdm(enumerate(valid_dataloader), total=loop_steps):
         y_hat = model(X)
+
+        # identify the correct mask / create a mask if necessary
+        if X.shape[-2:] == IMAGE_SIZE_TUPLE:
+            mask = CUTOUT_MASK
+        elif X.shape[-2:] == CROPPED_IMAGE_SIZE_TUPLE:
+            mask = CROPPED_CUTOUT_MASK
+        else:
+            mask = np.ones(X.shape[-2:], dtype=np.float64)
 
         # cutout the GB area
         mask_full = mask[np.newaxis, np.newaxis, np.newaxis, :, :]
@@ -368,7 +375,6 @@ def validate(
     batch_size: int = 1,
     num_workers: int = 0,
     batch_limit: int | None = None,
-    mask: NDArray[np.float64] = CUTOUT_MASK,
 ) -> None:
     """Run the full validation procedure on the model and log the results to wandb.
 
@@ -415,7 +421,6 @@ def validate(
         batch_size=batch_size,
         num_workers=num_workers,
         batch_limit=batch_limit,
-        mask=mask,
     )
 
     # Calculate the mean of each metric reduced over forecast horizon and channels

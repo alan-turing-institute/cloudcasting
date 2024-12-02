@@ -8,7 +8,6 @@ from cloudcasting.constants import (
     NUM_FORECAST_STEPS,
 )
 from cloudcasting.dataset import ValidationSatelliteDataset
-from cloudcasting.utils import create_cutout_mask
 from cloudcasting.validation import (
     calc_mean_metrics,
     score_model_on_all_metrics,
@@ -18,17 +17,12 @@ from cloudcasting.validation import (
 
 
 @pytest.fixture()
-def test_mask():
-    return create_cutout_mask((2, 6, 1, 7), (9, 8))
-
-
-@pytest.fixture()
 def model():
     return PersistenceModel(history_steps=1, rollout_steps=NUM_FORECAST_STEPS)
 
 
 @pytest.mark.parametrize("nan_to_num", [True, False])
-def test_score_model_on_all_metrics(model, val_sat_zarr_path, test_mask, nan_to_num):
+def test_score_model_on_all_metrics(model, val_sat_zarr_path, nan_to_num):
     # Create valid dataset
     valid_dataset = ValidationSatelliteDataset(
         zarr_path=val_sat_zarr_path,
@@ -53,7 +47,6 @@ def test_score_model_on_all_metrics(model, val_sat_zarr_path, test_mask, nan_to_
         batch_limit=3,
         metric_names=metric_names,
         metric_kwargs=metric_kwargs,
-        mask=test_mask,
     )
 
     # Check all the expected keys are there
@@ -87,7 +80,7 @@ def test_calc_mean_metrics():
     assert mean_metrics_dict["mse"] == 5
 
 
-def test_validate(model, val_sat_zarr_path, test_mask, mocker):
+def test_validate(model, val_sat_zarr_path, mocker):
     # Mock the wandb functions so they aren't run in testing
     mocker.patch("wandb.login")
     mocker.patch("wandb.init")
@@ -105,11 +98,10 @@ def test_validate(model, val_sat_zarr_path, test_mask, mocker):
         batch_size=2,
         num_workers=0,
         batch_limit=4,
-        mask=test_mask,
     )
 
 
-def test_validate_cli(val_sat_zarr_path, test_mask, mocker):
+def test_validate_cli(val_sat_zarr_path, mocker):
     # write out an example model.py file
     with open("model.py", "w") as f:
         f.write(
@@ -149,7 +141,6 @@ validation:
   batch_size: 2
   num_workers: 0
   batch_limit: 4
-  mask: "{test_mask}"
 """
         )
 

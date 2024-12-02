@@ -134,7 +134,7 @@ model:
     history_steps: 1
     sigma: 0.1
 validation:
-  data_path: "{val_sat_zarr_path}"
+  data_path: {val_sat_zarr_path}
   wandb_project_name: cloudcasting-pytest
   wandb_run_name: test_validate
   nan_to_num: False

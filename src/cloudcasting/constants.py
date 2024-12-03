@@ -22,7 +22,7 @@ NUM_CHANNELS = 11
 # Image size (height, width)
 IMAGE_SIZE_TUPLE = (372, 614)
 # Cutout mask (min x, max x, min y, max y)
-CUTOUT_MASK_BOUNDARY = (127, 394, 104, 290)
+CUTOUT_MASK_BOUNDARY = (166, 336, 107, 289)
 # Create cutout mask
 CUTOUT_MASK = create_cutout_mask(CUTOUT_MASK_BOUNDARY, IMAGE_SIZE_TUPLE)
 
@@ -30,6 +30,6 @@ CUTOUT_MASK = create_cutout_mask(CUTOUT_MASK_BOUNDARY, IMAGE_SIZE_TUPLE)
 # Cropped image size (height, width)
 CROPPED_IMAGE_SIZE_TUPLE = (278, 385)
 # Cropped cutout mask (min x, max x, min y, max y)
-CROPPED_CUTOUT_MASK_BOUNDARY = (70, 337, 59, 245)
+CROPPED_CUTOUT_MASK_BOUNDARY = (109, 279, 62, 244)
 # Create cropped cutout mask
 CROPPED_CUTOUT_MASK = create_cutout_mask(CROPPED_CUTOUT_MASK_BOUNDARY, CROPPED_IMAGE_SIZE_TUPLE)

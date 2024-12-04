@@ -32,8 +32,10 @@ import cloudcasting
 from cloudcasting import metrics as dm_pix  # for compatibility if our changes are upstreamed
 from cloudcasting.constants import (
     CROPPED_CUTOUT_MASK,
+    CROPPED_CUTOUT_MASK_BOUNDARY,
     CROPPED_IMAGE_SIZE_TUPLE,
     CUTOUT_MASK,
+    CUTOUT_MASK_BOUNDARY,
     DATA_INTERVAL_SPACING_MINUTES,
     FORECAST_HORIZON_MINUTES,
     IMAGE_SIZE_TUPLE,
@@ -148,6 +150,30 @@ def log_prediction_video_to_wandb(
     y[mask] = 0
     y_hat[mask] = 0
 
+    create_box = True
+
+    # create a boundary box for the crop
+    if y.shape[-2:] == IMAGE_SIZE_TUPLE:
+        boxl, boxr, boxb, boxt = CUTOUT_MASK_BOUNDARY
+        bsize = IMAGE_SIZE_TUPLE
+    elif y.shape[-2:] == CROPPED_IMAGE_SIZE_TUPLE:
+        boxl, boxr, boxb, boxt = CROPPED_CUTOUT_MASK_BOUNDARY
+        bsize = CROPPED_IMAGE_SIZE_TUPLE
+    else:
+        create_box = False
+
+    if create_box:
+        # box mask
+        maskb = np.ones(bsize, dtype=np.float64)
+        maskb[boxb : boxb + 2, boxl:boxr] = np.nan  # Top edge
+        maskb[boxt - 2 : boxt, boxl:boxr] = np.nan  # Bottom edge
+        maskb[boxb:boxt, boxl : boxl + 2] = np.nan  # Left edge
+        maskb[boxb:boxt, boxr - 2 : boxr] = np.nan  # Right edge
+        maskb = maskb[np.newaxis, np.newaxis, :, :]
+
+        y = y * maskb
+        y_hat = y_hat * maskb
+
     # Tranpose the arrays so time is the first dimension and select the channel
     # Then flip the frames so they are in the correct orientation for the video
     y_frames = y.transpose(1, 2, 3, 0)[:, ::-1, ::-1, channel_ind : channel_ind + 1]
@@ -171,6 +197,14 @@ def log_prediction_video_to_wandb(
 
     # combine add difference to the video array
     video_array = np.concatenate([video_array, diff_ccmap], axis=2)
+
+    # Set bounding box to a colour so it is visible
+    if create_box:
+        video_array[:, :, :, 0][np.isnan(video_array[:, :, :, 0])] = 250
+        video_array[:, :, :, 1][np.isnan(video_array[:, :, :, 1])] = 40
+        video_array[:, :, :, 2][np.isnan(video_array[:, :, :, 2])] = 10
+        video_array[:, :, :, 3][np.isnan(video_array[:, :, :, 3])] = 255
+
     video_array = video_array.transpose(0, 3, 1, 2)
     video_array = video_array.astype(np.uint8)
 

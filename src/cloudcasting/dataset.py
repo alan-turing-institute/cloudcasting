@@ -220,7 +220,7 @@ class ValidationSatelliteDataset(SatelliteDataset):
             history_mins=history_mins,
             forecast_mins=forecast_mins,
             sample_freq_mins=sample_freq_mins,
-            preshuffle=True,
+            preshuffle=False,
             nan_to_num=nan_to_num,
         )
 

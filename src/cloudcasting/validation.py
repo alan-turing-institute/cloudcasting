@@ -31,6 +31,11 @@ except RuntimeError:
 import cloudcasting
 from cloudcasting import metrics as dm_pix  # for compatibility if our changes are upstreamed
 from cloudcasting.constants import (
+    CROPPED_CUTOUT_MASK,
+    CROPPED_CUTOUT_MASK_BOUNDARY,
+    CROPPED_IMAGE_SIZE_TUPLE,
+    CUTOUT_MASK,
+    CUTOUT_MASK_BOUNDARY,
     DATA_INTERVAL_SPACING_MINUTES,
     FORECAST_HORIZON_MINUTES,
     IMAGE_SIZE_TUPLE,
@@ -145,6 +150,30 @@ def log_prediction_video_to_wandb(
     y[mask] = 0
     y_hat[mask] = 0
 
+    create_box = True
+
+    # create a boundary box for the crop
+    if y.shape[-2:] == IMAGE_SIZE_TUPLE:
+        boxl, boxr, boxb, boxt = CUTOUT_MASK_BOUNDARY
+        bsize = IMAGE_SIZE_TUPLE
+    elif y.shape[-2:] == CROPPED_IMAGE_SIZE_TUPLE:
+        boxl, boxr, boxb, boxt = CROPPED_CUTOUT_MASK_BOUNDARY
+        bsize = CROPPED_IMAGE_SIZE_TUPLE
+    else:
+        create_box = False
+
+    if create_box:
+        # box mask
+        maskb = np.ones(bsize, dtype=np.float64)
+        maskb[boxb : boxb + 2, boxl:boxr] = np.nan  # Top edge
+        maskb[boxt - 2 : boxt, boxl:boxr] = np.nan  # Bottom edge
+        maskb[boxb:boxt, boxl : boxl + 2] = np.nan  # Left edge
+        maskb[boxb:boxt, boxr - 2 : boxr] = np.nan  # Right edge
+        maskb = maskb[np.newaxis, np.newaxis, :, :]
+
+        y = y * maskb
+        y_hat = y_hat * maskb
+
     # Tranpose the arrays so time is the first dimension and select the channel
     # Then flip the frames so they are in the correct orientation for the video
     y_frames = y.transpose(1, 2, 3, 0)[:, ::-1, ::-1, channel_ind : channel_ind + 1]
@@ -168,6 +197,14 @@ def log_prediction_video_to_wandb(
 
     # combine add difference to the video array
     video_array = np.concatenate([video_array, diff_ccmap], axis=2)
+
+    # Set bounding box to a colour so it is visible
+    if create_box:
+        video_array[:, :, :, 0][np.isnan(video_array[:, :, :, 0])] = 250
+        video_array[:, :, :, 1][np.isnan(video_array[:, :, :, 1])] = 40
+        video_array[:, :, :, 2][np.isnan(video_array[:, :, :, 2])] = 10
+        video_array[:, :, :, 3][np.isnan(video_array[:, :, :, 3])] = 255
+
     video_array = video_array.transpose(0, 3, 1, 2)
     video_array = video_array.astype(np.uint8)
 
@@ -269,25 +306,38 @@ def score_model_on_all_metrics(
     for i, (X, y) in tqdm(enumerate(valid_dataloader), total=loop_steps):
         y_hat = model(X)
 
+        # identify the correct mask / create a mask if necessary
+        if X.shape[-2:] == IMAGE_SIZE_TUPLE:
+            mask = CUTOUT_MASK
+        elif X.shape[-2:] == CROPPED_IMAGE_SIZE_TUPLE:
+            mask = CROPPED_CUTOUT_MASK
+        else:
+            mask = np.ones(X.shape[-2:], dtype=np.float64)
+
+        # cutout the GB area
+        mask_full = mask[np.newaxis, np.newaxis, np.newaxis, :, :]
+        y_cutout = y * mask_full
+        y_hat = y_hat * mask_full
+
         # assert shapes are the same
-        assert y.shape == y_hat.shape, f"{y.shape=} != {y_hat.shape=}"
+        assert y_cutout.shape == y_hat.shape, f"{y_cutout.shape=} != {y_hat.shape=}"
 
         # If nan_to_num is used in the dataset, the model will output -1 for NaNs. We need to
         # convert these back to NaNs for the metrics
-        y[y == -1] = np.nan
+        y_cutout[y_cutout == -1] = np.nan
 
         # pix accepts arrays of shape [batch, height, width, channels].
         # our arrays are of shape [batch, channels, time, height, width].
         # channel dim would be reduced; we add a new axis to satisfy the shape reqs.
         # we then reshape to squash batch, channels, and time into the leading axis,
         # where the vmap in metrics.py will broadcast over the leading dim.
-        y_jax = jnp.array(y).reshape(-1, *y.shape[-2:])[..., np.newaxis]
+        y_jax = jnp.array(y_cutout).reshape(-1, *y_cutout.shape[-2:])[..., np.newaxis]
         y_hat_jax = jnp.array(y_hat).reshape(-1, *y_hat.shape[-2:])[..., np.newaxis]
 
         for metric_name, metric_func in metric_funcs.items():
             # we reshape the result back into [batch, channels, time],
             # then take the mean over the batch
-            metric_res = metric_func(y_hat_jax, y_jax).reshape(*y.shape[:3])
+            metric_res = metric_func(y_hat_jax, y_jax).reshape(*y_cutout.shape[:3])
             batch_reduced_metric = jnp.nanmean(metric_res, axis=0)
             metrics[metric_name].append(batch_reduced_metric)
 

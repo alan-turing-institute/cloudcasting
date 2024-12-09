@@ -11,6 +11,7 @@ Tooling and infrastructure to enable cloud nowcasting.
 - [Optical Flow (TVL1)](https://github.com/alan-turing-institute/ocf-optical-flow-tvl1)
 - [Diffusion model](https://github.com/alan-turing-institute/ocf-diffusion)
 - [ConvLSTM](https://github.com/alan-turing-institute/ocf-convLSTM)
+- [IAM4VP](https://github.com/alan-turing-institute/ocf-iam4vp)
 
 The model template repo on which these are based is found [here](https://github.com/alan-turing-institute/ocf-model-template). These repositories contain the implementations of each model, as well as validation infrastructure to replicate metric scores on weights and biases.
 

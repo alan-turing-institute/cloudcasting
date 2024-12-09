@@ -13,6 +13,7 @@ import pandas as pd
 import pyproj
 import pyresample
 import xarray as xr
+from numpy.typing import NDArray
 
 from cloudcasting.types import (
     BatchInputArray,
@@ -152,3 +153,27 @@ def numpy_validation_collate_fn(
         X_all[i] = X
         y_all[i] = y
     return X_all, y_all
+
+
+def create_cutout_mask(
+    mask_size: tuple[int, int, int, int],
+    image_size: tuple[int, int],
+) -> NDArray[np.float64]:
+    """Create a mask with a cutout in the center.
+    Args:
+        x: x-coordinate of the center of the cutout
+        y: y-coordinate of the center of the cutout
+        width: Width of the mask
+        height: Height of the mask
+        mask_size: Size of the cutout
+        mask_value: Value to fill the mask with
+    Returns:
+        np.ndarray: The mask
+    """
+    height, width = image_size
+    min_x, max_x, min_y, max_y = mask_size
+
+    mask = np.empty((height, width), dtype=np.float64)
+    mask[:] = np.nan
+    mask[min_y:max_y, min_x:max_x] = 1
+    return mask

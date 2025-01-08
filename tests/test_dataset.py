@@ -196,3 +196,53 @@ def test_validation_dataset_raises_error(sat_zarr_path):
             forecast_mins=FORECAST_HORIZON_MINUTES,
             sample_freq_mins=DATA_INTERVAL_SPACING_MINUTES,
         )
+
+def test_time_feature_validity(sat_zarr_path):
+    dataset = SatelliteDataset(
+        zarr_path=sat_zarr_path,
+        start_time=None,
+        end_time=None,
+        history_mins=0,
+        forecast_mins=15,
+        sample_freq_mins=5,
+        nan_to_num=True,
+        return_time_features=True,
+    )
+
+    # Test access
+    data = dataset["2023-01-01 00:00:00"]
+    assert len(data) == 3
+
+    # Test midnight (hour = 0)
+    midnight = (
+        pd.Timestamp("2023-01-01 00:00:00"), 
+        pd.Timestamp("2023-01-01 00:15:00")
+    )
+    features = dataset._get_time_features(midnight)
+    assert features.shape[1] == 4  # [cos_hour, sin_hour, cos_day, sin_day]
+    
+    # At midnight: cos(hour)=1, sin(hour)=0
+    np.testing.assert_allclose(features[0, 0], 1, atol=1e-6)  # cos(hour)
+    np.testing.assert_allclose(features[0, 1], 0, atol=1e-6)  # sin(hour)
+    
+    # Test noon (hour = 12)
+    noon = (
+        pd.Timestamp("2023-01-01 12:00:00"),
+        pd.Timestamp("2023-01-01 12:15:00")
+    )
+    features = dataset._get_time_features(noon)
+    
+    # At noon: cos(hour)=-1, sin(hour)≈0
+    np.testing.assert_allclose(features[0, 0], -1, atol=1e-6)  # cos(hour)
+    np.testing.assert_allclose(features[0, 1], 0, atol=1e-6)   # sin(hour)
+    
+    # Test start of year
+    new_year = (
+        pd.Timestamp("2023-01-01 00:00:00"),
+        pd.Timestamp("2023-01-01 00:15:00")
+    )
+    features = dataset._get_time_features(new_year)
+    
+    # At start of year: cos(day)=1, sin(day)=0
+    np.testing.assert_allclose(features[0, 2], 1, atol=1e-6)  # cos(day)
+    np.testing.assert_allclose(features[0, 3], 0, atol=1e-6)  # sin(day)

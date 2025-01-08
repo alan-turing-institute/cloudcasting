@@ -102,6 +102,7 @@ class SatelliteDataset(Dataset[tuple[NDArray[np.float32], NDArray[np.float32]]])
         variables: list[str] | str | None = None,
         preshuffle: bool = False,
         nan_to_num: bool = False,
+        return_time_features: bool = False,
     ):
         """A torch Dataset for loading past and future satellite data
 
@@ -115,6 +116,10 @@ class SatelliteDataset(Dataset[tuple[NDArray[np.float32], NDArray[np.float32]]])
             variables: The variables to load from the satellite data (defaults to all)
             preshuffle: Whether to shuffle the data - useful for validation
             nan_to_num: Whether to convert NaNs to -1.
+            return_time_features: If True, will calculate features relating to time of
+                                  day, time of year etc, and return those as a third
+                                  return value of the dataset (X, y, time_features) as 
+                                  opposed to (X, y).
         """
 
         # Load the sat zarr file or list of files and slice the data to the given period
@@ -144,6 +149,7 @@ class SatelliteDataset(Dataset[tuple[NDArray[np.float32], NDArray[np.float32]]])
         self.forecast_mins = forecast_mins
         self.sample_freq_mins = sample_freq_mins
         self.nan_to_num = nan_to_num
+        self.return_time_features = return_time_features
 
     @staticmethod
     def _find_t0_times(
@@ -154,13 +160,38 @@ class SatelliteDataset(Dataset[tuple[NDArray[np.float32], NDArray[np.float32]]])
     def __len__(self) -> int:
         return len(self.t0_times)
 
-    def _get_datetime(self, t0: datetime) -> tuple[NDArray[np.float32], NDArray[np.float32]]:
-        ds_sel = self.ds.sel(
-            time=slice(
-                t0 - timedelta(minutes=self.history_mins),
-                t0 + timedelta(minutes=self.forecast_mins),
-            )
+    def _get_time_features(self, dt_range: tuple[pd.Timestamp, pd.Timestamp]) -> NDArray[np.float32]:
+        # get dates in the requested range [from history_mins to forecast_mins centered on t0]
+        dates = pd.date_range(*dt_range, freq=timedelta(minutes=self.sample_freq_mins))
+
+        # calculate numerical values for the times and days, normalized to [0, 1]
+        hours = np.array(
+            [dt.hour + dt.minute/60 + dt.second/3600 for dt in dates]
+        ) / 24
+        days = np.array(
+            [dt.day_of_year - 1 + h for dt, h in zip(dates, hours)]  # -1 since it's 1-indexed
+        ) / 366  # leap years
+
+        # use sin/cos features for the hours and days -- trying to capture how far along
+        # the cycle of time we are. should correlate with the darkening of visible channels,
+        # and capture seasonal variation.
+        time_features = np.stack(
+            (
+                np.cos(2 * np.pi * hours),
+                np.sin(2 * np.pi * hours),
+                np.cos(2 * np.pi * days),
+                np.sin(2 * np.pi * days),
+            ),
+            axis = -1
         )
+
+        return time_features 
+                
+    def _get_datetime(self, t0: datetime) -> tuple[NDArray[np.float32], NDArray[np.float32]] | tuple[NDArray[np.float32], NDArray[np.float32], NDArray[np.float32]]:
+    
+        t_range = (t0 - timedelta(minutes=self.history_mins), t0 + timedelta(minutes=self.forecast_mins)) 
+
+        ds_sel = self.ds.sel(time=slice(*t_range))
 
         # Load the data eagerly so that the same chunks aren't loaded multiple times after we split
         # further
@@ -180,9 +211,13 @@ class SatelliteDataset(Dataset[tuple[NDArray[np.float32], NDArray[np.float32]]])
             X = np.nan_to_num(X, nan=-1)
             y = np.nan_to_num(y, nan=-1)
 
+        if self.return_time_features:
+            time_features = self._get_time_features(t_range).astype(np.float32)
+            return X.astype(np.float32), y.astype(np.float32), time_features
+
         return X.astype(np.float32), y.astype(np.float32)
 
-    def __getitem__(self, key: DataIndex) -> tuple[NDArray[np.float32], NDArray[np.float32]]:
+    def __getitem__(self, key: DataIndex) -> tuple[NDArray[np.float32], NDArray[np.float32]] | tuple[NDArray[np.float32], NDArray[np.float32], NDArray[np.float32]]:
         if isinstance(key, int):
             t0 = self.t0_times[key]
 

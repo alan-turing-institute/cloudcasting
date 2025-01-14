@@ -212,7 +212,7 @@ class SatelliteDataset(Dataset[tuple[NDArray[np.float32], NDArray[np.float32]]])
             y = np.nan_to_num(y, nan=-1)
 
         if self.return_time_features:
-            time_features = self._get_time_features(t_range).astype(np.float32)
+            time_features = self._get_time_features((t0 - timedelta(minutes=self.history_mins), t0)).astype(np.float32)
             return X.astype(np.float32), y.astype(np.float32), time_features
 
         return X.astype(np.float32), y.astype(np.float32)
@@ -334,6 +334,7 @@ class SatelliteDataModule(LightningDataModule):
         nan_to_num: bool = False,
         pin_memory: bool = False,
         persistent_workers: bool = False,
+        return_time_features: bool = False,
     ):
         """A lightning DataModule for loading past and future satellite data
 
@@ -376,6 +377,7 @@ class SatelliteDataModule(LightningDataModule):
         self.history_mins = history_mins
         self.forecast_mins = forecast_mins
         self.sample_freq_mins = sample_freq_mins
+        self.return_time_features = return_time_features
 
         self._common_dataloader_kwargs = DataloaderArgs(
             batch_size=batch_size,
@@ -406,6 +408,7 @@ class SatelliteDataModule(LightningDataModule):
             preshuffle=preshuffle,
             nan_to_num=self.nan_to_num,
             variables=self.variables,
+            return_time_features=self.return_time_features,
         )
 
     def train_dataloader(self) -> DataLoader[tuple[NDArray[np.float32], NDArray[np.float32]]]:

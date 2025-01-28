@@ -1,12 +1,12 @@
 
-Documentation for cloudcasting 
+Documentation for cloudcasting
 ==============================
 
-Tooling and infrastructure to enable cloud nowcasting. 
+Tooling and infrastructure to enable cloud nowcasting.
 Check out the :doc:`usage` section for further information.
 
-This tool was developed with `Open Climate Fix <https://openclimatefix.org/>`_ and 
-`The Alan Turing Institute <https://www.turing.ac.uk/>`_ as part of the 
+This tool was developed with `Open Climate Fix <https://openclimatefix.org/>`_ and
+`The Alan Turing Institute <https://www.turing.ac.uk/>`_ as part of the
 `Manchester Prize <https://manchesterprize.org/>`_.
 
 
@@ -17,4 +17,3 @@ This tool was developed with `Open Climate Fix <https://openclimatefix.org/>`_ a
    usage
    api
    generated/cloudcasting
-

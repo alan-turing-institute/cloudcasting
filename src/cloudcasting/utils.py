@@ -137,8 +137,10 @@ def numpy_validation_collate_fn(
     into output; a tuple of:
         X: (batch, channels, time, height, width)
         y: (batch, channels, rollout_steps, height, width)
+
     Args:
         samples: List of (X, y) samples
+        
     Returns:
         np.ndarray: The collated batch of X samples
         np.ndarray: The collated batch of y samples

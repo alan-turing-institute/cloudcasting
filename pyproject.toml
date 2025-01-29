@@ -60,7 +60,8 @@ dev = [
 ]
 doc = [
   "sphinx",
-  "sphinx-rtd-theme"
+  "sphinx-rtd-theme",
+  "m2r2"
 ]
 
 [tool.setuptools.package-data]

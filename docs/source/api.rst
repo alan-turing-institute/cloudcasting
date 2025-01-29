@@ -1,7 +1,20 @@
 API
 ===
 
-.. autosummary::
-   :toctree: generated
+.. automodule:: cloudcasting.dataset
+   :members:
+   
+.. autoclass:: cloudcasting.download
+   :members:
+   
+.. autoclass:: cloudcasting.metrics
+   :members:
+   
+.. autoclass:: cloudcasting.models
+   :members:
 
-   cloudcasting
+.. autoclass:: cloudcasting.utils
+   :members:
+   
+.. autoclass:: cloudcasting.validation
+   :members:

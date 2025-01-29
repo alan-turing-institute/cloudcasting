@@ -14,9 +14,14 @@ Contents
 
 .. toctree::
    :maxdepth: 2
-   
+
    usage
-   api
+   dataset
+   download
+   metrics
+   models
+   utils
+   validation
 
 License
 -------

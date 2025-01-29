@@ -4,17 +4,17 @@ API
 .. automodule:: cloudcasting.dataset
    :members:
    
-.. autoclass:: cloudcasting.download
+.. automodule:: cloudcasting.download
    :members:
    
-.. autoclass:: cloudcasting.metrics
+.. automodule:: cloudcasting.metrics
    :members:
    
-.. autoclass:: cloudcasting.models
+.. automodule:: cloudcasting.models
    :members:
 
-.. autoclass:: cloudcasting.utils
+.. automodule:: cloudcasting.utils
    :members:
    
-.. autoclass:: cloudcasting.validation
+.. automodule:: cloudcasting.validation
    :members:

@@ -25,10 +25,11 @@ class AbstractModel(ABC):
         """Abstract method for the forward pass of the model.
 
         Args:
-            X: Either a batch or a sample of the most recent satelllite data. X can will be 5
+            X: Either a batch or a sample of the most recent satelllite data. X will be 5
                 dimensional. X has shape [batch, channels, time, height, width]
                 time = {t_{-n}, ..., t_{0}}
-                     = all n values needed to predict {t'_{1}, ..., t'_{horizon}}
+                (all n values needed to predict {t'_{1}, ..., t'_{horizon}})
+
         Returns
             ForecastArray: The model's prediction of the future satellite data of shape
                 [batch, channels, rollout_steps, height, width]

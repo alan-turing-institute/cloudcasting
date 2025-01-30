@@ -1,4 +1,4 @@
-validation
+Validation
 ==========
 
 .. automodule:: cloudcasting.validation

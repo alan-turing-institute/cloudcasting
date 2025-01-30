@@ -3,6 +3,7 @@ __all__ = (
     "find_contiguous_time_periods",
     "find_contiguous_t0_time_periods",
     "numpy_validation_collate_fn",
+    "create_cutout_mask",
 )
 
 from collections.abc import Sequence
@@ -162,6 +163,7 @@ def create_cutout_mask(
     image_size: tuple[int, int],
 ) -> NDArray[np.float64]:
     """Create a mask with a cutout in the center.
+
     Args:
         x: x-coordinate of the center of the cutout
         y: y-coordinate of the center of the cutout
@@ -169,6 +171,7 @@ def create_cutout_mask(
         height: Height of the mask
         mask_size: Size of the cutout
         mask_value: Value to fill the mask with
+
     Returns:
         np.ndarray: The mask
     """

@@ -413,8 +413,8 @@ def validate(
     """Run the full validation procedure on the model and log the results to wandb.
 
     Args:
-        model (AbstractModel): _description_
-        data_path (Path): _description_
+        model (AbstractModel): the model to be validated
+        data_path (Path): path to the validation data set
         nan_to_num (bool, optional): Whether to convert NaNs to -1. Defaults to False.
         batch_size (int, optional): Defaults to 1.
         num_workers (int, optional): Defaults to 0.

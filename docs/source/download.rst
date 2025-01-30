@@ -1,4 +1,4 @@
-download
+Download
 ========
 
 .. automodule:: cloudcasting.download

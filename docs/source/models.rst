@@ -1,4 +1,4 @@
-models
+Models
 ======
 
 .. automodule:: cloudcasting.models

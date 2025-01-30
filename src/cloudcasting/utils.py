@@ -1,7 +1,7 @@
 __all__ = (
-    "lon_lat_to_geostationary_area_coords",
-    "find_contiguous_time_periods",
     "find_contiguous_t0_time_periods",
+    "find_contiguous_time_periods",
+    "lon_lat_to_geostationary_area_coords",
     "numpy_validation_collate_fn",
 )
 
@@ -104,7 +104,7 @@ def find_contiguous_time_periods(
         start_i = next_start_i
 
     assert len(periods) > 0, (
-        f"Did not find an periods from {datetimes}. " f"{min_seq_length=} {max_gap_duration=}"
+        f"Did not find an periods from {datetimes}. {min_seq_length=} {max_gap_duration=}"
     )
 
     return pd.DataFrame(periods)

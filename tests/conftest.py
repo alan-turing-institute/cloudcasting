@@ -10,12 +10,12 @@ from cloudcasting.models import VariableHorizonModel
 xr.set_options(keep_attrs=True)  # type: ignore[no-untyped-call]
 
 
-@pytest.fixture()
+@pytest.fixture
 def temp_output_dir(tmp_path):
     return str(tmp_path)
 
 
-@pytest.fixture()
+@pytest.fixture
 def sat_zarr_path(temp_output_dir):
     # Load dataset which only contains coordinates, but no data
     ds = xr.load_dataset(
@@ -47,7 +47,7 @@ def sat_zarr_path(temp_output_dir):
     return zarr_path
 
 
-@pytest.fixture()
+@pytest.fixture
 def val_dataset_hyperparams():
     return {
         "x_geostationary_size": 8,
@@ -55,7 +55,7 @@ def val_dataset_hyperparams():
     }
 
 
-@pytest.fixture()
+@pytest.fixture
 def val_sat_zarr_path(temp_output_dir, val_dataset_hyperparams):
     # The validation set requires a much larger set of times so we create it separately
     # Load dataset which only contains coordinates, but no data

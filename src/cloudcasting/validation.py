@@ -523,7 +523,7 @@ def validate(
         )
 
     # Log selected video samples to wandb
-    channel_inds = valid_dataset.ds.get_index("variable").get_indexer(VIDEO_SAMPLE_CHANNELS)  # type: ignore[no-untyped-call]
+    channel_inds = valid_dataset.ds.get_index("variable").get_indexer(VIDEO_SAMPLE_CHANNELS)
 
     for date in VIDEO_SAMPLE_DATES:
         X, y = valid_dataset[date]

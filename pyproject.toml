@@ -130,6 +130,7 @@ ignore_missing_imports = true
 module = [
     "cloudcasting.download",
     "cloudcasting.cli",
+    "cloudcasting.validation",  # use of wandb.update/Table
 ]
 disallow_untyped_calls = false
 

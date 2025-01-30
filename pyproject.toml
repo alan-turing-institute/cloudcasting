@@ -90,6 +90,7 @@ filterwarnings = [
   "ignore:ast.Str is deprecated:DeprecationWarning",                                # jaxtyping
   "ignore:`newshape` keyword argument is deprecated:DeprecationWarning",            # wandb using numpy 2.1.0
   "ignore:The keyword `fps` is no longer supported:DeprecationWarning",             # wandb.Video
+  "ignore:The codec `vlen-bytes` is currently not part in the Zarr format 3 specification:UserWarning", # ocf_blocs2
 ]
 log_cli_level = "INFO"
 testpaths = [

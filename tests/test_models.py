@@ -7,7 +7,7 @@ from cloudcasting.constants import NUM_FORECAST_STEPS
 from cloudcasting.models import AbstractModel
 
 
-@pytest.fixture()
+@pytest.fixture
 def model():
     return PersistenceModel(history_steps=1, rollout_steps=NUM_FORECAST_STEPS)
 

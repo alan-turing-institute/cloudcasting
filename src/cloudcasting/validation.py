@@ -10,14 +10,15 @@ from functools import partial
 from typing import Annotated, Any, cast
 
 import jax.numpy as jnp
-import matplotlib.pyplot as plt  # type: ignore[import-not-found]
+import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 import typer
-import wandb  # type: ignore[import-not-found]
+import wandb
 import yaml
 from jax import tree
 from jaxtyping import Array, Float32
-from matplotlib.colors import Normalize  # type: ignore[import-not-found]
+from matplotlib.colors import Normalize
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -164,12 +165,12 @@ def log_prediction_video_to_wandb(
 
     if create_box:
         # box mask
-        maskb = np.ones(bsize, dtype=np.float64)
-        maskb[boxb : boxb + 2, boxl:boxr] = np.nan  # Top edge
-        maskb[boxt - 2 : boxt, boxl:boxr] = np.nan  # Bottom edge
-        maskb[boxb:boxt, boxl : boxl + 2] = np.nan  # Left edge
-        maskb[boxb:boxt, boxr - 2 : boxr] = np.nan  # Right edge
-        maskb = maskb[np.newaxis, np.newaxis, :, :]
+        _maskb = np.ones(bsize, dtype=np.float32)
+        _maskb[boxb : boxb + 2, boxl:boxr] = np.nan  # Top edge
+        _maskb[boxt - 2 : boxt, boxl:boxr] = np.nan  # Bottom edge
+        _maskb[boxb:boxt, boxl : boxl + 2] = np.nan  # Left edge
+        _maskb[boxb:boxt, boxr - 2 : boxr] = np.nan  # Right edge
+        maskb: Float32[npt.NDArray[np.float32], "1 1 a b"] = _maskb[np.newaxis, np.newaxis, :, :]
 
         y = y * maskb
         y_hat = y_hat * maskb
@@ -312,7 +313,7 @@ def score_model_on_all_metrics(
         elif X.shape[-2:] == CROPPED_IMAGE_SIZE_TUPLE:
             mask = CROPPED_CUTOUT_MASK
         else:
-            mask = np.ones(X.shape[-2:], dtype=np.float64)
+            mask = np.ones(X.shape[-2:], dtype=np.float32)
 
         # cutout the GB area
         mask_full = mask[np.newaxis, np.newaxis, np.newaxis, :, :]
@@ -522,7 +523,7 @@ def validate(
         )
 
     # Log selected video samples to wandb
-    channel_inds = valid_dataset.ds.get_index("variable").get_indexer(VIDEO_SAMPLE_CHANNELS)  # type: ignore[no-untyped-call]
+    channel_inds = valid_dataset.ds.get_index("variable").get_indexer(VIDEO_SAMPLE_CHANNELS)
 
     for date in VIDEO_SAMPLE_DATES:
         X, y = valid_dataset[date]

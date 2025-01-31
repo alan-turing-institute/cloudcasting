@@ -7,7 +7,7 @@ import xarray as xr
 from cloudcasting.download import download_satellite_data
 
 
-@pytest.fixture()
+@pytest.fixture
 def temp_output_dir(tmp_path):
     return str(tmp_path)
 

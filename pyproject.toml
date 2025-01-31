@@ -29,7 +29,7 @@ classifiers = [
 ]
 dependencies = [
     "gcsfs",
-    "zarr",
+    "zarr<3.0.0",  # ocf_blosc2 compatibility
     "xarray",
     "dask",
     "pyresample",
@@ -44,7 +44,7 @@ dependencies = [
     "tqdm",
     "moviepy==1.0.3", # currently >1.0.3 not working with wandb
     "imageio>=2.35.1",
-    "numpy <2.1.0",  # https://github.com/wandb/wandb/issues/8166
+    "numpy<2.1.0",  # https://github.com/wandb/wandb/issues/8166
     "chex",
     "matplotlib"
 ]

@@ -6,12 +6,12 @@ from typer.testing import CliRunner
 from cloudcasting.cli import app
 
 
-@pytest.fixture()
+@pytest.fixture
 def runner():
     return CliRunner()
 
 
-@pytest.fixture()
+@pytest.fixture
 def temp_output_dir(tmp_path):
     return str(tmp_path)
 

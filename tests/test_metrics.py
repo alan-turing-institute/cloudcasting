@@ -75,6 +75,6 @@ def test_metrics(metric_func, legacy_func):
     # Lower tolerance for ssim (differences in implementation)
     rtol = 0.001 if metric_func == ssim else 1e-5
 
-    assert np.allclose(
-        metric, legacy_res, rtol=rtol
-    ), f"Metric {metric_func} does not match legacy metric {legacy_func}"
+    assert np.allclose(metric, legacy_res, rtol=rtol), (
+        f"Metric {metric_func} does not match legacy metric {legacy_func}"
+    )

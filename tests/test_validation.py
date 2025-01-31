@@ -16,7 +16,7 @@ from cloudcasting.validation import (
 )
 
 
-@pytest.fixture()
+@pytest.fixture
 def model():
     return PersistenceModel(history_steps=1, rollout_steps=NUM_FORECAST_STEPS)
 

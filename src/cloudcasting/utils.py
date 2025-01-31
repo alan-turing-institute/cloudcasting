@@ -1,7 +1,7 @@
 __all__ = (
-    "lon_lat_to_geostationary_area_coords",
-    "find_contiguous_time_periods",
     "find_contiguous_t0_time_periods",
+    "find_contiguous_time_periods",
+    "lon_lat_to_geostationary_area_coords",
     "numpy_validation_collate_fn",
 )
 
@@ -104,7 +104,7 @@ def find_contiguous_time_periods(
         start_i = next_start_i
 
     assert len(periods) > 0, (
-        f"Did not find an periods from {datetimes}. " f"{min_seq_length=} {max_gap_duration=}"
+        f"Did not find an periods from {datetimes}. {min_seq_length=} {max_gap_duration=}"
     )
 
     return pd.DataFrame(periods)
@@ -158,7 +158,7 @@ def numpy_validation_collate_fn(
 def create_cutout_mask(
     mask_size: tuple[int, int, int, int],
     image_size: tuple[int, int],
-) -> NDArray[np.float64]:
+) -> NDArray[np.float32]:
     """Create a mask with a cutout in the center.
     Args:
         x: x-coordinate of the center of the cutout
@@ -173,7 +173,7 @@ def create_cutout_mask(
     height, width = image_size
     min_x, max_x, min_y, max_y = mask_size
 
-    mask = np.empty((height, width), dtype=np.float64)
+    mask = np.empty((height, width), dtype=np.float32)
     mask[:] = np.nan
     mask[min_y:max_y, min_x:max_x] = 1
     return mask

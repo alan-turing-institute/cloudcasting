@@ -1,14 +1,14 @@
 __all__ = (
-    "MetricArray",
-    "ChannelArray",
-    "TimeArray",
-    "SampleInputArray",
     "BatchInputArray",
-    "InputArray",
-    "SampleOutputArray",
     "BatchOutputArray",
     "BatchOutputArrayJAX",
+    "ChannelArray",
+    "InputArray",
+    "MetricArray",
     "OutputArray",
+    "SampleInputArray",
+    "SampleOutputArray",
+    "TimeArray",
 )
 
 import jaxtyping

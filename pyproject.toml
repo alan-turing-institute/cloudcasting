@@ -29,7 +29,7 @@ classifiers = [
 ]
 dependencies = [
     "gcsfs",
-    "zarr",
+    "zarr<3.0.0",  # ocf_blosc2 compatibility
     "xarray",
     "dask",
     "pyresample",
@@ -44,7 +44,7 @@ dependencies = [
     "tqdm",
     "moviepy==1.0.3", # currently >1.0.3 not working with wandb
     "imageio>=2.35.1",
-    "numpy <2.1.0",  # https://github.com/wandb/wandb/issues/8166
+    "numpy<2.1.0",  # https://github.com/wandb/wandb/issues/8166
     "chex",
     "matplotlib"
 ]
@@ -90,6 +90,7 @@ filterwarnings = [
   "ignore:ast.Str is deprecated:DeprecationWarning",                                # jaxtyping
   "ignore:`newshape` keyword argument is deprecated:DeprecationWarning",            # wandb using numpy 2.1.0
   "ignore:The keyword `fps` is no longer supported:DeprecationWarning",             # wandb.Video
+  "ignore:torch.onnx.dynamo_export is deprecated since 2.6.0:DeprecationWarning",    # lighning fabric torch 2.6+
 ]
 log_cli_level = "INFO"
 testpaths = [
@@ -130,6 +131,7 @@ ignore_missing_imports = true
 module = [
     "cloudcasting.download",
     "cloudcasting.cli",
+    "cloudcasting.validation",  # use of wandb.update/Table
 ]
 disallow_untyped_calls = false
 

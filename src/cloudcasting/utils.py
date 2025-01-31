@@ -35,7 +35,7 @@ def lon_lat_to_geostationary_area_coords(
         x (Sequence[float]): Longitude east-west
         y Sequence[float]: Latitude north-south
         xr_data (xr.Dataset | xr.DataArray): xarray object with geostationary area
-   
+
     Returns:
         tuple[Sequence[float], Sequence[float]]: x, y in geostationary coordinates
     """
@@ -65,16 +65,16 @@ def find_contiguous_time_periods(
 
     Args:
       datetimes (pd.DatetimeIndex): Must be sorted.
-      min_seq_length (int): Sequences of min_seq_length or shorter will be discarded.  Typically, this
-        would be set to the `total_seq_length` of each machine learning example.
-      max_gap_duration (timedelta): If any pair of consecutive `datetimes` is more than `max_gap_duration`
-        apart, then this pair of `datetimes` will be considered a "gap" between two contiguous
-        sequences. Typically, `max_gap_duration` would be set to the sample period of
+      min_seq_length (int): Sequences of min_seq_length or shorter will be discarded.  Typically,
+        this would be set to the `total_seq_length` of each machine learning example.
+      max_gap_duration (timedelta): If any pair of consecutive `datetimes` is more than
+        `max_gap_duration` apart, then this pair of `datetimes` will be considered a "gap" between
+        two contiguous sequences. Typically, `max_gap_duration` would be set to the sample period of
         the timeseries.
 
     Returns:
-      pd.DataFrame: The DataFrame has two columns `start_dt` and `end_dt` (where 'dt' is short for 'datetime'). 
-      Each row represents a single time period.  
+      pd.DataFrame: The DataFrame has two columns `start_dt` and `end_dt`
+      (where 'dt' is short for 'datetime'). Each row represents a single time period.
     """
     # Sanity checks.
     assert len(datetimes) > 0
@@ -122,10 +122,10 @@ def find_contiguous_t0_time_periods(
         contiguous_time_periods (pd.DataFrame): Dataframe of continguous time periods
         history_duration (timedelta): Duration of the history
         forecast_duration (timedelta): Duration of the forecast
-    
+
     Returns:
-      pd.DataFrame: A DataFrame with two columns `start_dt` and `end_dt` (where 'dt' is short for 'datetime'). 
-      Each row represents a single time period. 
+      pd.DataFrame: A DataFrame with two columns `start_dt` and `end_dt`
+      (where 'dt' is short for 'datetime'). Each row represents a single time period.
     """
     contiguous_time_periods["start_dt"] += np.timedelta64(history_duration)
     contiguous_time_periods["end_dt"] -= np.timedelta64(forecast_duration)
@@ -139,13 +139,13 @@ def numpy_validation_collate_fn(
     """Collate a list of data + targets into a batch.
 
     Args:
-        samples (list[tuple[SampleInputArray, SampleOutputArray]]): List of (X, y) samples, with sizes of 
-            X (batch, channels, time, height, width) and
+        samples (list[tuple[SampleInputArray, SampleOutputArray]]): List of (X, y) samples,
+            with sizes of X (batch, channels, time, height, width) and
             y (batch, channels, rollout_steps, height, width)
-        
+
     Returns:
-        tuple(np.ndarray, np.ndarray): The collated batch of X samples in the form 
-        (batch, channels, time, height, width) and the collated batch of y samples 
+        tuple(np.ndarray, np.ndarray): The collated batch of X samples in the form
+        (batch, channels, time, height, width) and the collated batch of y samples
         in the form  (batch, channels, rollout_steps, height, width)
     """
 

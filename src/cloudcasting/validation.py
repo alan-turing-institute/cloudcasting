@@ -548,7 +548,8 @@ def validate_from_config(
         str, typer.Option(help="Path to Python file with model definition. Defaults to 'model.py'.")
     ] = "model.py",
 ) -> None:
-    """CLI function to validate a model from a config file. Example templates of these files can be found at https://github.com/alan-turing-institute/ocf-model-template
+    """CLI function to validate a model from a config file. Example templates of these files can
+    be found at https://github.com/alan-turing-institute/ocf-model-template.
 
     Args:
         config_file (str): Path to config file. Defaults to "validate_config.yml".

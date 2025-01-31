@@ -177,18 +177,18 @@ def ssim(
       a (chex.Array): First image (or set of images)
       b (chex.Array): Second image (or set of images)
       max_val (float): The maximum magnitude that `a` or `b` can have. Defaults to 1.
-      filter_size (int): Window size (>= 1). Image dims must be at least this small. 
+      filter_size (int): Window size (>= 1). Image dims must be at least this small.
         Defaults to 11
-      filter_sigma (float): The bandwidth of the Gaussian used for filtering (> 0.). 
+      filter_sigma (float): The bandwidth of the Gaussian used for filtering (> 0.).
         Defaults to 1.5
       k1 (float): One of the SSIM dampening parameters (> 0.). Defaults to 0.01.
       k2 (float): One of the SSIM dampening parameters (> 0.). Defaults to 0.03.
-      return_map (bool): If True, will cause the per-pixel SSIM "map" to be returned. 
+      return_map (bool): If True, will cause the per-pixel SSIM "map" to be returned.
         Defaults to False.
       precision: The numerical precision to use when performing convolution
-      filter_fn (Callable[[chex.Array], chex.Array] | None): An optional argument for overriding the filter function used by
-        SSIM, which would otherwise be a 2D Gaussian blur specified by filter_size
-        and filter_sigma
+      filter_fn (Callable[[chex.Array], chex.Array] | None): An optional argument for
+        overriding the filter function used by SSIM, which would otherwise be a 2D
+        Gaussian blur specified by filter_size and filter_sigma
       ignore_nans (bool): Defaults to False
 
     Returns:

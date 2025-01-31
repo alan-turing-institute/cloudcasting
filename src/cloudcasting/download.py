@@ -71,15 +71,23 @@ def download_satellite_data(
         start_date (str): First datetime (inclusive) to download in 'YYYY-MM-DD HH:MM' format
         end_date (str): Last datetime (inclusive) to download in 'YYYY-MM-DD HH:MM' format
         output_directory (str): Directory to which the satellite data should be saved
-        download_frequency (str): Frequency to download data in pandas datetime format. Defaults to 15min.
-        get_hrv (bool): Whether to download the HRV data, otherwise only non-HRV is downloaded. Defaults to False.
+        download_frequency (str): Frequency to download data in pandas datetime format.
+            Defaults to "15min".
+        get_hrv (bool): Whether to download the HRV data, otherwise only non-HRV is downloaded.
+            Defaults to False.
         override_date_bounds (bool): Whether to override the date range limits
-        lon_min (float): The west-most longitude (in degrees) of the bounding box to download. Defaults to -16.
-        lon_max (float): The east-most longitude (in degrees) of the bounding box to download. Defaults to 10.
-        lat_min (float): The south-most latitude (in degrees) of the bounding box to download. Defaults to 45.
-        lat_max (float): The north-most latitude (in degrees) of the bounding box to download. Defaults to 70.
-        test_2022_set (bool): Whether to filter data from 2022 to download the test set (every 2 weeks)
-        verify_2023_set (bool): Whether to download verification data from 2023. Only used at project end.
+        lon_min (float): The west-most longitude (in degrees) of the bounding box to download.
+            Defaults to -16.
+        lon_max (float): The east-most longitude (in degrees) of the bounding box to download.
+            Defaults to 10.
+        lat_min (float): The south-most latitude (in degrees) of the bounding box to download.
+            Defaults to 45.
+        lat_max (float): The north-most latitude (in degrees) of the bounding box to download.
+            Defaults to 70.
+        test_2022_set (bool): Whether to filter data from 2022 to download the test set
+            (every 2 weeks)
+        verify_2023_set (bool): Whether to download verification data from 2023. Only
+            used at project end.
 
     Raises:
         FileNotFoundError: If the output directory doesn't exist.

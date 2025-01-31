@@ -3,7 +3,6 @@ __all__ = (
     "find_contiguous_time_periods",
     "find_contiguous_t0_time_periods",
     "numpy_validation_collate_fn",
-    "create_cutout_mask",
 )
 
 from collections.abc import Sequence
@@ -30,11 +29,13 @@ def lon_lat_to_geostationary_area_coords(
     y: Sequence[float],
     xr_data: xr.Dataset | xr.DataArray,
 ) -> tuple[Sequence[float], Sequence[float]]:
-    """Loads geostationary area and change from lon-lat to geostationaery coords
+    """Loads geostationary area and change from lon-lat to geostationary coords
+
     Args:
         x: Longitude east-west
         y: Latitude north-south
         xr_data: xarray object with geostationary area
+   
     Returns:
         Geostationary coords: x, y
     """
@@ -72,8 +73,8 @@ def find_contiguous_time_periods(
         the timeseries.
 
     Returns:
-      pd.DataFrame where each row represents a single time period.  The pd.DataFrame
-          has two columns: `start_dt` and `end_dt` (where 'dt' is short for 'datetime').
+      pd.DataFrame: The DataFrame has two columns `start_dt` and `end_dt` (where 'dt' is short for 'datetime'). 
+      Each row represents a single time period.  
     """
     # Sanity checks.
     assert len(datetimes) > 0
@@ -115,12 +116,16 @@ def find_contiguous_t0_time_periods(
     contiguous_time_periods: pd.DataFrame, history_duration: timedelta, forecast_duration: timedelta
 ) -> pd.DataFrame:
     """Get all time periods which contain valid t0 datetimes.
-
     `t0` is the datetime of the most recent observation.
 
+    Args:
+        contiguous_time_periods: pd.DataFrame
+        history_duration: timedelta
+        forecast_duration: timedelta
+    
     Returns:
-      pd.DataFrame where each row represents a single time period.  The pd.DataFrame
-      has two columns: `start_dt` and `end_dt` (where 'dt' is short for 'datetime').
+      pd.DataFrame: A DataFrame with two columns `start_dt` and `end_dt` (where 'dt' is short for 'datetime'). 
+      Each row represents a single time period. 
     """
     contiguous_time_periods["start_dt"] += np.timedelta64(history_duration)
     contiguous_time_periods["end_dt"] -= np.timedelta64(forecast_duration)
@@ -132,19 +137,16 @@ def numpy_validation_collate_fn(
     samples: list[tuple[SampleInputArray, SampleOutputArray]],
 ) -> tuple[BatchInputArray, BatchOutputArray]:
     """Collate a list of data + targets into a batch.
-        input: list of (X, y) samples, with sizes
-        X: (batch, channels, time, height, width)
-        y: (batch, channels, rollout_steps, height, width)
-    into output; a tuple of:
-        X: (batch, channels, time, height, width)
-        y: (batch, channels, rollout_steps, height, width)
 
     Args:
-        samples: List of (X, y) samples
+        samples: List of (X, y) samples, with sizes of 
+            X (batch, channels, time, height, width) and
+            y (batch, channels, rollout_steps, height, width)
         
     Returns:
-        np.ndarray: The collated batch of X samples
-        np.ndarray: The collated batch of y samples
+        tuple(np.ndarray, np.ndarray): The collated batch of X samples in the form 
+        (batch, channels, time, height, width) and the collated batch of y samples 
+        in the form  (batch, channels, rollout_steps, height, width)
     """
 
     # Create empty stores for the compiled batch
@@ -165,12 +167,8 @@ def create_cutout_mask(
     """Create a mask with a cutout in the center.
 
     Args:
-        x: x-coordinate of the center of the cutout
-        y: y-coordinate of the center of the cutout
-        width: Width of the mask
-        height: Height of the mask
         mask_size: Size of the cutout
-        mask_value: Value to fill the mask with
+        image_size: Size of the image
 
     Returns:
         np.ndarray: The mask

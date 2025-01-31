@@ -113,8 +113,8 @@ class SatelliteDataset(Dataset[tuple[NDArray[np.float32], NDArray[np.float32]]])
             forecast_mins: How many minutes of future will be used as target features
             sample_freq_mins: The sample frequency to use for the satellite data
             variables: The variables to load from the satellite data (defaults to all)
-            preshuffle: Whether to shuffle the data - useful for validation
-            nan_to_num: Whether to convert NaNs to -1.
+            preshuffle: Whether to shuffle the data - useful for validation. Defaults to False.
+            nan_to_num: Whether to convert NaNs to -1. Defaults to False.
         """
 
         # Load the sat zarr file or list of files and slice the data to the given period
@@ -210,7 +210,7 @@ class ValidationSatelliteDataset(SatelliteDataset):
             history_mins: How many minutes of history will be used as input features
             forecast_mins: How many minutes of future will be used as target features
             sample_freq_mins: The sample frequency to use for the satellite data
-            nan_to_num: Whether to convert NaNs to -1.
+            nan_to_num: Whether to convert NaNs to -1. Defaults to False.
         """
 
         super().__init__(
@@ -281,8 +281,6 @@ class ValidationSatelliteDataset(SatelliteDataset):
 
 
 class SatelliteDataModule(LightningDataModule):
-    """A lightning DataModule for loading past and future satellite data"""
-
     def __init__(
         self,
         zarr_path: list[str] | str,
@@ -303,22 +301,23 @@ class SatelliteDataModule(LightningDataModule):
         """A lightning DataModule for loading past and future satellite data
 
         Args:
-            zarr_path: Path the satellite data. Can be a string or list
+            zarr_path: Path to the satellite data. Can be a string or list
             history_mins: How many minutes of history will be used as input features
             forecast_mins: How many minutes of future will be used as target features
             sample_freq_mins: The sample frequency to use for the satellite data
-            batch_size: Batch size.
-            num_workers: Number of workers to use in multiprocess batch loading.
+            batch_size: Batch size. Defaults to 16.
+            num_workers: Number of workers to use in multiprocess batch loading. Defaults to 0.
             variables: The variables to load from the satellite data (defaults to all)
-            prefetch_factor: Number of data will be prefetched at the end of each worker process.
-            train_period: Date range filter for train dataloader.
-            val_period: Date range filter for val dataloader.
-            test_period: Date range filter for test dataloader.
+            prefetch_factor: Number of data to be prefetched at the end of each worker process
+            train_period: Date range filter for train dataloader
+            val_period: Date range filter for validation dataloader
+            test_period: Date range filter for test dataloader
+            nan_to_num: Whether to convert NaNs to -1. Defaults to False.
             pin_memory:  If True, the data loader will copy Tensors into device/CUDA pinned memory
-                before returning them
+                before returning them. Defaults to False.
             persistent_workers: If True, the data loader will not shut down the worker processes
-                after a dataset has been consumed once. This allows to maintain the workers Dataset
-                instances alive.
+                after a dataset has been consumed once. This allows you to keep the workers 
+                Dataset instances alive. Defaults to False.
         """
         super().__init__()
 
@@ -379,7 +378,7 @@ class SatelliteDataModule(LightningDataModule):
         return DataLoader(dataset, shuffle=True, **self._common_dataloader_kwargs)
 
     def val_dataloader(self) -> DataLoader[tuple[NDArray[np.float32], NDArray[np.float32]]]:
-        """Construct val dataloader"""
+        """Construct validation dataloader"""
         dataset = self._make_dataset(self.val_period[0], self.val_period[1], preshuffle=True)
         return DataLoader(dataset, shuffle=False, **self._common_dataloader_kwargs)
 

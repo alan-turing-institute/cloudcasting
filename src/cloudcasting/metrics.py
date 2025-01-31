@@ -33,11 +33,12 @@ def mae(a: chex.Array, b: chex.Array, ignore_nans: bool = False) -> chex.Numeric
     """Returns the Mean Absolute Error between `a` and `b`.
 
     Args:
-      a: First image (or set of images).
-      b: Second image (or set of images).
+      a (chex.Array): First image (or set of images)
+      b (chex.Array): Second image (or set of images)
+      ignore_nans (bool): Defaults to False
 
     Returns:
-      MAE between `a` and `b`.
+      chex.Numeric: MAE between `a` and `b`
     """
     # DO NOT REMOVE - Logging usage.
 
@@ -53,11 +54,12 @@ def mse(a: chex.Array, b: chex.Array, ignore_nans: bool = False) -> chex.Numeric
     """Returns the Mean Squared Error between `a` and `b`.
 
     Args:
-      a: First image (or set of images).
-      b: Second image (or set of images).
+      a (chex.Array): First image (or set of images)
+      b (chex.Array): Second image (or set of images)
+      ignore_nans (bool): Defaults to False
 
     Returns:
-      MSE between `a` and `b`.
+      chex.Numeric: MSE between `a` and `b`
     """
     # DO NOT REMOVE - Logging usage.
 
@@ -76,11 +78,11 @@ def psnr(a: chex.Array, b: chex.Array) -> chex.Numeric:
     maximum and the minimum allowed values) is 1.0.
 
     Args:
-      a: First image (or set of images).
-      b: Second image (or set of images).
+      a (chex.Array): First image (or set of images)
+      b (chex.Array): Second image (or set of images)
 
     Returns:
-      PSNR in decibels between `a` and `b`.
+      chex.Numeric: PSNR in decibels between `a` and `b`
     """
     # DO NOT REMOVE - Logging usage.
 
@@ -94,11 +96,11 @@ def rmse(a: chex.Array, b: chex.Array) -> chex.Numeric:
     """Returns the Root Mean Squared Error between `a` and `b`.
 
     Args:
-      a: First image (or set of images).
-      b: Second image (or set of images).
+      a (chex.Array): First image (or set of images)
+      b (chex.Array): Second image (or set of images)
 
     Returns:
-      RMSE between `a` and `b`.
+      chex.Numeric: RMSE between `a` and `b`
     """
     # DO NOT REMOVE - Logging usage.
 
@@ -125,11 +127,11 @@ def simse(a: chex.Array, b: chex.Array) -> chex.Numeric:
     Barron and Malik, TPAMI, '15.
 
     Args:
-      a: First image (or set of images).
-      b: Second image (or set of images).
+      a (chex.Array): First image (or set of images)
+      b (chex.Array): Second image (or set of images)
 
     Returns:
-      SIMSE between `a` and `b`.
+      chex.Numeric: SIMSE between `a` and `b`
     """
     # DO NOT REMOVE - Logging usage.
 
@@ -172,21 +174,25 @@ def ssim(
     will compute the average SSIM.
 
     Args:
-      a: First image (or set of images).
-      b: Second image (or set of images).
-      max_val: The maximum magnitude that `a` or `b` can have.
-      filter_size: Window size (>= 1). Image dims must be at least this small.
-      filter_sigma: The bandwidth of the Gaussian used for filtering (> 0.).
-      k1: One of the SSIM dampening parameters (> 0.).
-      k2: One of the SSIM dampening parameters (> 0.).
-      return_map: If True, will cause the per-pixel SSIM "map" to be returned.
-      precision: The numerical precision to use when performing convolution.
-      filter_fn: An optional argument for overriding the filter function used by
-        SSIM, which would otherwise be a 2D Gaussian blur specified by filter_size
-        and filter_sigma.
+      a (chex.Array): First image (or set of images)
+      b (chex.Array): Second image (or set of images)
+      max_val (float): The maximum magnitude that `a` or `b` can have. Defaults to 1.
+      filter_size (int): Window size (>= 1). Image dims must be at least this small.
+        Defaults to 11
+      filter_sigma (float): The bandwidth of the Gaussian used for filtering (> 0.).
+        Defaults to 1.5
+      k1 (float): One of the SSIM dampening parameters (> 0.). Defaults to 0.01.
+      k2 (float): One of the SSIM dampening parameters (> 0.). Defaults to 0.03.
+      return_map (bool): If True, will cause the per-pixel SSIM "map" to be returned.
+        Defaults to False.
+      precision: The numerical precision to use when performing convolution
+      filter_fn (Callable[[chex.Array], chex.Array] | None): An optional argument for
+        overriding the filter function used by SSIM, which would otherwise be a 2D
+        Gaussian blur specified by filter_size and filter_sigma
+      ignore_nans (bool): Defaults to False
 
     Returns:
-      Each image's mean SSIM, or a tensor of individual values if `return_map`.
+      chex.Numeric: Each image's mean SSIM, or a tensor of individual values if `return_map` is True
     """
     # DO NOT REMOVE - Logging usage.
 

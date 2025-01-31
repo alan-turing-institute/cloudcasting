@@ -42,7 +42,7 @@ python -m pip install ".[dev]"
 pre-commit install
 ```
 
-To make create the documentation, it is necessary to install the extra `doc` dependencies:
+To create the documentation, it is necessary to install the extra `doc` dependencies:
 
 ```bash
 python -m pip install ".[doc]"
@@ -59,7 +59,8 @@ Use the cli to download data:
 cloudcasting download "2020-06-01 00:00" "2020-06-30 23:55" "path/to/data/save/dir"
 ```
 
-Once you have developed a model, you can also validate the model, calculating a set of metrics with a standard dataset:
+Once you have developed a model, you can also validate the model, calculating a set of metrics with a standard dataset. 
+To make use of the cli tool, use the [model github repo template](https://github.com/alan-turing-institute/ocf-model-template) to structure it correctly for validation. 
 
 ```bash
 cloudcasting validate "path/to/config/file.yml" "path/to/model/file.py"

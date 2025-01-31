@@ -26,14 +26,12 @@ class AbstractModel(ABC):
 
         Args:
             X: Either a batch or a sample of the most recent satelllite data. X will be 5
-                dimensional and has shape [batch, channels, time, height, width]
+                dimensional and has shape [batch, channels, time, height, width] where
                 time = {t_{-n}, ..., t_{0}}
                 (all n values needed to predict {t'_{1}, ..., t'_{horizon}})
 
         Returns:
-            ForecastArray: The model's prediction of the future satellite data
-                of shape [batch, channels, rollout_steps, height, width]
-                rollout_steps = {t'_{1}, ..., t'_{horizon}}.
+            ForecastArray: The model's prediction of the future satellite data of shape [batch, channels, rollout_steps, height, width] where rollout_steps = {t'_{1}, ..., t'_{horizon}}.
         """
 
     def check_predictions(self, y_hat: BatchOutputArray) -> None:

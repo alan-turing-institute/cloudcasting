@@ -32,12 +32,12 @@ def lon_lat_to_geostationary_area_coords(
     """Loads geostationary area and change from lon-lat to geostationary coords
 
     Args:
-        x: Longitude east-west
-        y: Latitude north-south
-        xr_data: xarray object with geostationary area
+        x (Sequence[float]): Longitude east-west
+        y Sequence[float]: Latitude north-south
+        xr_data (xr.Dataset | xr.DataArray): xarray object with geostationary area
    
     Returns:
-        Geostationary coords: x, y
+        tuple[Sequence[float], Sequence[float]]: x, y in geostationary coordinates
     """
     # WGS84 is short for "World Geodetic System 1984", used in GPS. Uses
     # latitude and longitude.
@@ -64,10 +64,10 @@ def find_contiguous_time_periods(
     """Return a pd.DataFrame where each row records the boundary of a contiguous time period.
 
     Args:
-      datetimes: pd.DatetimeIndex. Must be sorted.
-      min_seq_length: Sequences of min_seq_length or shorter will be discarded.  Typically, this
+      datetimes (pd.DatetimeIndex): Must be sorted.
+      min_seq_length (int): Sequences of min_seq_length or shorter will be discarded.  Typically, this
         would be set to the `total_seq_length` of each machine learning example.
-      max_gap_duration: If any pair of consecutive `datetimes` is more than `max_gap_duration`
+      max_gap_duration (timedelta): If any pair of consecutive `datetimes` is more than `max_gap_duration`
         apart, then this pair of `datetimes` will be considered a "gap" between two contiguous
         sequences. Typically, `max_gap_duration` would be set to the sample period of
         the timeseries.
@@ -119,9 +119,9 @@ def find_contiguous_t0_time_periods(
     `t0` is the datetime of the most recent observation.
 
     Args:
-        contiguous_time_periods: pd.DataFrame
-        history_duration: timedelta
-        forecast_duration: timedelta
+        contiguous_time_periods (pd.DataFrame): Dataframe of continguous time periods
+        history_duration (timedelta): Duration of the history
+        forecast_duration (timedelta): Duration of the forecast
     
     Returns:
       pd.DataFrame: A DataFrame with two columns `start_dt` and `end_dt` (where 'dt' is short for 'datetime'). 
@@ -139,7 +139,7 @@ def numpy_validation_collate_fn(
     """Collate a list of data + targets into a batch.
 
     Args:
-        samples: List of (X, y) samples, with sizes of 
+        samples (list[tuple[SampleInputArray, SampleOutputArray]]): List of (X, y) samples, with sizes of 
             X (batch, channels, time, height, width) and
             y (batch, channels, rollout_steps, height, width)
         

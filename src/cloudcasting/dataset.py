@@ -106,15 +106,15 @@ class SatelliteDataset(Dataset[tuple[NDArray[np.float32], NDArray[np.float32]]])
         """A torch Dataset for loading past and future satellite data
 
         Args:
-            zarr_path: Path to the satellite data. Can be a string or list
-            start_time: The satellite data is filtered to exclude timestamps before this
-            end_time: The satellite data is filtered to exclude timestamps after this
-            history_mins: How many minutes of history will be used as input features
-            forecast_mins: How many minutes of future will be used as target features
-            sample_freq_mins: The sample frequency to use for the satellite data
-            variables: The variables to load from the satellite data (defaults to all)
-            preshuffle: Whether to shuffle the data - useful for validation. Defaults to False.
-            nan_to_num: Whether to convert NaNs to -1. Defaults to False.
+            zarr_path (list[str] | str): Path to the satellite data. Can be a string or list
+            start_time (str): The satellite data is filtered to exclude timestamps before this
+            end_time (str): The satellite data is filtered to exclude timestamps after this
+            history_mins (int): How many minutes of history will be used as input features
+            forecast_mins (int): How many minutes of future will be used as target features
+            sample_freq_mins (int): The sample frequency to use for the satellite data
+            variables (list[str] | str): The variables to load from the satellite data (defaults to all)
+            preshuffle (bool): Whether to shuffle the data - useful for validation. Defaults to False.
+            nan_to_num (bool): Whether to convert NaNs to -1. Defaults to False.
         """
 
         # Load the sat zarr file or list of files and slice the data to the given period
@@ -206,11 +206,11 @@ class ValidationSatelliteDataset(SatelliteDataset):
         """A torch Dataset used only in the validation proceedure.
 
         Args:
-            zarr_path: Path to the satellite data for validation. Can be a string or list
-            history_mins: How many minutes of history will be used as input features
-            forecast_mins: How many minutes of future will be used as target features
-            sample_freq_mins: The sample frequency to use for the satellite data
-            nan_to_num: Whether to convert NaNs to -1. Defaults to False.
+            zarr_path (list[str] | str): Path to the satellite data for validation. Can be a string or list
+            history_mins (int): How many minutes of history will be used as input features
+            forecast_mins (int): How many minutes of future will be used as target features
+            sample_freq_mins (int): The sample frequency to use for the satellite data
+            nan_to_num (bool): Whether to convert NaNs to -1. Defaults to False.
         """
 
         super().__init__(
@@ -301,21 +301,21 @@ class SatelliteDataModule(LightningDataModule):
         """A lightning DataModule for loading past and future satellite data
 
         Args:
-            zarr_path: Path to the satellite data. Can be a string or list
-            history_mins: How many minutes of history will be used as input features
-            forecast_mins: How many minutes of future will be used as target features
-            sample_freq_mins: The sample frequency to use for the satellite data
-            batch_size: Batch size. Defaults to 16.
-            num_workers: Number of workers to use in multiprocess batch loading. Defaults to 0.
-            variables: The variables to load from the satellite data (defaults to all)
-            prefetch_factor: Number of data to be prefetched at the end of each worker process
-            train_period: Date range filter for train dataloader
-            val_period: Date range filter for validation dataloader
-            test_period: Date range filter for test dataloader
-            nan_to_num: Whether to convert NaNs to -1. Defaults to False.
-            pin_memory:  If True, the data loader will copy Tensors into device/CUDA pinned memory
+            zarr_path (list[str] | str): Path to the satellite data. Can be a string or list
+            history_mins (int): How many minutes of history will be used as input features
+            forecast_mins (int): How many minutes of future will be used as target features
+            sample_freq_mins (int): The sample frequency to use for the satellite data
+            batch_size (int): Batch size. Defaults to 16.
+            num_workers (int): Number of workers to use in multiprocess batch loading. Defaults to 0.
+            variables (list[str] | str): The variables to load from the satellite data (defaults to all)
+            prefetch_factor (int): Number of data to be prefetched at the end of each worker process
+            train_period (list[str] | tuple[str] | None): Date range filter for train dataloader
+            val_period (list[str] | tuple[str] | None): Date range filter for validation dataloader
+            test_period (list[str] | tuple[str] | None): Date range filter for test dataloader
+            nan_to_num (bool): Whether to convert NaNs to -1. Defaults to False.
+            pin_memory (bool):  If True, the data loader will copy Tensors into device/CUDA pinned memory
                 before returning them. Defaults to False.
-            persistent_workers: If True, the data loader will not shut down the worker processes
+            persistent_workers (bool): If True, the data loader will not shut down the worker processes
                 after a dataset has been consumed once. This allows you to keep the workers 
                 Dataset instances alive. Defaults to False.
         """

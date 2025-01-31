@@ -5,7 +5,7 @@
 [![PyPI version][pypi-version]][pypi-link]
 [![PyPI platforms][pypi-platforms]][pypi-link]
 
-Tooling and infrastructure to enable cloud nowcasting. Full documentation can be found at https://cloudcasting.readthedocs.io/. 
+Tooling and infrastructure to enable cloud nowcasting. Full documentation can be found at https://cloudcasting.readthedocs.io/.
 
 ## Linked model repos
 - [Optical Flow (Farneback)](https://github.com/alan-turing-institute/ocf-optical-flow)

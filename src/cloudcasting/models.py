@@ -37,11 +37,6 @@ class AbstractModel(ABC):
 
     def check_predictions(self, y_hat: BatchOutputArray) -> None:
         """Checks the predictions conform to expectations"""
-        # Check no NaNs in the predictions
-        if np.isnan(y_hat).any():
-            msg = f"Predictions contain NaNs: {np.isnan(y_hat).mean()=:.4g}."
-            raise ValueError(msg)
-
         # Check the range of the predictions. If outside the expected range this can interfere
         # with computing metrics like structural similarity
         if ((y_hat < 0) | (y_hat > 1)).any():

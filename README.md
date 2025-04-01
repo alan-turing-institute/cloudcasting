@@ -1,8 +1,6 @@
 # cloudcasting
 
 [![Actions Status][actions-badge]][actions-link]
-[![PyPI version][pypi-version]][pypi-link]
-[![PyPI platforms][pypi-platforms]][pypi-link]
 
 Tooling and infrastructure to enable cloud nowcasting.
 

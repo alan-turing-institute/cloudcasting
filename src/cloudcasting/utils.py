@@ -29,13 +29,15 @@ def lon_lat_to_geostationary_area_coords(
     y: Sequence[float],
     xr_data: xr.Dataset | xr.DataArray,
 ) -> tuple[Sequence[float], Sequence[float]]:
-    """Loads geostationary area and change from lon-lat to geostationaery coords
+    """Loads geostationary area and change from lon-lat to geostationary coords
+
     Args:
-        x: Longitude east-west
-        y: Latitude north-south
-        xr_data: xarray object with geostationary area
+        x (Sequence[float]): Longitude east-west
+        y Sequence[float]: Latitude north-south
+        xr_data (xr.Dataset | xr.DataArray): xarray object with geostationary area
+
     Returns:
-        Geostationary coords: x, y
+        tuple[Sequence[float], Sequence[float]]: x, y in geostationary coordinates
     """
     # WGS84 is short for "World Geodetic System 1984", used in GPS. Uses
     # latitude and longitude.
@@ -62,17 +64,17 @@ def find_contiguous_time_periods(
     """Return a pd.DataFrame where each row records the boundary of a contiguous time period.
 
     Args:
-      datetimes: pd.DatetimeIndex. Must be sorted.
-      min_seq_length: Sequences of min_seq_length or shorter will be discarded.  Typically, this
-        would be set to the `total_seq_length` of each machine learning example.
-      max_gap_duration: If any pair of consecutive `datetimes` is more than `max_gap_duration`
-        apart, then this pair of `datetimes` will be considered a "gap" between two contiguous
-        sequences. Typically, `max_gap_duration` would be set to the sample period of
+      datetimes (pd.DatetimeIndex): Must be sorted.
+      min_seq_length (int): Sequences of min_seq_length or shorter will be discarded.  Typically,
+        this would be set to the `total_seq_length` of each machine learning example.
+      max_gap_duration (timedelta): If any pair of consecutive `datetimes` is more than
+        `max_gap_duration` apart, then this pair of `datetimes` will be considered a "gap" between
+        two contiguous sequences. Typically, `max_gap_duration` would be set to the sample period of
         the timeseries.
 
     Returns:
-      pd.DataFrame where each row represents a single time period.  The pd.DataFrame
-          has two columns: `start_dt` and `end_dt` (where 'dt' is short for 'datetime').
+      pd.DataFrame: The DataFrame has two columns `start_dt` and `end_dt`
+      (where 'dt' is short for 'datetime'). Each row represents a single time period.
     """
     # Sanity checks.
     assert len(datetimes) > 0
@@ -114,12 +116,16 @@ def find_contiguous_t0_time_periods(
     contiguous_time_periods: pd.DataFrame, history_duration: timedelta, forecast_duration: timedelta
 ) -> pd.DataFrame:
     """Get all time periods which contain valid t0 datetimes.
-
     `t0` is the datetime of the most recent observation.
 
+    Args:
+        contiguous_time_periods (pd.DataFrame): Dataframe of continguous time periods
+        history_duration (timedelta): Duration of the history
+        forecast_duration (timedelta): Duration of the forecast
+
     Returns:
-      pd.DataFrame where each row represents a single time period.  The pd.DataFrame
-      has two columns: `start_dt` and `end_dt` (where 'dt' is short for 'datetime').
+      pd.DataFrame: A DataFrame with two columns `start_dt` and `end_dt`
+      (where 'dt' is short for 'datetime'). Each row represents a single time period.
     """
     contiguous_time_periods["start_dt"] += np.timedelta64(history_duration)
     contiguous_time_periods["end_dt"] -= np.timedelta64(forecast_duration)
@@ -131,17 +137,16 @@ def numpy_validation_collate_fn(
     samples: list[tuple[SampleInputArray, SampleOutputArray]],
 ) -> tuple[BatchInputArray, BatchOutputArray]:
     """Collate a list of data + targets into a batch.
-        input: list of (X, y) samples, with sizes
-        X: (batch, channels, time, height, width)
-        y: (batch, channels, rollout_steps, height, width)
-    into output; a tuple of:
-        X: (batch, channels, time, height, width)
-        y: (batch, channels, rollout_steps, height, width)
+
     Args:
-        samples: List of (X, y) samples
+        samples (list[tuple[SampleInputArray, SampleOutputArray]]): List of (X, y) samples,
+            with sizes of X (batch, channels, time, height, width) and
+            y (batch, channels, rollout_steps, height, width)
+
     Returns:
-        np.ndarray: The collated batch of X samples
-        np.ndarray: The collated batch of y samples
+        tuple(np.ndarray, np.ndarray): The collated batch of X samples in the form
+        (batch, channels, time, height, width) and the collated batch of y samples
+        in the form  (batch, channels, rollout_steps, height, width)
     """
 
     # Create empty stores for the compiled batch
@@ -160,13 +165,11 @@ def create_cutout_mask(
     image_size: tuple[int, int],
 ) -> NDArray[np.float32]:
     """Create a mask with a cutout in the center.
+
     Args:
-        x: x-coordinate of the center of the cutout
-        y: y-coordinate of the center of the cutout
-        width: Width of the mask
-        height: Height of the mask
         mask_size: Size of the cutout
-        mask_value: Value to fill the mask with
+        image_size: Size of the image
+
     Returns:
         np.ndarray: The mask
     """

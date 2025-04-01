@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 name = "cloudcasting"
 dynamic = ["version"]
 authors = [
-  { name = "cloudcasting Maintainers", email = "nsimpson@turing.ac.uk" },
+  { name = "cloudcasting Maintainers", email = "clouds@turing.ac.uk" },
 ]
 description = "Tooling and infrastructure to enable cloud nowcasting."
 readme = "README.md"
@@ -57,6 +57,11 @@ dev = [
   "pytest-mock",
   "scikit-image",
   "typeguard",
+]
+doc = [
+  "sphinx",
+  "sphinx-rtd-theme",
+  "m2r2"
 ]
 
 [tool.setuptools.package-data]

@@ -68,18 +68,26 @@ def download_satellite_data(
     the output directory.
 
     Args:
-        start_date: First datetime (inclusive) to download.
-        end_date: Last datetime (inclusive) to download.
-        data_inner_steps: Data will be sliced into data_inner_steps*5minute chunks.
-        output_directory: Directory to which the satellite data should be saved.
-        lon_min: The west-most longitude (in degrees) of the bounding box to download.
-        lon_max: The east-most longitude (in degrees) of the bounding box to download.
-        lat_min: The south-most latitude (in degrees) of the bounding box to download.
-        lat_max: The north-most latitude (in degrees) of the bounding box to download.
-        get_hrv: Whether to download the HRV data, else non-HRV is downloaded.
-        override_date_bounds: Whether to override the date range limits.
-        test_2022_set: Whether to filter data from 2022 to download the test set (every 2 weeks).
-        verify_2023_set: Whether to download verification data from 2023. Only used at project end.
+        start_date (str): First datetime (inclusive) to download in 'YYYY-MM-DD HH:MM' format
+        end_date (str): Last datetime (inclusive) to download in 'YYYY-MM-DD HH:MM' format
+        output_directory (str): Directory to which the satellite data should be saved
+        download_frequency (str): Frequency to download data in pandas datetime format.
+            Defaults to "15min".
+        get_hrv (bool): Whether to download the HRV data, otherwise only non-HRV is downloaded.
+            Defaults to False.
+        override_date_bounds (bool): Whether to override the date range limits
+        lon_min (float): The west-most longitude (in degrees) of the bounding box to download.
+            Defaults to -16.
+        lon_max (float): The east-most longitude (in degrees) of the bounding box to download.
+            Defaults to 10.
+        lat_min (float): The south-most latitude (in degrees) of the bounding box to download.
+            Defaults to 45.
+        lat_max (float): The north-most latitude (in degrees) of the bounding box to download.
+            Defaults to 70.
+        test_2022_set (bool): Whether to filter data from 2022 to download the test set
+            (every 2 weeks)
+        verify_2023_set (bool): Whether to download verification data from 2023. Only
+            used at project end.
 
     Raises:
         FileNotFoundError: If the output directory doesn't exist.

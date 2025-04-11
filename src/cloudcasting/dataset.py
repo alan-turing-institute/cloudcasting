@@ -10,6 +10,7 @@ import io
 import pkgutil
 from datetime import datetime, timedelta
 from typing import TypedDict
+import os
 
 import numpy as np
 import pandas as pd
@@ -346,6 +347,9 @@ class SatelliteDataModule(LightningDataModule):
         self.forecast_mins = forecast_mins
         self.sample_freq_mins = sample_freq_mins
 
+        # Validate data paths at instantiation
+        self._validate_data_paths()
+
         self._common_dataloader_kwargs = DataloaderArgs(
             batch_size=batch_size,
             sampler=None,
@@ -361,6 +365,21 @@ class SatelliteDataModule(LightningDataModule):
 
         self.nan_to_num = nan_to_num
         self.variables = variables
+
+    def _validate_data_paths(self) -> None:
+        """Validate that all data paths exist at instantiation.
+        
+        Raises:
+            FileNotFoundError: If any of the data paths do not exist.
+        """
+        if isinstance(self.zarr_path, str):
+            paths = [self.zarr_path]
+        else:
+            paths = self.zarr_path
+            
+        for path in paths:
+            if not os.path.exists(path):
+                raise FileNotFoundError(f"Data path does not exist: {path}")
 
     def _make_dataset(
         self, start_date: str | None, end_date: str | None, preshuffle: bool = False

@@ -414,8 +414,8 @@ def validate(
     """Run the full validation procedure on the model and log the results to wandb.
 
     Args:
-        model (AbstractModel): _description_
-        data_path (Path): _description_
+        model (AbstractModel): the model to be validated
+        data_path (str): path to the validation data set
         nan_to_num (bool, optional): Whether to convert NaNs to -1. Defaults to False.
         batch_size (int, optional): Defaults to 1.
         num_workers (int, optional): Defaults to 0.
@@ -549,11 +549,12 @@ def validate_from_config(
         str, typer.Option(help="Path to Python file with model definition. Defaults to 'model.py'.")
     ] = "model.py",
 ) -> None:
-    """CLI function to validate a model from a config file.
+    """CLI function to validate a model from a config file. Example templates of these files can
+    be found at https://github.com/alan-turing-institute/ocf-model-template.
 
     Args:
-        config_file: Path to config file. Defaults to "validate_config.yml".
-        model_file: Path to Python file with model definition. Defaults to "model.py".
+        config_file (str): Path to config file. Defaults to "validate_config.yml".
+        model_file (str): Path to Python file with model definition. Defaults to "model.py".
     """
     with open(config_file) as f:
         config: dict[str, Any] = yaml.safe_load(f)
